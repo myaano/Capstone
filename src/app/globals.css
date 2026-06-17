@@ -10,6 +10,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-bona_nova_sc: var(--font-bona_nova_sc);
+  --font-bona_nova: var(--font-bona_nova);
+  --font-cormorant_infant: var(--font-cormorant_infant);
+  --font-urbanist: var(--font-urbanist);
 }
 
 @media (prefers-color-scheme: dark) {
