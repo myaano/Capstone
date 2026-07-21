@@ -1,10 +1,7 @@
-// component import
-import Header from "../../reusable_components/Header";
-// component import
 
-//this whole page will be used for each individual paper UI
-export default async function PaperDetails({ params }) {
-  const { paperID } = await params;
+import Header from "../../reusable_components/Header";
+export default async function CapstoneID({ params }) {
+   const { paperID } = await params;
   return (
     <div>
       <Header></Header>
@@ -27,7 +24,7 @@ export default async function PaperDetails({ params }) {
               <div className="bg-[#800000] lg:w-[55%] p-10 ">
                 <div className="flex flex-col gap-6 cursor-pointer">
                   <p className="text-3xl font-bona_nova_sc leading-relaxed">
-                    Abstract
+                    Summary
                   </p>
                   <p className={`font-urbanist text-[1.1rem] max-w[65ch] `}>
                     This study used implicit leadership theory (ILT) as a lens
@@ -75,7 +72,7 @@ export default async function PaperDetails({ params }) {
                   </div>
                   <div className="">
                     <p className="font-semibold">Program :</p>
-                    <p>Bachelor of Science in Computer Science</p>
+                    <p>Bachelor of Science in Information Technology</p>
                   </div>
                   <div className="">
                     <p className="font-semibold">Campus Library :</p>

@@ -112,7 +112,7 @@ export default function Home() {
         }
       },
     });
-
+    // campus counter animations
     gsap.to(
       bulanCounterValue.current,
       {
@@ -145,38 +145,39 @@ export default function Home() {
       },
       [],
     );
-        gsap.to(
-          magallanesCounterValue.current,
-          {
-            value: 30,
-            duration: 3,
-            ease: "power2.out",
-            onUpdate: () => {
-              if (magallanesTimer.current) {
-                magallanesTimer.current.textContent = Math.floor(
-                  magallanesCounterValue.current.value,
-                );
-              }
-            },
-          },
-          [],
-        );
-        gsap.to(
-          sorsogonCounterValue.current,
-          {
-            value: 500,
-            duration: 3,
-            ease: "power2.out",
-            onUpdate: () => {
-              if (sorsogonTimer.current) {
-                sorsogonTimer.current.textContent = Math.floor(
-                  sorsogonCounterValue.current.value,
-                );
-              }
-            },
-          },
-          [],
-        );
+    gsap.to(
+      magallanesCounterValue.current,
+      {
+        value: 30,
+        duration: 3,
+        ease: "power2.out",
+        onUpdate: () => {
+          if (magallanesTimer.current) {
+            magallanesTimer.current.textContent = Math.floor(
+              magallanesCounterValue.current.value,
+            );
+          }
+        },
+      },
+      [],
+    );
+    gsap.to(
+      sorsogonCounterValue.current,
+      {
+        value: 500,
+        duration: 3,
+        ease: "power2.out",
+        onUpdate: () => {
+          if (sorsogonTimer.current) {
+            sorsogonTimer.current.textContent = Math.floor(
+              sorsogonCounterValue.current.value,
+            );
+          }
+        },
+      },
+      [],
+    );
+    // campus counter animations
   }, []);
   //counter useEffect
   return (
@@ -352,16 +353,18 @@ export default function Home() {
               {/* Campuses Analytics */}
               <div className="bg-purple-500 h-100 flex flex-col font-cormorant_infant text-5xl">
                 <div className="bg-blue-500 flex-1 flex justify-between items-center">
-                  <p className="cursor-pointer underline decoration-2 decoration-transparent underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current ">
-                    Bulan
-                  </p>
-                  <div className="flex justify-end items-end gap-2">
-                    {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
-                    {/* when the container div of both the campus and the total paper is hovered, the counting animation of the total papers will be triggered */}
-                    <span ref={bulanTimer}>0</span>
-                    {/* when the container div of both the campus and the total paper is hovered, the counting animation of the total papers will be triggered */}
-                    {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
-                    <p className="text-sm">Total Papers</p>
+                  <div className="bg-red-500 flex flex-1 justify-between">
+                    <p className="cursor-pointer underline decoration-2 decoration-transparent underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current ">
+                      Bulan
+                    </p>
+                    <div className="flex justify-end items-end gap-2">
+                      {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
+                      {/* when the container div of both the campus and the total paper is hovered, the counting animation of the total papers will be triggered */}
+                      <span ref={bulanTimer}>0</span>
+                      {/* when the container div of both the campus and the total paper is hovered, the counting animation of the total papers will be triggered */}
+                      {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
+                      <p className="text-sm">Total Papers</p>
+                    </div>
                   </div>
                 </div>
                 <div className="bg-black flex-1 flex justify-between items-center">
