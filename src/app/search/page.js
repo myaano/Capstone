@@ -63,7 +63,7 @@ function SearchContent() {
       <div className=" bg-red-400 flex-1 mt-5 px-5">
         <div className="bg-blue-500 lg:flex-1 w-full h-full py-2 font-urbanist">
           <div className="bg-green-900 h-full flex flex-col gap-5">
-            {loading && <p>Loading...</p>}
+            {loading && <p className="text-xl">Loading...</p>}
             {!loading && papers.length === 0 && <p>No results found.</p>}
 
             {!loading &&
@@ -162,9 +162,9 @@ export default function Search() {
   return (
     <>
       <Header></Header>
-      <div className="bg-amber-900 h-300 px-5 lg:px-10 pt-10 ">
+      <div className="bg-white h-300 px-5 lg:px-10 pt-10 ">
         <div className="bg-pink-400 h-[90%] flex flex-col ">
-          <div className="bg-[#800000] font-bona_nova_sc text-4xl px-5 py-5 ">
+          <div className="bg-[#800000] font-bona_nova_sc text-4xl px-5 py-5 text-white">
             Searched For :
           </div>
           <Suspense fallback={<div>Loading ...</div>}>
