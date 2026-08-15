@@ -6,11 +6,13 @@ export default function Login() {
     <div className="h-screen bg-[#800000] px-10 py-12">
       <div className="h-full rounded-2xl flex bg-gray-400">
         <div className="bg-green-500 overflow-hidden rounded-l-2xl w-[60%] hidden lg:block relative">
-          <div>
+          <div className="absolute h-full w-full">
             <Image
               src={Rizal}
               alt="BackgroundPhoto"
               fill={true}
+              loading="eager"
+              sizes="(max-width: 768px) 100vw"
               style={{ filter: "brightness(60%)" }}
             />
           </div>

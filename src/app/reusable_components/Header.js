@@ -8,16 +8,18 @@ export default function Header() {
     <div className=" bg-white flex justify-between">
       <div className="bg-[#800000] w-[55%] flex pl-10 py-4 items-center gap-4 font-bona_nova_sc">
         <div className="bg-green-200 w-13 h-13 rounded-full"></div>
-        <p className="flex flex-col sm:flex-row sm:gap-2 lg:text-4xl">
-          <span>Sorsogon</span>
-          <span>State</span>
-          <span>University</span>
-        </p>
+        <Link href= "../page.js">
+          <p className="flex flex-col sm:flex-row sm:gap-2 lg:text-4xl">
+            <span>Sorsogon</span>
+            <span>State</span>
+            <span>University</span>
+          </p>
+        </Link>
       </div>
 
       <div className=" lg:w-[25%] font-urbanist">
-        <div className="bg-[#071437]  flex p-4 justify-center items-center">
-          <button className=" inline-flex justify-center items-center  border-r border-white pr-4 gap-2 lg:text-2xl cursor-pointer">
+        <div className="bg-[#071437]  flex p-3 justify-center items-center font-light">
+          <button className=" inline-flex justify-center items-center  border-r border-white pr-2 gap-2  cursor-pointer">
             <svg
               width="26"
               height="26"
@@ -38,10 +40,11 @@ export default function Header() {
             </svg>
             Search
           </button>
-          <button className="px-4 lg:text-2xl  cursor-pointer">Login</button>
+          <Link href="../login">
+            <button className="px-2   cursor-pointer">Login</button>
+          </Link>
         </div>
       </div>
-      
     </div>
   );
 }

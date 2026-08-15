@@ -1,10 +1,28 @@
 "use client";
 
 import Header from "../reusable_components/Header";
+import { submitUpload } from "./actions";
+
 
 import { useRef, useState, useEffect, useActionState } from "react";
 
 export default function Upload() {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   // add cascading dropdown options here
 
   // file upload logics
@@ -13,6 +31,17 @@ export default function Upload() {
   const [file, setFile] = useState(null);
 
   const [error, setError] = useState("");
+
+  const initialState = {
+    success: false,
+    message: "",
+    errors: {},
+  };
+
+  const [state, formAction, isPending] = useActionState(
+    submitUpload,
+    initialState,
+  );
 
   //drag n drop NOTE: false is used since this is a toggle not an api related thing
   const [isDragOver, setIsDragOver] = useState(false);
@@ -43,20 +72,24 @@ export default function Upload() {
 
   const handleDragOver = (event) => {
     event.preventDefault();
+    event.stopPropagation();
     setIsDragOver(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragOver(false);
   };
 
   const handleDrop = (event) => {
     event.preventDefault();
+    event.stopPropagation();
     const droppedFile = event.dataTransfer?.files?.[0];
     validateFile(droppedFile);
     setIsDragOver(false);
   };
   // file upload logics
-
-  // make a function? or whatever is it to submit the whole form and set an error message that specifies which part of the form is missing a field
-
-  // make a function? or whatever is it to submit the whole form and set an error message that specifies which part of the form is missing a field
 
   //dropdown options
 
@@ -86,7 +119,6 @@ export default function Upload() {
   const [Department, setDepartment] = useState("");
   const [Course, setCourse] = useState("");
   const [DepartmentOptions, setDepartmentOptions] = useState([]);
-
   const [CourseOptions, setCourseOptions] = useState([]);
   // campus, department, course use states HERE
 
@@ -128,14 +160,26 @@ export default function Upload() {
           </div>
 
           {/* FORM LOGICS HERE */}
-          <form className="bg-pink-200  overflow-y-scroll">
-            <div className="flex h-180">
-              <div className="bg-yellow-700 w-full py-2 px-10 flex flex-col  text-black">
+          <form
+            action={formAction}
+            className="bg-pink-200 overflow-y-scroll"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+          >
+            <div className="lg:flex h-180">
+              <div className="bg-yellow-700 w-full py-4 px-10 flex flex-col  text-black">
                 <div className="bg-cyan-400 h-full flex flex-col justify-between">
                   <div className="bg-white w-full p-2">
-                    <div className="text-xl flex gap-2">
-                      <p>File Upload :</p>
-                      {error && <p className="text-red-500">{error}</p>}
+                    <div className="text-xl flex flex-col gap-2">
+                      <div className="lg:flex justify-between items-center">
+                        <p>File Upload :</p>
+                        {/* {error && <p className="text-red-500">{error}</p>} */}
+
+                        <span className="text-sm text-red-500">
+                          {state.errors.file}
+                        </span>
+                      </div>
                     </div>
                     {/* FILE DROP CONTAINER */}
                     <div className="border-2 border-dashed divide-dashed border-[#686565] h-40">
@@ -151,6 +195,7 @@ export default function Upload() {
                           className="hidden"
                           accept="application/pdf"
                           ref={uploadRef}
+                          name="submissionFile"
                           onChange={handleChange}
                         />
                         <svg
@@ -184,49 +229,64 @@ export default function Upload() {
                     {/* FILE DROP CONTAINER */}
                   </div>
                   <div className="bg-red-200 w-full px-2 ">
-                    <div>
+                    <div className="lg:flex  justify-between items-center">
                       <p className="text-xl flex gap-2">Abstract/Summary :</p>
+                      <span className="text-sm text-red-500">
+                        {state.errors.abstract}
+                      </span>
                     </div>
                     <div className="text-white w-full h-50">
                       <textarea
                         className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
                         placeholder="Abstract and Summary here ..."
+                        name="abstract/summary"
                       />
                     </div>
                   </div>
                   <div className="bg-green-300 w-full px-2 ">
-                    <div>
+                    <div className="lg:flex justify-between items-center">
                       <p className="text-xl flex gap-2">Title :</p>
+                      <span className="text-sm text-red-500">
+                        {state.errors.title}
+                      </span>
                     </div>
                     <div className="w-full">
                       <input
                         placeholder="Title ..."
                         type="text"
-                        className="w-full h-full bg-white text-black border border-black rounded-md p-2 "
+                        className="w-full h-full bg-white text-black border border-black rounded-md p-2"
+                        name="title"
                       />
                     </div>
                   </div>
                   <div className="bg-yellow-800 w-full px-2 ">
-                    <div>
+                    <div className="lg:flex justify-between items-center">
                       <p className="text-xl flex gap-2">Researchers :</p>
+                      <span className="text-sm text-red-500">
+                        {state.errors.researchers}
+                      </span>
                     </div>
                     <div className="text-white w-full h-30">
                       <textarea
                         placeholder="Name 1, Name 2, Name 3, ..."
                         className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
+                        name="researchers"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="bg-blue-500 px-10 w-full  flex flex-col justify-center items-center py-2">
-                <div className="bg-cyan-400 h-full w-[75%] flex flex-col justify-between">
+              <div className="bg-blue-500 px-10 py-4 w-full  flex flex-col justify-center items-center ">
+                <div className="bg-cyan-400 h-full  flex flex-col justify-between">
                   <div>
-                    <div className="flex gap-2">
+                    <div className="lg:flex  justify-between items-center ">
                       <h1 className="text-xl">Campus :</h1>
+                      <span className="text-sm text-red-500">
+                        {state.errors.campus}
+                      </span>
                     </div>
                     <select
-                      name=""
+                      name="campus"
                       id=""
                       value={Campus}
                       onChange={(event) => setCampus(event.target.value)}
@@ -243,11 +303,14 @@ export default function Upload() {
                     </select>
                   </div>
                   <div>
-                    <div className="flex gap-2">
+                    <div className="lg:flex  justify-between items-center ">
                       <h1 className="text-xl">Department :</h1>
+                      <span className="text-sm text-red-500">
+                        {state.errors.department}
+                      </span>
                     </div>
                     <select
-                      name=""
+                      name="department"
                       id=""
                       onChange={(event) => setDepartment(event.target.value)}
                       className="w-full bg-amber-700 border p-2 border-black  rounded-md"
@@ -267,11 +330,14 @@ export default function Upload() {
                     </select>
                   </div>
                   <div>
-                    <div className="flex gap-2">
+                    <div className="lg:flex  justify-between items-center ">
                       <h1 className="text-xl">Course :</h1>
+                      <span className="text-sm text-red-500">
+                        {state.errors.course}
+                      </span>
                     </div>
                     <select
-                      name=""
+                      name="course"
                       id=""
                       onChange={(event) => setCourse(event.target.value)}
                       className="w-full bg-amber-700 border p-2 border-black  rounded-md"
@@ -288,11 +354,14 @@ export default function Upload() {
                     </select>
                   </div>
                   <div>
-                    <div className="flex gap-2">
+                    <div className="lg:flex  justify-between items-center ">
                       <h1 className="text-xl">File Type :</h1>
+                      <span className="text-sm text-red-500">
+                        {state.errors.fileType}
+                      </span>
                     </div>
                     <select
-                      name=""
+                      name="fileType"
                       id=""
                       onChange={(event) => setFileType(event.target.value)}
                       className="w-full bg-amber-700 border p-2 border-black  rounded-md"
@@ -314,8 +383,23 @@ export default function Upload() {
                     that can be used specially for backup purposes in case that
                     the website is compromised.
                   </p>
+                  <div className="flex justify-center items-center">
+                    {state.message ? (
+                      <p
+                        className={`text-sm ${state.success ? "text-green-600" : "text-red-500"}`}
+                      >
+                        {state.message}
+                      </p>
+                    ) : null}
+                  </div>
                   <div className="flex justify-center items-center bg-fuchsia-950">
-                    <button className="bg-[#071437] px-15 py-3">Upload</button>
+                    <button
+                      type="submit"
+                      className="bg-[#071437] px-15 py-3 disabled:opacity-70"
+                      disabled={isPending}
+                    >
+                      {isPending ? "Uploading..." : "Upload"}
+                    </button>
                   </div>
                 </div>
               </div>
