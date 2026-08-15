@@ -5,6 +5,31 @@ import Header from "../../reusable_components/Header";
 //this whole page will be used for each individual paper UI
 export default async function PaperDetails({ params }) {
   const { paperID } = await params;
+  // let data;
+  //in the fetch get request here, make the fetch know which paper it will be in /thesis
+
+  // try {
+  //   //sample url only, put the real url of the api
+  //   const response = await fetch(
+  //     `${process.env.NEXT_PUBLIC_BASE_URL}/thesis/api/${paperID}`,
+  //     { cache: "no-store" },
+  //   );
+
+  //   if (!response.ok) {
+  //   }
+
+  //   data = await response.json();
+  // } catch (error) {
+  //   console.error(error);
+  // }
+
+  //continue the codeblock ^^^ above after the api route is done.
+
+
+
+  
+  // retrieve the data from backend using fetch here
+  // store it in a variable, and display the data
   return (
     <div>
       <Header></Header>
@@ -12,7 +37,7 @@ export default async function PaperDetails({ params }) {
         <div className="flex flex-col flex-1 px-4 lg:px-10">
           <p className="font-bona_nova text-3xl text-[#242423]">
             Level of technology implementation in the classroom as a predictor
-            of students' achievement in English, Math, and Science{" "}
+            of students' achievement in English, Math, and Science
           </p>
           <div className=" flex flex-col flex-1 mt-5">
             <div className=" lg:w-[55%]">
