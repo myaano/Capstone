@@ -16,7 +16,7 @@ export default function Login() {
               style={{ filter: "brightness(60%)" }}
             />
           </div>
-          <div className="font-urbanist z-10 absolute pl-5 bottom-20 select-none">
+          <div className="font-urbanist z-10 absolute pl-5 bottom-20 select-none text-white ">
             <p className="text-5xl font-semibold ">
               If Knowledge is the heritage of mankind, only the brave inherit
               it.

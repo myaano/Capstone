@@ -71,14 +71,14 @@ export default function Thesis() {
   return (
     <>
       <Header></Header>
-      <div className="bg-amber-900 h-300 px-5 lg:px-10 pt-10 ">
-        <div className="bg-pink-400 h-[90%] flex flex-col ">
-          <div className="bg-[#800000] font-bona_nova_sc text-4xl px-5 py-5">
+      <div className="bg-white h-300 px-5 lg:px-10 pt-10 ">
+        <div className=" h-[90%] flex flex-col ">
+          <div className="bg-[#800000] font-bona_nova_sc text-4xl px-5 py-5 text-white">
             Thesis Papers
           </div>
           {/* this div will contain both the divs for filter and the papers for pagination */}
-          <div className="lg:flex bg-red-400 flex-1 mt-5">
-            <div className="bg-green-200 lg:w-70 lg:pr-5 flex flex-col border-r border-black">
+          <div className="lg:flex  flex-1 mt-5">
+            <div className="lg:w-70 lg:pr-5 flex flex-col border-r border-black">
               <Filter onFilterChange={handleFilterChange}></Filter>
             </div>
             <div className="bg-blue-500 lg:flex-1 w-full h-full lg:pl-5 lg:pr-2 py-2 font-urbanist">

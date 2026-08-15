@@ -9,7 +9,7 @@ export default function Header() {
       <div className="bg-[#800000] w-[55%] flex pl-10 py-4 items-center gap-4 font-bona_nova_sc">
         <div className="bg-green-200 w-13 h-13 rounded-full"></div>
         <Link href= "../page.js">
-          <p className="flex flex-col sm:flex-row sm:gap-2 lg:text-4xl">
+          <p className="flex flex-col sm:flex-row sm:gap-2 lg:text-4xl text-white">
             <span>Sorsogon</span>
             <span>State</span>
             <span>University</span>
@@ -18,7 +18,7 @@ export default function Header() {
       </div>
 
       <div className=" lg:w-[25%] font-urbanist">
-        <div className="bg-[#071437]  flex p-3 justify-center items-center font-light">
+        <div className="bg-[#071437]  flex p-3 justify-center items-center font-light text-white">
           <button className=" inline-flex justify-center items-center  border-r border-white pr-2 gap-2  cursor-pointer">
             <svg
               width="26"

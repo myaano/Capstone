@@ -86,9 +86,9 @@ export default function Filter({onFilterChange}) {
   ];
 
   return (
-    <div className="bg-blue-300 flex-1 gap-4 flex flex-col font-urbanist">
-      <div className="flex items-center justify-between bg-red-400 px-2 py-2">
-        <span className="text-xl bg-amber-400">Filter :</span>
+    <div className="bg-white flex-1 gap-4 flex flex-col font-urbanist">
+      <div className="flex items-center justify-between  py-2 ">
+        <span className="text-xl lg:text-3xl text-black">Filter :</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -101,7 +101,7 @@ export default function Filter({onFilterChange}) {
           </button>
           <button
             onClick={resetFilter}
-            className="bg-white border text-[#071437] border-[#071437] px-4 py-1 cursor-pointer"
+            className="bg-white border text-[#071437] border-[#071437] px-6 py-1 cursor-pointer  "
           >
             Reset
           </button>
@@ -109,7 +109,7 @@ export default function Filter({onFilterChange}) {
       </div>
       <div
         id="filter-options-panel"
-        className={`bg-red-500 flex-1 flex flex-col gap-8 select-none ${mobileFilterOpen ? "flex" : "hidden"} md:flex`}
+        className={` flex-1 flex flex-col gap-8 select-none ${mobileFilterOpen ? "flex" : "hidden"} md:flex`}
       >
         <div className="bg-[#071437] px-5 py-4">
           <div
