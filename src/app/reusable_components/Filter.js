@@ -111,7 +111,7 @@ export default function Filter({onFilterChange}) {
         id="filter-options-panel"
         className={` flex-1 flex flex-col gap-8 select-none ${mobileFilterOpen ? "flex" : "hidden"} md:flex`}
       >
-        <div className="bg-[#071437] px-5 py-4">
+        <div className="bg-[#071437] px-5 py-4 text-white">
           <div
             className="flex cursor-pointer justify-between items-center"
             onClick={() => setCampusOpen((prev) => !prev)}
@@ -189,7 +189,7 @@ export default function Filter({onFilterChange}) {
             ))}
         </div>
 
-        <div className="bg-[#071437] px-5 py-4">
+        <div className="bg-[#071437] px-5 py-4 text-white">
           <div
             className="flex cursor-pointer justify-between items-center"
             onClick={() => setDepartmentOpen((prev) => !prev)}
@@ -267,7 +267,7 @@ export default function Filter({onFilterChange}) {
             ))}
         </div>
 
-        <div className="bg-[#071437] px-5 py-4">
+        <div className="bg-[#071437] px-5 py-4 text-white">
           <div
             className="flex cursor-pointer justify-between items-center"
             onClick={() => setCourseOpen((prev) => !prev)}
@@ -349,7 +349,7 @@ export default function Filter({onFilterChange}) {
           </div>
         </div>
 
-        <div className="bg-[#071437] px-5 py-4">
+        <div className="bg-[#071437] px-5 py-4 text-white">
           <div
             className="flex cursor-pointer justify-between items-center"
             onClick={() => setYearOpen((prev) => !prev)}
