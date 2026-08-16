@@ -22,7 +22,7 @@ export default async function CapstoneID({ params }) {
             </div>
             <div className=" flex flex-col gap-10 lg:gap-0 lg:flex lg:flex-row ">
               <div className="bg-[#800000] lg:w-[55%] p-10 ">
-                <div className="flex flex-col gap-6 cursor-pointer">
+                <div className="flex flex-col gap-6 text-white">
                   <p className="text-3xl font-bona_nova_sc leading-relaxed">
                     Summary
                   </p>
