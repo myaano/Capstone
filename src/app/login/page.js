@@ -83,9 +83,14 @@ export default function Login() {
                 />
               </div>
               {/*PasswordContainer */}
-              <button className="bg-[#071437] text-xl p-2 rounded-xl ">
-                Login
-              </button>
+              <div className="group relative flex flex-1 cursor-pointer active:opacity-70">
+                <button className="flex flex-1 justify-center items-center bg-[#C1FF30] text-xl text-black p-2 rounded-xl ">
+                  Login
+                </button>
+                <div className="absolute z-20 inset-0  bg-[#071437] flex justify-center items-center [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-[#071437] group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)] group-hover:text-white rounded-xl text-xl">
+                  Login
+                </div>
+              </div>
             </form>
           </div>
         </div>
