@@ -71,20 +71,20 @@ export default function Thesis() {
   return (
     <>
       <Header></Header>
-      <div className="bg-white h-300 px-5 lg:px-10 pt-10 ">
-        <div className=" h-[90%] flex flex-col ">
+      <div className="bg-white min-h-screen px-5 lg:px-10 pt-10 ">
+        <div className="  flex flex-col flex-1">
           <div className="bg-[#800000] font-bona_nova_sc text-4xl px-5 py-5 text-white">
             Thesis Papers
           </div>
           {/* this div will contain both the divs for filter and the papers for pagination */}
           <div className="lg:flex  flex-1 mt-5">
-            <div className="lg:w-70 lg:pr-5 flex flex-col border-r border-black">
+            <div className="lg:w-72 lg:shrink-0 lg:pr-5 flex flex-col border-r border-black">
               <Filter onFilterChange={handleFilterChange}></Filter>
             </div>
-            <div className="bg-blue-500 lg:flex-1 w-full h-full lg:pl-5 lg:pr-2 py-2 font-urbanist">
+            <div className="bg-blue-500 lg:flex-1 w-full h-full lg:pl-5  py-2 font-urbanist">
               <div className="bg-green-900 h-full flex flex-col gap-5">
                 {/* use js to generate these divs and the contents for each paper link that leads to the dynamic /thesis page */}
-                <div className="bg-pink-500 h-40 flex flex-col justify-between">
+                <div className="bg-pink-500 min-h-40 flex flex-col justify-between">
                   <div>
                     <p className="font-bold text-lg bg-amber-950">
                       Level of Technology implementation in the classroom as a
@@ -127,7 +127,6 @@ export default function Thesis() {
           {/* this div will contain both the divs for filter and the papers for pagination */}
         </div>
       </div>
-
     </>
   );
 }
