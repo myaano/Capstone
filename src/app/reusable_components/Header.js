@@ -1,14 +1,16 @@
 //next imports
 import Image from "next/image";
 import Link from "next/link";
-//next improts
+//next
+
+import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
   return (
     <div className=" bg-white flex justify-between">
       <div className="bg-[#800000] w-[55%] flex pl-10 py-4 items-center gap-4 font-bona_nova_sc">
         <div className="bg-green-200 w-13 h-13 rounded-full"></div>
-        <Link href="../page.js">
+        <Link href="/">
           <p className="flex flex-col sm:flex-row sm:gap-2 lg:text-4xl text-white">
             <span>Sorsogon</span>
             <span>State</span>
@@ -17,11 +19,11 @@ export default function Header() {
         </Link>
       </div>
 
-      <div className=" lg:w-[25%] font-urbanist  text-2xl">
+      <div className=" lg:w-[25%] font-urbanist  text-2xl select-none">
         <div className="bg-[#071437]  flex p-3 justify-center items-center font-light text-white">
           <div className=" pr-3 border-r border-white flex items-center">
             {/* Link */}
-            <div className="group relative cursor-pointer flex justify-center items-center lg:px-5 ">
+            <div className="group relative cursor-pointer flex justify-center items-center lg:px-4 ">
               <button className=" flex justify-center items-center gap-2  cursor-pointer">
                 <svg
                   width="26"
@@ -51,8 +53,8 @@ export default function Header() {
           </div>
 
           <div className="pl-3 ">
-            <Link href="../login">
-              <div className="group relative cursor-pointer flex justify-center items-center  lg:px-5  ">
+            <Link href="/login">
+              <div className="group relative cursor-pointer flex justify-center items-center  lg:px-4  ">
                 <button className=" cursor-pointer ">Login</button>
 
                 <div className="absolute  z-20 inset-0  bg-[#C1FF30] flex justify-center items-center  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-[#C1FF30] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-black ">

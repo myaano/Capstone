@@ -24,11 +24,19 @@ export default function Footer() {
           </div>
           <div className="grid grid-cols-3 font-light text-white md:text-lg">
             <div>
-              <Link href="https://sorsu.edu.ph/" target="_blank">
+              <Link
+                href="https://sorsu.edu.ph/"
+                target="_blank"
+                className="focus:outline-none focus:ring-0"
+              >
                 <h1 className="underline underline-offset-4">sorsu.edu.ph</h1>
               </Link>
 
-              <Link href="https://bulan.sorsu.edu.ph" target="_blank">
+              <Link
+                href="https://bulan.sorsu.edu.ph"
+                target="_blank"
+                className="focus:outline-none focus:ring-0"
+              >
                 <h1 className="underline underline-offset-4">
                   bulan.sorsu.edu.ph
                 </h1>
@@ -42,6 +50,7 @@ export default function Footer() {
               <Link
                 href="https://www.facebook.com/sorsogonstateuniversityofficial"
                 target="_blank"
+                className="focus:outline-none focus:ring-0"
               >
                 <h1 className="underline underline-offset-4 inline-flex justify-center items-center">
                   Facebook

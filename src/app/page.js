@@ -25,7 +25,10 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { CustomEase } from "gsap/CustomEase";
-// gsap imports
+// gsap
+
+import { useAuth } from "./context/AuthContext.js";
+
 export default function Home() {
   //lenis function
   const lenisRef = useRef(null);
@@ -68,18 +71,12 @@ export default function Home() {
     /* RESEARCH TIMER VARS */
   }
 
-
-
-
-
-
-
   //useGsap
 
   useGSAP(() => {
     gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase);
     CustomEase.create("hop", "0.85, 0, 0.15, 1");
-    console.log("useGSAP ran, mounting fresh"); 
+    console.log("useGSAP ran, mounting fresh");
     //timeline
     // const timerTimeline = gsap.timeline({ delay: "0.5" });
     //timeline
@@ -88,21 +85,18 @@ export default function Home() {
     // apply it to the counter animation that it only runs when hovered
 
     // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
-    gsap.to(
-      thesisCounterValue.current,
-      {
-        value: 61,
-        duration: 3,
-        ease: "power2.out",
-        onUpdate: () => {
-          if (thesisTimer.current) {
-            thesisTimer.current.textContent = Math.floor(
-              thesisCounterValue.current.value,
-            );
-          }
-        },
+    gsap.to(thesisCounterValue.current, {
+      value: 61,
+      duration: 3,
+      ease: "power2.out",
+      onUpdate: () => {
+        if (thesisTimer.current) {
+          thesisTimer.current.textContent = Math.floor(
+            thesisCounterValue.current.value,
+          );
+        }
       },
-    );
+    });
     // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
     gsap.to(capstoneCounterValue.current, {
       value: 120,
@@ -117,32 +111,26 @@ export default function Home() {
       },
     });
     // campus counter animations
-    gsap.to(
-      bulanCounterValue.current,
-      {
-        value: 181,
-        duration: 3,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: ".bulan",
-          start: "bottom bottom",
-          once: true,
-        },
-        onUpdate: () => {
-          if (bulanTimer.current) {
-            bulanTimer.current.textContent = Math.floor(
-              bulanCounterValue.current.value,
-            );
-          }
-        },
+    gsap.to(bulanCounterValue.current, {
+      value: 181,
+      duration: 3,
+      ease: "power2.out",
+      scrollTrigger: {
+        trigger: ".bulan",
+        start: "bottom bottom",
+        once: true,
       },
-
-    );
+      onUpdate: () => {
+        if (bulanTimer.current) {
+          bulanTimer.current.textContent = Math.floor(
+            bulanCounterValue.current.value,
+          );
+        }
+      },
+    });
     // campus counter animations
   }, []);
   //use Gsap
-
- 
 
   return (
     <>
@@ -157,11 +145,11 @@ export default function Home() {
           {/* header */}
           <div className="bg-transparent flex justify-end items-center sticky top-0 ">
             {/*modal buttons*/}
-            <div className="bg-[#071437] flex justify-center items-center w-[45%] lg:w-[25%] p-3 text-white font-urbanist font-extralight text-2xl">
+            <div className="select-none bg-[#071437] flex justify-center items-center w-[45%] lg:w-[25%] p-3 text-white font-urbanist font-extralight lg:text-2xl">
               {/*button containers*/}
-              <div className="pr-3 border-r border-white flex items-center">
-                <div className="group relative cursor-pointer flex justify-center items-center px-5 ">
-                  <button className=" flex justify-center items-center gap-2  cursor-pointer">
+              <div className="lg:pr-3 border-r border-white flex items-center">
+                <div className="group relative cursor-pointer flex justify-center items-center lg:px-4 ">
+                  <button className=" flex justify-center items-center gap-2  cursor-pointer focus:outline-none focus:ring-0">
                     <svg
                       width="26"
                       height="26"
@@ -188,8 +176,11 @@ export default function Home() {
                 </div>
               </div>
               <div className="pl-3">
-                <Link href="../login">
-                  <div className="group relative cursor-pointer flex justify-center items-center  px-5  ">
+                <Link
+                  href="../login"
+                  className="focus:outline-none focus:ring-0"
+                >
+                  <div className="group relative cursor-pointer flex justify-center items-center lg:px-4  ">
                     <button className="cursor-pointer ">Login</button>
                     <div className="absolute  z-20 inset-0  bg-[#C1FF30] flex justify-center items-center  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-[#C1FF30] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-white ">
                       Login
@@ -289,7 +280,10 @@ export default function Home() {
                     <span ref={thesisTimer}>0</span>
                     {/* this stupid number should have a counting animation from 0 to current number of papers */}
                     {/* this svg will be a <Link /> which is pressable and will send the user to the thesis section */}
-                    <Link href="/thesis">
+                    <Link
+                      href="/thesis"
+                      className="focus:outline-none focus:ring-0"
+                    >
                       <svg
                         width="30"
                         height="15"
@@ -312,7 +306,10 @@ export default function Home() {
                 <div className="  flex flex-col justify-center w-full">
                   <p className=" border-b border-white text-5xl font-bona_nova_sc pb-2 flex justify-between items-center">
                     <span ref={capstoneTimer}>0</span>
-                    <Link href="/capstone">
+                    <Link
+                      href="/capstone"
+                      className="focus:outline-none focus:ring-0"
+                    >
                       <svg
                         width="30"
                         height="15"

@@ -3,26 +3,9 @@
 import Header from "../reusable_components/Header";
 import { submitUpload } from "./actions";
 
-
 import { useRef, useState, useEffect, useActionState } from "react";
 
 export default function Upload() {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   // add cascading dropdown options here
 
   // file upload logics
@@ -110,6 +93,14 @@ export default function Upload() {
     // list all the campuses and departments of each campuses in this array to be used by the cascading dropdown
   };
 
+  const currentYear = new Date().getFullYear();
+  const startYear = 2018;
+
+  const years = Array.from(
+    { length: currentYear - startYear + 1 },
+    (_, i) => currentYear - i,
+  );
+
   const [FileType, setFileType] = useState("");
 
   const fileTypes = ["Capstone", "Thesis"];
@@ -195,7 +186,7 @@ export default function Upload() {
                           className="hidden"
                           accept="application/pdf"
                           ref={uploadRef}
-                          name="submissionFile"
+                          name="file"
                           onChange={handleChange}
                         />
                         <svg
@@ -355,20 +346,42 @@ export default function Upload() {
                   </div>
                   <div>
                     <div className="lg:flex  justify-between items-center ">
-                      <h1 className="text-xl">File Type :</h1>
+                      <h1 className="text-xl">Year :</h1>
                       <span className="text-sm text-red-500">
-                        {state.errors.fileType}
+                        {state.errors.year}
                       </span>
                     </div>
                     <select
-                      name="fileType"
+                      name="year"
+                      id=""
+                      className="w-full bg-amber-700 border p-2 border-black  rounded-md"
+                    >
+                      <option value="" hidden>
+                        Year
+                      </option>
+                      {years.map((selectedYear) => (
+                        <option key={selectedYear} value={selectedYear}>
+                          {selectedYear}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <div className="lg:flex  justify-between items-center ">
+                      <h1 className="text-xl">Paper Type :</h1>
+                      <span className="text-sm text-red-500">
+                        {state.errors.paperType}
+                      </span>
+                    </div>
+                    <select
+                      name="paperType"
                       id=""
                       onChange={(event) => setFileType(event.target.value)}
                       className="w-full bg-amber-700 border p-2 border-black  rounded-md"
                       disabled={!(Campus && Department && Course)}
                     >
                       <option value="" hidden>
-                        File Type
+                        Paper Type
                       </option>
                       {fileTypes.map((selectedFType) => (
                         <option key={selectedFType} value={selectedFType}>
