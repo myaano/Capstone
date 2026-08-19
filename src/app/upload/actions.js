@@ -2,14 +2,15 @@
 
 export async function submitUpload(prevState, formData) {
   //retrieve data//retrieve data//retrieve data//retrieve data
-  const file = formData.get("submissionFile");
+  const file = formData.get("file");
   const abstract = formData.get("abstract/summary")?.toString().trim() || "";
   const title = formData.get("title")?.toString().trim() || "";
   const researchers = formData.get("researchers")?.toString().trim() || "";
   const campus = formData.get("campus")?.toString().trim() || "";
   const department = formData.get("department")?.toString().trim() || "";
   const course = formData.get("course")?.toString().trim() || "";
-  const fileType = formData.get("fileType")?.toString().trim() || "";
+  const year = formData.get("year")?.toString().trim() || "";
+  const fileType = formData.get("paperType")?.toString().trim() || "";
   //retrieve data//retrieve data//retrieve data//retrieve data
 
   //error validations //error validations //error validations //error validations //error validations
@@ -31,7 +32,8 @@ export async function submitUpload(prevState, formData) {
   if (!campus) errors.campus = "Campus is required.";
   if (!department) errors.department = "Department is required.";
   if (!course) errors.course = "Course is required.";
-  if (!fileType) errors.fileType = "File type is required.";
+  if (!year) errors.year = "Year is required.";
+  if (!fileType) errors.fileType = "Paper type is required.";
 
   if (Object.keys(errors).length > 0) {
     return {
@@ -44,17 +46,18 @@ export async function submitUpload(prevState, formData) {
 
   //puts data into a submittion body
   const uploadData = new FormData();
-  uploadData.append("submissionFile", file);
-  uploadData.append("description", abstract);
+  uploadData.append("file", file);
+  uploadData.append("abstract", abstract);
   uploadData.append("title", title);
   uploadData.append("researchers", researchers);
   uploadData.append("campus", campus);
   uploadData.append("department", department);
   uploadData.append("course", course);
-  uploadData.append("fileType", fileType);
+  uploadData.append("year", year);
+  uploadData.append("paperType", fileType);
 
   // fix this variable next time and attach link it to a true env file variable
-  const uploadUrl = process.env.NEXT_PUBLIC_UPLOAD_API_URL;
+  const uploadUrl = process.env.NEXT_PUBLIC_API_URL;
   // fix this variable next time and attach link it to a true env file variable
 
   //error val
@@ -67,10 +70,9 @@ export async function submitUpload(prevState, formData) {
   }
   //error val
 
-  
   //submits data using fetch//submits data using fetch//submits data using fetch//submits data using fetch
   try {
-    const response = await fetch("api.com/api/api/apii", {
+    const response = await fetch(uploadUrl, {
       method: "POST",
       body: uploadData,
     });

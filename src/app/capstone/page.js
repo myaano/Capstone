@@ -29,7 +29,7 @@ export default function Capstone() {
           </div>
           {/* this div will contain both the divs for filter and the papers for pagination */}
           <div className="lg:flex  flex-1 mt-5">
-            <div className="lg:w-72 lg:shrink-0 lg:pr-5 flex flex-col border-r border-black">
+            <div className="lg:w-72 lg:shrink-0 lg:pr-5 flex flex-col lg:border-r lg:border-black">
               <Filter></Filter>
             </div>
             <div className="bg-blue-500  w-full h-full lg:flex-1 lg:pl-5 py-2 font-urbanist">

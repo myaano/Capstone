@@ -41,6 +41,7 @@ export const metadata = {
 };
 
 
+import { AuthProvider } from "./context/AuthContext";
 
 
 export default function RootLayout({ children }) {
@@ -49,7 +50,9 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${BonaNovaFont.variable}  ${BonaNovaSCFont.variable}  ${UrbanistFont.variable} ${CormorantInfantFont.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col ">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

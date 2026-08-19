@@ -3,65 +3,51 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 
-
-
-
-
+import Filter from "../reusable_components/Filter";
 import Pagination from "../reusable_components/Pagination";
 import Header from "../reusable_components/Header";
 
 function SearchContent() {
-    const searchParams = useSearchParams();
-    const q = searchParams.get("q") || "";
-    const page = Number(searchParams.get("page")) || 1;
+  const searchParams = useSearchParams();
+  const q = searchParams.get("q") || "";
+  const page = Number(searchParams.get("page")) || 1;
 
-    const [papers, setPapers] = useState([]);
-    const [pagination, setPagination] = useState(null);
+  const [papers, setPapers] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-
-
 
   const router = useRouter();
   const pathname = usePathname();
-
 
   const handlChange = (newPage) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", newPage);
     router.push(`${pathname}?${params.toString()}`);
-  }
+  };
 
+  useEffect(() => {
+    if (!q) return;
+    setLoading(true);
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/papers/search?q=${encodeURIComponent(q)}&page=${page}`,
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setPapers(data.papers); // matched papers from your Laravel search endpoint
+        setPagination(data.pagination);
+        setLoading(false);
+      });
+  }, [q, page]);
 
-
-
-
-
-
-
-
-
-    useEffect(() => {
-      if (!q) return;
-      setLoading(true);
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/papers/search?q=${encodeURIComponent(q)}&page=${page}`,
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          setPapers(data.papers); // matched papers from your Laravel search endpoint
-          setPagination(data.pagination);
-          setLoading(false);
-        });
-    }, [q, page]);
-
-    if (loading) return <div>Loading...</div>;
+  // if (loading) return <div>Loading...</div>;
 
   return (
     <>
-
-      <div className=" bg-red-400 flex-1 mt-5 px-5">
-        <div className="bg-blue-500 lg:flex-1 w-full h-full py-2 font-urbanist">
+      <div className=" bg-red-400 flex flex-1 mt-5">
+        <div className="lg:w-72 pr-2 border-r border-black">
+          <Filter></Filter>
+        </div>
+        <div className="bg-blue-500 lg:flex-1 w-full h-full py-2 font-urbanist ml-2">
           <div className="bg-green-900 h-full flex flex-col gap-5">
             {loading && <p className="text-xl">Loading...</p>}
             {!loading && papers.length === 0 && <p>No results found.</p>}
@@ -73,7 +59,9 @@ function SearchContent() {
                   className="bg-pink-500 h-40 flex flex-col justify-between"
                 >
                   <div className="flex gap-2">
-                    <div className="font-cormorant_infant text-xl text-black">Searched for :</div>
+                    <div className="font-cormorant_infant text-xl text-black">
+                      Searched for :
+                    </div>
                     <h1 className="text-black font-urbanist ">Placeholder</h1>
                   </div>
                   <div>
@@ -118,7 +106,6 @@ function SearchContent() {
                   </div>
                 </div>
               ))}
-            
 
             {/* pagination */}
             {!loading && pagination && (
@@ -135,28 +122,10 @@ function SearchContent() {
   );
 }
 
-
-
-
 /// change the hardcoded ui above to render papers not just by a single paper^^^^^
 /// the ui above only returns single paper block so you need to make a map? to render all papers that is being retrieved
 
-
-
-
 /// next step is make a pagination
-
-
-
-
-
-
-
-
-
-
-
-
 
 export default function Search() {
   return (
