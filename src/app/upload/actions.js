@@ -10,7 +10,7 @@ export async function submitUpload(prevState, formData) {
   const department = formData.get("department")?.toString().trim() || "";
   const course = formData.get("course")?.toString().trim() || "";
   const year = formData.get("year")?.toString().trim() || "";
-  const fileType = formData.get("paperType")?.toString().trim() || "";
+  const paper_type = formData.get("paper_type")?.toLowerCase().toString().trim() || "";
   //retrieve data//retrieve data//retrieve data//retrieve data
 
   //error validations //error validations //error validations //error validations //error validations
@@ -33,7 +33,7 @@ export async function submitUpload(prevState, formData) {
   if (!department) errors.department = "Department is required.";
   if (!course) errors.course = "Course is required.";
   if (!year) errors.year = "Year is required.";
-  if (!fileType) errors.fileType = "Paper type is required.";
+  if (!paper_type) errors.paper_type = "Paper type is required.";
 
   if (Object.keys(errors).length > 0) {
     return {
@@ -54,7 +54,7 @@ export async function submitUpload(prevState, formData) {
   uploadData.append("department", department);
   uploadData.append("course", course);
   uploadData.append("year", year);
-  uploadData.append("paperType", fileType);
+  uploadData.append("paper_type", paper_type);
 
   // fix this variable next time and attach link it to a true env file variable
   const uploadUrl = process.env.NEXT_PUBLIC_API_URL;

@@ -1,7 +1,45 @@
+"use client";
+
 import Image from "next/image";
 import Rizal from "../../../public/Rizal.jpg";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
 export default function Login() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const res = await fetch("http://192.168.1.34:8000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!res.ok) {
+        setError("Invalid credentials");
+        return;
+      }
+
+      const data = await res.json();
+      localStorage.setItem("token", data.token);
+
+      router.push("/page.js"); // or wherever you want to land after login
+    } catch (err) {
+      setError("Something went wrong");
+    }
+  }
+
   return (
     <div className="h-screen bg-[#800000] px-10 py-12">
       <div className="h-full rounded-2xl flex">
@@ -57,6 +95,7 @@ export default function Login() {
             </div>
             <form
               action=""
+              onSubmit={handleSubmit}
               className="font-urbanist flex flex-1 flex-col  pt-7 lg:justify-end gap-7 "
             >
               {/*UsernameCONTAINER */}
@@ -67,6 +106,8 @@ export default function Login() {
                 <input
                   placeholder="Username"
                   type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="bg-[#fffff6] border border-[#242423] rounded-lg px-2 py-1 placeholder:text-[#999595] text-[#363633]"
                 />
               </div>
@@ -79,10 +120,13 @@ export default function Login() {
                 <input
                   placeholder="Password"
                   type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="bg-[#fffff6] border border-[#363633] rounded-lg px-2 py-1 outline-[#363633] placeholder:text-[#999595] text-[#363633]"
                 />
               </div>
               {/*PasswordContainer */}
+              {error && <p className="text-red-600 text-sm -mt-4">{error}</p>}
               <div className="group relative flex flex-1 cursor-pointer active:opacity-70">
                 <button className="flex flex-1 justify-center items-center bg-[#C1FF30] text-xl text-black p-2 rounded-xl ">
                   Login

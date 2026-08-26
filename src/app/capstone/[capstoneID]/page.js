@@ -1,7 +1,29 @@
 
 import Header from "../../reusable_components/Header";
 export default async function CapstoneID({ params }) {
-   const { paperID } = await params;
+  const { paperID } = await params;
+  
+    let data = null;
+    //in the fetch get request here, make the fetch know which paper it will be in /thesis
+
+    try {
+      //sample url only, put the real url of the api
+      const response = await fetch(
+        `http://192.168.1.34:8000/api/papers/capstone/${paperID}`,
+        {
+          cache: "no-store",
+        },
+      );
+
+      if (!response.ok) {
+        console.error(`Request failed: ${response.status}`);
+        return <div>Paper not found.</div>;
+      }
+
+      data = await response.json();
+    } catch (error) {
+      console.error(error);
+    }
   return (
     <div>
       <Header></Header>

@@ -45,24 +45,18 @@ export default function Filter({ onFilterChange }) {
     const data = async () => {
       try {
         const response = await fetch("data.com/api/sample");
+        if (!response.ok) {
+          throw new Error(`Request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
 
         // get the filter details (campus, dept, course, year)
       } catch (error) {
-        console.error(error);
+        console.error("Failed to Fetch Data", error);
       }
     };
   }, []);
-
-
-
-
-
-
-  
-
-
-
-
 
   //request block here
 
@@ -119,17 +113,12 @@ export default function Filter({ onFilterChange }) {
     },
   };
 
-  const yearOptions = [
-    "2018",
-    "2019",
-    "2020",
-    "2021",
-    "2022",
-    "2023",
-    "2024",
-    "2025",
-    "2026",
-  ];
+  const startYear = 2018;
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from(
+    { length: currentYear - startYear + 1 },
+    (_, i) => String(startYear + i),
+  );
 
   return (
     <div className="bg-white flex-1 gap-4 flex flex-col font-urbanist">
