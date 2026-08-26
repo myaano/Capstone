@@ -135,32 +135,48 @@ export default function Upload() {
     } else {
       setCourseOptions([]);
       setCourse("");
+
     }
   }, [Campus, Department]);
   // cascading dropdown logic
 
   //dropdown options
 
+
+
+
+
+  TODO: // add reset into the input file
+
+  
+
+
+
+
+
+
+  
+
   return (
     <div className="bg-white h-screen">
       <Header></Header>
-      <div className="bg-amber-500 px-10 py-12 h-[calc(100vh-84px)] font-urbanist">
-        <div className="bg-green-500 h-full flex flex-col">
+      <div className="bg-white px-20 py-12 min-h-screen font-urbanist text-black">
+        <div className="h-full flex flex-col rounded-b-xl shadow-2xl border-black">
           <div className="bg-[#800000] rounded-t-2xl">
-            <p className=" text-5xl py-5 px-10">Upload</p>
+            <p className=" text-5xl py-5 px-10 text-white">Upload</p>
           </div>
 
           {/* FORM LOGICS HERE */}
           <form
             action={formAction}
-            className="bg-pink-200 overflow-y-scroll"
+            className=" rounded-b-xl"
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
           >
             <div className="lg:flex h-180">
-              <div className="bg-yellow-700 w-full py-4 px-10 flex flex-col  text-black">
-                <div className="bg-cyan-400 h-full flex flex-col justify-between">
+              <div className=" w-full py-4 px-10 flex flex-col  text-black">
+                <div className=" h-full flex flex-col justify-between">
                   <div className="bg-white w-full p-2">
                     <div className="text-xl flex flex-col gap-2">
                       <div className="lg:flex justify-between items-center">
@@ -219,14 +235,14 @@ export default function Upload() {
                     </div>
                     {/* FILE DROP CONTAINER */}
                   </div>
-                  <div className="bg-red-200 w-full px-2 ">
+                  <div className=" w-full px-2 ">
                     <div className="lg:flex  justify-between items-center">
                       <p className="text-xl flex gap-2">Abstract/Summary :</p>
                       <span className="text-sm text-red-500">
                         {state.errors.abstract}
                       </span>
                     </div>
-                    <div className="text-white w-full h-50">
+                    <div className=" w-full h-50">
                       <textarea
                         className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
                         placeholder="Abstract and Summary here ..."
@@ -234,7 +250,7 @@ export default function Upload() {
                       />
                     </div>
                   </div>
-                  <div className="bg-green-300 w-full px-2 ">
+                  <div className=" w-full px-2 ">
                     <div className="lg:flex justify-between items-center">
                       <p className="text-xl flex gap-2">Title :</p>
                       <span className="text-sm text-red-500">
@@ -250,14 +266,14 @@ export default function Upload() {
                       />
                     </div>
                   </div>
-                  <div className="bg-yellow-800 w-full px-2 ">
+                  <div className=" w-full px-2 ">
                     <div className="lg:flex justify-between items-center">
                       <p className="text-xl flex gap-2">Researchers :</p>
                       <span className="text-sm text-red-500">
                         {state.errors.researchers}
                       </span>
                     </div>
-                    <div className="text-white w-full h-30">
+                    <div className=" w-full h-30">
                       <textarea
                         placeholder="Name 1, Name 2, Name 3, ..."
                         className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
@@ -267,8 +283,8 @@ export default function Upload() {
                   </div>
                 </div>
               </div>
-              <div className="bg-blue-500 px-10 py-4 w-full  flex flex-col justify-center items-center ">
-                <div className="bg-cyan-400 h-full  flex flex-col justify-between">
+              <div className=" px-10 py-4 w-full  flex flex-col justify-center items-center ">
+                <div className=" h-full  flex flex-col justify-between">
                   <div>
                     <div className="lg:flex  justify-between items-center ">
                       <h1 className="text-xl">Campus :</h1>
@@ -281,13 +297,13 @@ export default function Upload() {
                       id=""
                       value={Campus}
                       onChange={(event) => setCampus(event.target.value)}
-                      className="w-full bg-amber-700 border border-black p-2 rounded-md "
+                      className="w-full  border border-black p-2 rounded-md "
                     >
                       <option value="" hidden>
                         Campus
                       </option>
                       {Object.keys(campusData).map((selectedCampus) => (
-                        <option key={selectedCampus} value={selectedCampus}>
+                        <option key={selectedCampus} value={selectedCampus} className="">
                           {selectedCampus}
                         </option>
                       ))}
@@ -304,7 +320,7 @@ export default function Upload() {
                       name="department"
                       id=""
                       onChange={(event) => setDepartment(event.target.value)}
-                      className="w-full bg-amber-700 border p-2 border-black  rounded-md"
+                      className="w-full  border p-2 border-black  rounded-md"
                       disabled={!Campus}
                     >
                       <option value="" hidden>
@@ -331,7 +347,7 @@ export default function Upload() {
                       name="course"
                       id=""
                       onChange={(event) => setCourse(event.target.value)}
-                      className="w-full bg-amber-700 border p-2 border-black  rounded-md"
+                      className="w-full  border p-2 border-black  rounded-md"
                       disabled={!Department}
                     >
                       <option value="" hidden>
@@ -354,7 +370,7 @@ export default function Upload() {
                     <select
                       name="year"
                       id=""
-                      className="w-full bg-amber-700 border p-2 border-black  rounded-md"
+                      className="w-full  border p-2 border-black  rounded-md"
                     >
                       <option value="" hidden>
                         Year
@@ -370,14 +386,14 @@ export default function Upload() {
                     <div className="lg:flex  justify-between items-center ">
                       <h1 className="text-xl">Paper Type :</h1>
                       <span className="text-sm text-red-500">
-                        {state.errors.paperType}
+                        {state.errors.paper_type}
                       </span>
                     </div>
                     <select
-                      name="paperType"
+                      name="paper_type"
                       id=""
                       onChange={(event) => setFileType(event.target.value)}
-                      className="w-full bg-amber-700 border p-2 border-black  rounded-md"
+                      className="w-full  border p-2 border-black  rounded-md"
                       disabled={!(Campus && Department && Course)}
                     >
                       <option value="" hidden>
@@ -390,7 +406,7 @@ export default function Upload() {
                       ))}
                     </select>
                   </div>
-                  <p className="text-md font-extralight italic bg-lime-400">
+                  <p className="text-xl font-extralight italic ">
                     Admin Note** Every single paper that will be uploaded within
                     the Web Repository should have a separate backup storage
                     that can be used specially for backup purposes in case that
@@ -405,10 +421,10 @@ export default function Upload() {
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex justify-center items-center bg-fuchsia-950">
+                  <div className="flex justify-center items-center ">
                     <button
                       type="submit"
-                      className="bg-[#071437] px-15 py-3 disabled:opacity-70"
+                      className="bg-[#071437] px-15 py-3 disabled:opacity-70 text-white"
                       disabled={isPending}
                     >
                       {isPending ? "Uploading..." : "Upload"}

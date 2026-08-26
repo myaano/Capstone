@@ -1,24 +1,74 @@
 "use client";
 
-import { useEffect, useState} from "react";
+import { useEffect, useState, useCallback } from "react";
 
 import Header from "../reusable_components/Header";
 import Filter from "../reusable_components/Filter";
 import Footer from "../reusable_components/Footer";
-
+import Pagination from "../reusable_components/Pagination";
 //next import
 import Link from "next/link";
 // next import
 
-
-
-
-
-
-
-
-
 export default function Capstone() {
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  // that filters is now the basis for the useEffect get requests to laravel that fetches data if the user clicks on a checkbox on filter.js and updates the paper in real time
+  const [filters, setFilters] = useState({
+    campus: [],
+    department: [],
+    course: [],
+    year: [],
+  });
+
+  const [papers, setPapers] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(newFilters);
+  }, []);
+
+  //fetch and filter
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchPapers = async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        filters.campus.forEach((v) => params.append("campus", v));
+        filters.department.forEach((v) => params.append("department", v));
+        filters.course.forEach((v) => params.append("course", v));
+        filters.year.forEach((v) => params.append("year", v));
+
+        const response = await fetch(
+          `http://192.168.1.34:8000/api/papers/capstone?${params.toString()}`,
+          {
+            signal: controller.signal,
+          },
+        );
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(`Request failed: ${response.status} - ${errorBody}`);
+        }
+
+        const data = await response.json();
+        setPapers(Array.isArray(data) ? data : (data.data ?? []));
+        setTotalPages(data.last_page ?? 1);
+      } catch (error) {
+        if (error.name !== "AbortError") console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPapers();
+    return () => controller.abort();
+  }, [filters]);
+
+  // pagination useStates
+
   return (
     <>
       <Header></Header>
@@ -32,51 +82,66 @@ export default function Capstone() {
             <div className="lg:w-72 lg:shrink-0 lg:pr-5 flex flex-col lg:border-r lg:border-black">
               <Filter></Filter>
             </div>
-            <div className="bg-blue-500  w-full h-full lg:flex-1 lg:pl-5 py-2 font-urbanist">
-              <div className="bg-green-900 h-full flex flex-col gap-5">
-                {/* use js to generate these divs and the contents for each paper link that leads to the dynamic /thesis page */}
-                <div className="bg-pink-500 min-h-40 flex flex-col justify-between">
-                  <div>
-                    <p className="font-bold text-lg bg-amber-950">
-                      Level of Technology implementation in the classroom as a
-                      predictor of students' achievment in English, Math and
-                      Science
-                    </p>
-                    <p className="italic font-light bg-green-400">
-                      Ronald U. Mendoza, Jurel K. Yap, Gabrielle Ann S. Mendoza,
-                      Leonardo M. Jaminola III, and Erica Celine Yu
-                    </p>
-                  </div>
-                  <div>
-                    <div className="flex justify-between bg-gray-500">
-                      <div className="flex gap-2">
-                        <h1>Department :</h1>
-                        <h1>CICT</h1>
-                      </div>
-                      <h1>Bulan</h1>
-                    </div>
-
-                    <div className="flex justify-between bg-blue-900">
+            <div className="flex flex-col flex-1">
+              {papers.map((paper) => (
+                <div
+                  key={paper.id}
+                  className="bg-blue-500  w-full h-full lg:flex-1 lg:pl-5 py-2 font-urbanist"
+                >
+                  <div className="bg-green-900 h-full flex flex-col gap-5">
+                    {/* use js to generate these divs and the contents for each paper link that leads to the dynamic /thesis page */}
+                    <div className="bg-pink-500 min-h-40 flex flex-col justify-between">
                       <div>
-                        <div className="flex gap-2">
-                          <h1>Program/Course :</h1>
-                          <h1>Bachelor of Science in Computer Science</h1>
-                        </div>
+                        <Link href={`/capstone/${paper.id}`}>
+                          <p className="font-bold text-lg bg-amber-950">
+                            {paper.title}
+                          </p>
+                        </Link>
+                        <p className="italic font-light bg-green-400">
+                          {paper.researcher}
+                        </p>
                       </div>
-                      <div className="flex justify-between">
-                        <div className="flex gap-2">
-                          <h1>Year :</h1>
-                          <h1>2021</h1>
+                      <div>
+                        <div className="flex justify-between bg-gray-500">
+                          <div className="flex gap-2">
+                            <h1>Department :</h1>
+                            <h1> {paper.department}</h1>
+                          </div>
+                          <h1> {paper.campus}</h1>
+                        </div>
+
+                        <div className="flex justify-between bg-blue-900">
+                          <div>
+                            <div className="flex gap-2">
+                              <h1>Program/Course :</h1>
+                              <h1> {paper.course}</h1>
+                            </div>
+                          </div>
+                          <div className="flex justify-between">
+                            <div className="flex gap-2">
+                              <h1>Year :</h1>
+                              <h1> {paper.year}</h1>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
           {/* this div will contain both the divs for filter and the papers for pagination */}
         </div>
+        {totalPages > 1 && (
+          <div className="flex  justify-end items-end text-black my-5 border-t border-black pt-5">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(newPage) => setPage(newPage)}
+            />
+          </div>
+        )}
       </div>
     </>
   );

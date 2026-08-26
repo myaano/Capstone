@@ -71,9 +71,50 @@ export default function Home() {
     /* RESEARCH TIMER VARS */
   }
 
+
+
+
+
+
+
+
+
+
+
+const [Analytics, setAnalytics] = useState(null)
+// fetch paper analytics
+  useEffect(() => {
+    async function loadAnalyticsData() {
+      try {
+        const response = await fetch(
+          "http://192.168.1.34:8000/api/papers/analytics",
+        );
+        if (!response.ok) {
+          throw new Error(`Request failed: ${response.status}`);
+        }
+        const data = await response.json();
+        setAnalytics(data)
+        console.log(data);
+        
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      }
+    }
+    loadAnalyticsData();
+  }, []);
+
+
+
+
+
+
+
+
   //useGsap
 
   useGSAP(() => {
+
+    if (!Analytics) return;
     gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase);
     CustomEase.create("hop", "0.85, 0, 0.15, 1");
     console.log("useGSAP ran, mounting fresh");
@@ -86,7 +127,7 @@ export default function Home() {
 
     // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
     gsap.to(thesisCounterValue.current, {
-      value: 61,
+      value: Analytics.papers_thesis,
       duration: 3,
       ease: "power2.out",
       onUpdate: () => {
@@ -99,7 +140,7 @@ export default function Home() {
     });
     // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
     gsap.to(capstoneCounterValue.current, {
-      value: 120,
+      value: Analytics.papers_capstone,
       duration: 3,
       ease: "power2.out",
       onUpdate: () => {
@@ -112,8 +153,7 @@ export default function Home() {
     });
     // campus counter animations
     gsap.to(bulanCounterValue.current, {
-      value: 181,
-      duration: 3,
+      value: Analytics.papers_by_bulan,
       ease: "power2.out",
       scrollTrigger: {
         trigger: ".bulan",
@@ -129,8 +169,13 @@ export default function Home() {
       },
     });
     // campus counter animations
-  }, []);
+  }, [Analytics]);
   //use Gsap
+
+
+
+
+  TODO: // make the campus containers dynamic according to the campus that are available in the database. fetch those and make a map that generates new campuses and apply animation to it.
 
   return (
     <>
@@ -354,6 +399,9 @@ export default function Home() {
             {/* Research Papers Analytics */}
           </div>
           {/* contents */}
+          <div className="flex justify-center items-center bg-blue-900 py-5 px-5 overflow-x-auto">
+            wdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdw
+          </div>
           <Footer></Footer>
         </div>
         {/* body */}

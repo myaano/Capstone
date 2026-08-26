@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    fetch("http://your-laravel-api/api/user", { credentials: "include" })
+    fetch("", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => setUser(data))
       .catch(() => setUser(null));
