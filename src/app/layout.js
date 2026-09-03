@@ -41,8 +41,8 @@ export const metadata = {
 };
 
 
-import { AuthProvider } from "./context/AuthContext";
 
+import AuthLoader from "./reusable_components/AuthLoader";
 
 export default function RootLayout({ children }) {
   return (
@@ -51,7 +51,8 @@ export default function RootLayout({ children }) {
       className={`${geistSans.variable} ${geistMono.variable} ${BonaNovaFont.variable}  ${BonaNovaSCFont.variable}  ${UrbanistFont.variable} ${CormorantInfantFont.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col ">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthLoader />
+        {children}
       </body>
     </html>
   );

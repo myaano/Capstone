@@ -27,7 +27,9 @@ import { SplitText } from "gsap/SplitText";
 import { CustomEase } from "gsap/CustomEase";
 // gsap
 
-import { useAuth } from "./context/AuthContext.js";
+import { useAuthStore } from "./store/useAuthStore";
+
+import ProfileModal from "./reusable_components/ProfileModal";
 
 export default function Home() {
   //lenis function
@@ -55,47 +57,31 @@ export default function Home() {
   const thesisTimer = useRef(null);
   const capstoneTimer = useRef(null);
   const bulanTimer = useRef(null);
-  const castillaTimer = useRef(null);
-  const magallanesTimer = useRef(null);
-  const sorsogonTimer = useRef(null);
+
   //change the counterValue to the current value of the current available papers in the datbase
   const thesisCounterValue = useRef({ value: 0 });
   const capstoneCounterValue = useRef({ value: 0 });
   const bulanCounterValue = useRef({ value: 0 });
-  const castillaCounterValue = useRef({ value: 0 });
-  const magallanesCounterValue = useRef({ value: 0 });
-  const sorsogonCounterValue = useRef({ value: 0 });
   //change the thesisCounterValue to the current value of the current available papers in the datbase
   //counter animation for both types of research papers and for the total amount of papers on each campuses
   {
     /* RESEARCH TIMER VARS */
   }
 
-
-
-
-
-
-
-
-
-
-
-const [Analytics, setAnalytics] = useState(null)
-// fetch paper analytics
+  const [Analytics, setAnalytics] = useState(null);
+  // fetch paper analytics
   useEffect(() => {
     async function loadAnalyticsData() {
       try {
         const response = await fetch(
-          "http://192.168.1.34:8000/api/papers/analytics",
+          "https://application-production-cfb3.up.railway.app/api/papers/analytics",
         );
         if (!response.ok) {
           throw new Error(`Request failed: ${response.status}`);
         }
         const data = await response.json();
-        setAnalytics(data)
+        setAnalytics(data);
         console.log(data);
-        
       } catch (error) {
         console.error("Failed to load data:", error);
       }
@@ -103,27 +89,16 @@ const [Analytics, setAnalytics] = useState(null)
     loadAnalyticsData();
   }, []);
 
-
-
-
-
-
-
-
   //useGsap
 
   useGSAP(() => {
-
     if (!Analytics) return;
     gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase);
     CustomEase.create("hop", "0.85, 0, 0.15, 1");
     console.log("useGSAP ran, mounting fresh");
-    //timeline
-    // const timerTimeline = gsap.timeline({ delay: "0.5" });
-    //timeline
 
-    // try activating css hover through javascript
-    // apply it to the counter animation that it only runs when hovered
+
+
 
     // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
     gsap.to(thesisCounterValue.current, {
@@ -153,7 +128,7 @@ const [Analytics, setAnalytics] = useState(null)
     });
     // campus counter animations
     gsap.to(bulanCounterValue.current, {
-      value: Analytics.papers_by_bulan,
+      value: Analytics.total_papers,
       ease: "power2.out",
       scrollTrigger: {
         trigger: ".bulan",
@@ -173,15 +148,18 @@ const [Analytics, setAnalytics] = useState(null)
   //use Gsap
 
 
-
-
-  TODO: // make the campus containers dynamic according to the campus that are available in the database. fetch those and make a map that generates new campuses and apply animation to it.
+  //useAuthStore checks user and loading
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
 
   return (
     <>
       <ReactLenis
         root
-        options={{ autoRaf: false, duration: 3 }}
+        options={{
+          autoRaf: false,
+          duration: 3,
+        }}
         smoothWheel={true}
         ref={lenisRef}
       >
@@ -215,23 +193,26 @@ const [Analytics, setAnalytics] = useState(null)
                     </svg>
                     Search
                   </button>
-                  <div className="absolute inset-0 z-20   bg-[#C1FF30] flex justify-center items-center gap-2  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-[#C1FF30] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-white ">
+                  <div className="absolute inset-0 z-20   bg-white flex justify-center items-center gap-2  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437] ">
                     Search
                   </div>
                 </div>
               </div>
               <div className="pl-3">
-                <Link
-                  href="../login"
-                  className="focus:outline-none focus:ring-0"
-                >
-                  <div className="group relative cursor-pointer flex justify-center items-center lg:px-4  ">
-                    <button className="cursor-pointer ">Login</button>
-                    <div className="absolute  z-20 inset-0  bg-[#C1FF30] flex justify-center items-center  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-[#C1FF30] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-white ">
-                      Login
+                {isLoading ? (
+                  <div className="lg:px-4">Loading..</div>
+                ) : user ? (
+                  <ProfileModal />
+                ) : (
+                  <Link href="/login">
+                    <div className="group relative cursor-pointer flex justify-center items-center lg:px-4">
+                      <button className="cursor-pointer">Login</button>
+                      <div className="absolute z-20 inset-0 bg-white flex justify-center items-center [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437]">
+                        Login
+                      </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                )}
               </div>
               {/*button containers */}
             </div>
@@ -399,9 +380,7 @@ const [Analytics, setAnalytics] = useState(null)
             {/* Research Papers Analytics */}
           </div>
           {/* contents */}
-          <div className="flex justify-center items-center bg-blue-900 py-5 px-5 overflow-x-auto">
-            wdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdwdwwdwdwdwdwdw
-          </div>
+
           <Footer></Footer>
         </div>
         {/* body */}

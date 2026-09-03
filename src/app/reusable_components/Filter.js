@@ -122,7 +122,7 @@ export default function Filter({ onFilterChange }) {
 
   return (
     <div className="bg-white flex-1 gap-4 flex flex-col font-urbanist">
-      <div className="flex items-center justify-between  py-2 ">
+      <div className="flex items-center justify-between">
         <span className="text-xl lg:text-3xl text-black">Filter :</span>
         <div className="flex items-center gap-2">
           <button
