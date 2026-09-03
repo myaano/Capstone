@@ -1,6 +1,19 @@
 "use server";
 
 export async function submitUpload(prevState, formData) {
+  //token
+  const token = formData.get("token")?.toString().trim() || "";
+
+  if (!token) {
+    return {
+      success: false,
+      message: "You must be logged in as an admin to upload.",
+      errors: {},
+    };
+  }
+
+
+
   //retrieve data//retrieve data//retrieve data//retrieve data
   const file = formData.get("file");
   const abstract = formData.get("abstract/summary")?.toString().trim() || "";
@@ -10,7 +23,8 @@ export async function submitUpload(prevState, formData) {
   const department = formData.get("department")?.toString().trim() || "";
   const course = formData.get("course")?.toString().trim() || "";
   const year = formData.get("year")?.toString().trim() || "";
-  const paper_type = formData.get("paper_type")?.toLowerCase().toString().trim() || "";
+  const paper_type =
+    formData.get("paper_type")?.toLowerCase().toString().trim() || "";
   //retrieve data//retrieve data//retrieve data//retrieve data
 
   //error validations //error validations //error validations //error validations //error validations
@@ -74,6 +88,9 @@ export async function submitUpload(prevState, formData) {
   try {
     const response = await fetch(uploadUrl, {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
       body: uploadData,
     });
 
@@ -94,6 +111,7 @@ export async function submitUpload(prevState, formData) {
       data: result,
       errors: {},
     };
+
   } catch (error) {
     return {
       success: false,
@@ -102,3 +120,4 @@ export async function submitUpload(prevState, formData) {
     };
   }
 }
+

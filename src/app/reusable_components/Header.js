@@ -1,11 +1,17 @@
+"use client";
 //next imports
 import Image from "next/image";
 import Link from "next/link";
 //next
 
-import { useAuth } from "../context/AuthContext";
+import { useAuthStore } from "../store/useAuthStore";
+
+import ProfileModal from "./ProfileModal";
 
 export default function Header() {
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+
   return (
     <div className=" bg-white flex justify-between">
       <div className="bg-[#800000] w-[55%] flex pl-10 py-4 items-center gap-4 font-bona_nova_sc">
@@ -45,7 +51,7 @@ export default function Header() {
                 </svg>
                 Search
               </button>
-              <div className="absolute inset-0 z-20   bg-[#C1FF30] flex justify-center items-center gap-2  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-[#C1FF30] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-black ">
+              <div className="absolute inset-0 z-20   bg-white flex justify-center items-center gap-2  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437] ">
                 Search
               </div>
             </div>
@@ -53,15 +59,20 @@ export default function Header() {
           </div>
 
           <div className="pl-3 ">
-            <Link href="/login">
-              <div className="group relative cursor-pointer flex justify-center items-center  lg:px-4  ">
-                <button className=" cursor-pointer ">Login</button>
-
-                <div className="absolute  z-20 inset-0  bg-[#C1FF30] flex justify-center items-center  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-[#C1FF30] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-black ">
-                  Login
+            {isLoading ? (
+              <div className="lg:px-4">Loading..</div>
+            ) : user ? (
+              <ProfileModal />
+            ) : (
+              <Link href="/login">
+                <div className="group relative cursor-pointer flex justify-center items-center lg:px-4">
+                  <button className="cursor-pointer">Login</button>
+                  <div className="absolute z-20 inset-0 bg-white flex justify-center items-center [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437]">
+                    Login
+                  </div>
                 </div>
-              </div>
-            </Link>
+              </Link>
+            )}
           </div>
         </div>
       </div>

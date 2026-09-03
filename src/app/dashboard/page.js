@@ -1,51 +1,157 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "../reusable_components/Header";
+import { useAuthStore } from "../store/useAuthStore";
+import { fetchPapers, updatePaper, deletePaper } from "./actions";
+import { useGSAP } from "@gsap/react";
+import { gsap } from "gsap";
+import { SplitText } from "gsap/SplitText";
 
 export default function Dashboard() {
-  // TODO: replace with your real papers fetch (useEffect + fetch to Laravel)
-  const [papers, setPapers] = useState([
-    {
-      id: 1,
-      title: "Filter UX in web apps",
-      file: "filter-ux.pdf",
-      researchers: "J. Cruz, M. Santos",
-      abstract: "A study on how filter placement affects usability...",
-      campus: "Main",
-      department: "CS",
-      course: "BSIT",
-      year: 2025,
-      fileType: "PDF",
-    },
-    // ...more papers from your API
-  ]);
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === "admin";
 
-  // TODO: replace with your real auth check, e.g. from AuthContext -> user?.role === "admin"
-  const isAdmin = true;
+  const [papers, setPapers] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [activePaper, setActivePaper] = useState(null); // controls the overlay
 
-  function handleSave(updatedPaper) {
-    // TODO: PUT/PATCH the edited fields to Laravel.
-    // if updatedPaper.newFile exists, the admin picked a replacement file - send as
-    // FormData instead of JSON, e.g.
-    //   const body = new FormData();
-    //   body.append("file", updatedPaper.newFile);
-    //   body.append("title", updatedPaper.title); // ...etc for other fields
-    //   await fetch(`${API_URL}/papers/${updatedPaper.id}`, { method: "POST", body }); // Laravel: use POST + _method=PUT for multipart
-    // if no newFile, a plain JSON PUT/PATCH is fine.
-    setPapers((prev) =>
-      prev.map((p) => (p.id === updatedPaper.id ? updatedPaper : p)),
-    );
-    setActivePaper(null);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDashboard() {
+      setLoading(true);
+      setError(null);
+      try {
+        const papersData = await fetchPapers();
+        if (!cancelled) {
+          setPapers(papersData);
+        }
+      } catch (err) {
+        if (!cancelled) setError(err.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadDashboard();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const thesisTimer = useRef(null);
+  const capstoneTimer = useRef(null);
+  const totalTimer = useRef(null);
+
+  const thesisCounterValue = useRef({ value: 0 });
+  const capstoneCounterValue = useRef({ value: 0 });
+  const totalCounterValue = useRef({ value: 0 });
+
+  const [Analytics, setAnalytics] = useState(null);
+  //analytics feetch
+  useEffect(() => {
+    async function loadAnalyticsData() {
+      try {
+        const response = await fetch(
+          "https://application-production-cfb3.up.railway.app/api/papers/analytics",
+        );
+        if (!response.ok) {
+          throw new Error(`Request failed: ${response.status}`);
+        }
+        const data = await response.json();
+        setAnalytics(data);
+        console.log(setAnalytics);
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      }
+    }
+    loadAnalyticsData();
+  }, []);
+
+  // analytics animation
+  useGSAP(() => {
+    if (!Analytics) return;
+    gsap.registerPlugin(SplitText);
+
+    console.log("useGSAP ran, mounting fresh");
+
+    // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
+    gsap.to(thesisCounterValue.current, {
+      value: Analytics.papers_thesis,
+      duration: 3,
+      ease: "power2.out",
+      onUpdate: () => {
+        if (thesisTimer.current) {
+          thesisTimer.current.textContent = Math.floor(
+            thesisCounterValue.current.value,
+          );
+        }
+      },
+    });
+    // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
+    gsap.to(capstoneCounterValue.current, {
+      value: Analytics.papers_capstone,
+      duration: 3,
+      ease: "power2.out",
+      onUpdate: () => {
+        if (capstoneTimer.current) {
+          capstoneTimer.current.textContent = Math.floor(
+            capstoneCounterValue.current.value,
+          );
+        }
+      },
+    });
+    // campus counter animations
+    gsap.to(totalCounterValue.current, {
+      value: Analytics.total_papers,
+      ease: "power2.out",
+
+      onUpdate: () => {
+        if (totalTimer.current) {
+          totalTimer.current.textContent = Math.floor(
+            totalCounterValue.current.value,
+          );
+        }
+      },
+    });
+  }, [Analytics]);
+
+  async function handleSave(updatedPaper) {
+    const body = new FormData();
+    body.append("title", updatedPaper.title);
+    body.append("researchers", updatedPaper.researchers);
+    body.append("abstract", updatedPaper.abstract);
+    body.append("campus", updatedPaper.campus);
+    body.append("department", updatedPaper.department);
+    body.append("course", updatedPaper.course);
+    body.append("year", updatedPaper.year);
+    if (updatedPaper.newFile) {
+      body.append("file", updatedPaper.newFile);
+    }
+
+    try {
+      const saved = await updatePaper(updatedPaper.id, body);
+      setPapers((prev) =>
+        prev.map((p) => (p.id === updatedPaper.id ? saved : p)),
+      );
+      setActivePaper(null);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
-  function handleDelete(paper) {
-    // TODO: DELETE to Laravel, e.g.
-    // await fetch(`${API_URL}/papers/${paper.id}`, { method: "DELETE", headers: {...} })
-    setPapers((prev) => prev.filter((p) => p.id !== paper.id));
-    setActivePaper(null);
+  async function handleDelete(paper) {
+    try {
+      await deletePaper(paper.id);
+      setPapers((prev) => prev.filter((p) => p.id !== paper.id));
+      setActivePaper(null);
+    } catch (err) {
+      setError(err.message);
+    }
   }
 
   return (
@@ -55,54 +161,55 @@ export default function Dashboard() {
         <div className="flex flex-col">
           <h1 className="text-6xl bg-blue-200">Dashboard</h1>
 
+          {error && (
+            <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+              {error}
+            </p>
+          )}
+
           <div className="flex flex-col gap-16">
-            {/* stat cards - unchanged, still hardcoded, hook up to your API totals when ready */}
+            {/* stat cards */}
             <div className="flex justify-between mt-10 px-10 bg-white">
-              <div className="bg-green-200 h-60 w-60 px-5 py-10 flex flex-col justify-between rounded-2xl shadow-2xl">
-                <div>
-                  <h1 className="font-light leading-none">Total</h1>
-                  <h1 className="text-3xl italic leading-none">Thesis</h1>
-                </div>
-                <h1 className="bg-blue-900 flex justify-end items-end text-7xl">
-                  61
-                </h1>
-              </div>
-              <div className="bg-green-300 h-60 w-60 px-5 py-10 flex flex-col justify-between rounded-2xl shadow-2xl">
-                <div>
-                  <h1 className="font-light leading-none">Total</h1>
-                  <h1 className="text-3xl italic leading-none">Capstone</h1>
-                </div>
-                <h1 className="bg-blue-900 flex justify-end items-end text-7xl">
-                  181
-                </h1>
-              </div>
-              <div className="bg-green-500 h-60 w-60 px-5 py-10 flex flex-col justify-between rounded-2xl shadow-2xl">
-                <div>
-                  <h1 className="font-light leading-none">Total</h1>
-                  <h1 className="text-3xl italic leading-none">Papers</h1>
-                </div>
-                <h1 className="bg-blue-900 flex justify-end items-end text-7xl">
-                  242
-                </h1>
-              </div>
+              <StatCard
+                label="Thesis"
+                color="bg-green-200"
+                className=""
+                ref={thesisTimer}
+              />
+              <StatCard
+                label="Capstone"
+                color="bg-green-300"
+                className=""
+                ref={capstoneTimer}
+              />
+              <StatCard
+                label="Papers"
+                color="bg-green-500"
+                className=""
+                ref={totalTimer}
+              />
             </div>
 
-            {/* was the grid-cols-9 table - now a stacked card list, mobile-friendly */}
             <div className="flex flex-col gap-4">
-              {papers.map((paper) => (
-                <PaperCard
-                  key={paper.id}
-                  paper={paper}
-                  isAdmin={isAdmin}
-                  onView={() => setActivePaper(paper)}
-                />
-              ))}
+              {loading ? (
+                <p className="text-sm text-gray-500">Loading papers…</p>
+              ) : papers.length === 0 ? (
+                <p className="text-sm text-gray-500">No papers found.</p>
+              ) : (
+                papers.map((paper) => (
+                  <PaperCard
+                    key={paper.id}
+                    paper={paper}
+                    isAdmin={isAdmin}
+                    onView={() => setActivePaper(paper)}
+                  />
+                ))
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* the overlay is where edit AND delete both live - opened by clicking the card */}
       {activePaper && (
         <PaperOverlay
           paper={activePaper}
@@ -115,8 +222,23 @@ export default function Dashboard() {
   );
 }
 
+function StatCard({ label, value, color, className, ref }) {
+  return (
+    <div
+      className={`${color} h-60 w-60 px-5 py-10 flex flex-col justify-between rounded-2xl shadow-2xl`}
+    >
+      <div>
+        <h1 className="font-light leading-none">Total</h1>
+        <h1 className="text-3xl italic leading-none">{label}</h1>
+      </div>
+      <h1 ref={ref} className="bg-blue-900 flex justify-end items-end text-7xl">
+        0
+      </h1>
+    </div>
+  );
+}
+
 // one row = one card. the whole card is clickable and opens the edit/delete overlay.
-// "Click card to edit" is a plain label sitting where the old buttons were - not clickable itself.
 function PaperCard({ paper, isAdmin, onView }) {
   return (
     <div
@@ -155,23 +277,29 @@ function Field({ label, value }) {
 }
 
 // the overlay doubles as the edit form and the delete trigger.
-// fields are editable inputs; Save submits the edit, Delete asks for confirmation first.
 function PaperOverlay({ paper, onClose, onSave, onDelete }) {
   const [form, setForm] = useState({ ...paper });
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  async function handleSubmit() {
+    setSaving(true);
+    await onSave(form);
+    setSaving(false);
+  }
+
   return (
     <div
       className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center"
-      onClick={onClose} // click backdrop to close
+      onClick={onClose}
     >
       <div
         className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-6 max-h-[85vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()} // don't close when clicking inside the card
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-4">
           <h2 className="text-lg font-medium">Edit paper</h2>
@@ -227,7 +355,6 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
 
               <label className="block">
                 <span className="text-[11px] text-gray-400">File</span>
-                {/* shows the currently submitted file, or the newly picked one if the admin replaced it */}
                 <p className="text-sm text-blue-600 mb-1">
                   {form.newFile ? form.newFile.name : form.file}
                 </p>
@@ -242,10 +369,11 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
 
             <div className="flex gap-2 mt-6 border-t border-gray-100 pt-4">
               <button
-                onClick={() => onSave(form)}
-                className="flex-1 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                onClick={handleSubmit}
+                disabled={saving}
+                className="flex-1 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
               >
-                Submit edit
+                {saving ? "Saving…" : "Submit edit"}
               </button>
               <button
                 onClick={() => setConfirmingDelete(true)}
@@ -256,7 +384,6 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
             </div>
           </>
         ) : (
-          // inline confirmation step - replaces the form until the admin decides
           <div className="pt-2">
             <p className="text-base font-medium">Confirm delete?</p>
             <p className="text-sm text-gray-500 mt-1">This cannot be undone.</p>

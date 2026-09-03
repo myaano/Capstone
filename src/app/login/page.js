@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Rizal from "../../../public/Rizal.jpg";
+import { useAuthStore } from "../store/useAuthStore";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,20 +12,24 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const setUser = useAuthStore((state) => state.setUser); 
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
 
     try {
-      const res = await fetch("http://192.168.1.34:8000/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
+      const res = await fetch(
+        "https://application-production-cfb3.up.railway.app/api/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ username, password }),
         },
-        body: JSON.stringify({ username, password }),
-      });
+      );
 
       if (!res.ok) {
         setError("Invalid credentials");
@@ -33,8 +38,8 @@ export default function Login() {
 
       const data = await res.json();
       localStorage.setItem("token", data.token);
-
-      router.push("/page.js"); // or wherever you want to land after login
+      setUser(data.user);
+      router.push("/"); // or wherever you want to land after login
     } catch (err) {
       setError("Something went wrong");
     }
@@ -63,7 +68,7 @@ export default function Login() {
           </div>
         </div>
         <div className="bg-white rounded-2xl lg:rounded-r-2xl lg:rounded-l-none flex justify-center items-center flex-1 px-2 lg:px-10">
-          <div className=" h-[50%] lg:h-[60%] w-[90%] flex flex-col">
+          <div className=" h-[50%] lg:h-[60%] w-[90%] flex flex-col ">
             <div className="">
               <div className="bg-white border border-[#363633]  rounded-[10px] w-10 h-10 inline-flex justify-center items-center">
                 <svg

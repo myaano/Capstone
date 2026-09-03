@@ -10,13 +10,16 @@ export default async function PaperDetails({ params }) {
 
   try {
     //sample url only, put the real url of the api
-    const response = await fetch(`http://192.168.1.34:8000/api/papers/thesis/${paperID}`, {
-      cache: "no-store",
-    });
+    const response = await fetch(
+      `https://application-production-cfb3.up.railway.app/api/papers/thesis/${paperID}`,
+      {
+        cache: "no-store",
+      },
+    );
 
     if (!response.ok) {
       console.error(`Request failed: ${response.status}`);
-    return <div>Paper not found.</div>;
+    return <div className="text-black">Paper not found.</div>;
     }
 
     data = await response.json();

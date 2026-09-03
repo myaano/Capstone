@@ -4,15 +4,19 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <div className=" h-screen lg:h-170  bg-[#800000] relative overflow-hidden font-urbanist ">
+    <div className=" h-screen lg:h-170 bg-[#800000] relative overflow-hidden font-urbanist ">
       {/* background is the first div, the details is the 2nd one */}
-      <div className="absolute z-20 h-full w-full  px-5 lg:px-10 pt-10 flex flex-col justify-between">
-        <div className=" text-white">
-          <div className="md:flex gap-5">
-            <h1 className="text-7xl md:text-8xl">Sorsogon</h1>
-            <h1 className="text-7xl md:text-8xl">State</h1>
+      <div className="absolute z-20 h-full w-full px-5 lg:px-10 pt-10 flex flex-col justify-between">
+        <div className="text-white md:flex justify-start items-center gap-5">
+          <div className="w-30 h-30 lg:w-40 lg:h-40 rounded-full bg-pink-500">
           </div>
-          <h1 className="text-7xl md:text-8xl">University</h1>
+          <div>
+            <div className="md:flex gap-5">
+              <h1 className="text-7xl md:text-8xl">Sorsogon</h1>
+              <h1 className="text-7xl md:text-8xl">State</h1>
+            </div>
+            <h1 className="text-7xl md:text-8xl">University</h1>
+          </div>
         </div>
 
         {/* use grid here */}
@@ -63,23 +67,6 @@ export default function Footer() {
           <h1>
             Magsaysay Street, (Pob.), Sorsogon City, Sorsogon, Philippines, 4700
           </h1>
-        </div>
-      </div>
-
-      <div className="h-full relative flex just-center items-center ">
-        <div className="absolute right-[-50%] lg:right-[-20%] z-10 hidden lg:block">
-          <div className="bg-blue-400 rounded-full h-120  w-120">
-            <svg
-              width="350"
-              height="350"
-              viewBox="0 0 350 350"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-full h-full"
-            >
-              <circle cx="175" cy="175" r="175" fill="#D9D9D9" />
-            </svg>
-          </div>
         </div>
       </div>
     </div>

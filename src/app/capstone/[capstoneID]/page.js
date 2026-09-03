@@ -9,7 +9,7 @@ export default async function CapstoneID({ params }) {
     try {
       //sample url only, put the real url of the api
       const response = await fetch(
-        `http://192.168.1.34:8000/api/papers/capstone/${paperID}`,
+        `https://application-production-cfb3.up.railway.app/api/papers/capstone/${paperID}`,
         {
           cache: "no-store",
         },

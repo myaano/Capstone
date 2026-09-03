@@ -4,9 +4,33 @@ import Header from "../reusable_components/Header";
 import { submitUpload } from "./actions";
 
 import { useRef, useState, useEffect, useActionState } from "react";
+import { useAuthStore } from "../store/useAuthStore";
+import { useRouter } from "next/navigation";
 
 export default function Upload() {
-  // add cascading dropdown options here
+  
+
+  //redirect
+  const router = useRouter();
+
+  //checks user
+  const user = useAuthStore((state) => state.user);
+  const isLoading = useAuthStore((state) => state.isLoading);
+
+
+  useEffect(() => {
+    if (!user || user.role !== "admin") {
+      console.log("Unauthorized Access Detected")
+      router.push("/");
+    
+  }
+}, [isLoading, user])
+
+
+
+
+
+
 
   // file upload logics
   const uploadRef = useRef(null);
@@ -29,6 +53,9 @@ export default function Upload() {
   //drag n drop NOTE: false is used since this is a toggle not an api related thing
   const [isDragOver, setIsDragOver] = useState(false);
 
+  //check file size
+  const max_size = 10 * 1024 * 1024;
+
   const validateFile = (selectedFile) => {
     setError("");
 
@@ -40,6 +67,11 @@ export default function Upload() {
 
     if (!isPdfMimeType || !isPdfExtension) {
       setError("PDF file type required.");
+      setFile(null);
+      return false;
+    }
+    if (selectedFile.size > max_size) {
+      setError("File is too large. Max size is 10MB.");
       setFile(null);
       return false;
     }
@@ -101,6 +133,13 @@ export default function Upload() {
     (_, i) => currentYear - i,
   );
 
+
+  const Category = [
+    "Business",
+    "Politics & Society",
+    "Technology"
+  ];
+
   const [FileType, setFileType] = useState("");
 
   const fileTypes = ["Capstone", "Thesis"];
@@ -135,308 +174,329 @@ export default function Upload() {
     } else {
       setCourseOptions([]);
       setCourse("");
-
     }
   }, [Campus, Department]);
   // cascading dropdown logic
 
   //dropdown options
 
+  // add reset into the input file
+  useEffect(() => {
+    if (state.success) {
+      setFile(null);
+      if (uploadRef.current) {
+        uploadRef.current.value = "";
+      }
+    }
+  }, [state.success]);
 
+//token
+const [token, setToken] = useState("");
 
-
-
-  TODO: // add reset into the input file
-
-  
-
-
-
-
-
-
-  
+useEffect(() => {
+  setToken(localStorage.getItem("token") || "");
+}, []);
 
   return (
     <div className="bg-white h-screen">
-      <Header></Header>
-      <div className="bg-white px-20 py-12 min-h-screen font-urbanist text-black">
-        <div className="h-full flex flex-col rounded-b-xl shadow-2xl border-black">
-          <div className="bg-[#800000] rounded-t-2xl">
-            <p className=" text-5xl py-5 px-10 text-white">Upload</p>
-          </div>
-
-          {/* FORM LOGICS HERE */}
-          <form
-            action={formAction}
-            className=" rounded-b-xl"
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <div className="lg:flex h-180">
-              <div className=" w-full py-4 px-10 flex flex-col  text-black">
-                <div className=" h-full flex flex-col justify-between">
-                  <div className="bg-white w-full p-2">
-                    <div className="text-xl flex flex-col gap-2">
-                      <div className="lg:flex justify-between items-center">
-                        <p>File Upload :</p>
-                        {/* {error && <p className="text-red-500">{error}</p>} */}
-
-                        <span className="text-sm text-red-500">
-                          {state.errors.file}
-                        </span>
-                      </div>
-                    </div>
-                    {/* FILE DROP CONTAINER */}
-                    <div className="border-2 border-dashed divide-dashed border-[#686565] h-40">
-                      <div
-                        className={`bg-white  flex flex-col justify-center h-full items-center gap-2 cursor-pointer ${isDragOver ? "opacity-50" : "opacity-100"}`}
-                        onClick={() => uploadRef.current.click()}
-                        onDragOver={handleDragOver}
-                        onDrop={handleDrop}
-                        onDragLeave={() => setIsDragOver(false)}
-                      >
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="application/pdf"
-                          ref={uploadRef}
-                          name="file"
-                          onChange={handleChange}
-                        />
-                        <svg
-                          width="22"
-                          height="22"
-                          viewBox="0 0 22 22"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M11 0.999794L11 13.6445M11 0.999794C10.1597 0.999794 8.58984 3.52154 8 4.16098M11 0.999794C11.8403 0.999794 13.4102 3.52154 14 4.16098"
-                            stroke="#686565"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M21 16.3193C21 20.1418 20.3525 20.9395 17.25 20.9395H4.75C1.6475 20.9395 1 20.1418 1 16.3193"
-                            stroke="#686565"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-
-                        <p className="text-[#686565]">
-                          {file ? file.name : "Drop Files Here"}
-                        </p>
-                      </div>
-                    </div>
-                    {/* FILE DROP CONTAINER */}
-                  </div>
-                  <div className=" w-full px-2 ">
-                    <div className="lg:flex  justify-between items-center">
-                      <p className="text-xl flex gap-2">Abstract/Summary :</p>
-                      <span className="text-sm text-red-500">
-                        {state.errors.abstract}
-                      </span>
-                    </div>
-                    <div className=" w-full h-50">
-                      <textarea
-                        className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
-                        placeholder="Abstract and Summary here ..."
-                        name="abstract/summary"
-                      />
-                    </div>
-                  </div>
-                  <div className=" w-full px-2 ">
-                    <div className="lg:flex justify-between items-center">
-                      <p className="text-xl flex gap-2">Title :</p>
-                      <span className="text-sm text-red-500">
-                        {state.errors.title}
-                      </span>
-                    </div>
-                    <div className="w-full">
-                      <input
-                        placeholder="Title ..."
-                        type="text"
-                        className="w-full h-full bg-white text-black border border-black rounded-md p-2"
-                        name="title"
-                      />
-                    </div>
-                  </div>
-                  <div className=" w-full px-2 ">
-                    <div className="lg:flex justify-between items-center">
-                      <p className="text-xl flex gap-2">Researchers :</p>
-                      <span className="text-sm text-red-500">
-                        {state.errors.researchers}
-                      </span>
-                    </div>
-                    <div className=" w-full h-30">
-                      <textarea
-                        placeholder="Name 1, Name 2, Name 3, ..."
-                        className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
-                        name="researchers"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className=" px-10 py-4 w-full  flex flex-col justify-center items-center ">
-                <div className=" h-full  flex flex-col justify-between">
-                  <div>
-                    <div className="lg:flex  justify-between items-center ">
-                      <h1 className="text-xl">Campus :</h1>
-                      <span className="text-sm text-red-500">
-                        {state.errors.campus}
-                      </span>
-                    </div>
-                    <select
-                      name="campus"
-                      id=""
-                      value={Campus}
-                      onChange={(event) => setCampus(event.target.value)}
-                      className="w-full  border border-black p-2 rounded-md "
-                    >
-                      <option value="" hidden>
-                        Campus
-                      </option>
-                      {Object.keys(campusData).map((selectedCampus) => (
-                        <option key={selectedCampus} value={selectedCampus} className="">
-                          {selectedCampus}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="lg:flex  justify-between items-center ">
-                      <h1 className="text-xl">Department :</h1>
-                      <span className="text-sm text-red-500">
-                        {state.errors.department}
-                      </span>
-                    </div>
-                    <select
-                      name="department"
-                      id=""
-                      onChange={(event) => setDepartment(event.target.value)}
-                      className="w-full  border p-2 border-black  rounded-md"
-                      disabled={!Campus}
-                    >
-                      <option value="" hidden>
-                        Department
-                      </option>
-                      {DepartmentOptions.map((selectedDepartment) => (
-                        <option
-                          key={selectedDepartment}
-                          value={selectedDepartment}
-                        >
-                          {selectedDepartment}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="lg:flex  justify-between items-center ">
-                      <h1 className="text-xl">Course :</h1>
-                      <span className="text-sm text-red-500">
-                        {state.errors.course}
-                      </span>
-                    </div>
-                    <select
-                      name="course"
-                      id=""
-                      onChange={(event) => setCourse(event.target.value)}
-                      className="w-full  border p-2 border-black  rounded-md"
-                      disabled={!Department}
-                    >
-                      <option value="" hidden>
-                        Course
-                      </option>
-                      {CourseOptions.map((selectedCourse) => (
-                        <option key={selectedCourse} value={selectedCourse}>
-                          {selectedCourse}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="lg:flex  justify-between items-center ">
-                      <h1 className="text-xl">Year :</h1>
-                      <span className="text-sm text-red-500">
-                        {state.errors.year}
-                      </span>
-                    </div>
-                    <select
-                      name="year"
-                      id=""
-                      className="w-full  border p-2 border-black  rounded-md"
-                    >
-                      <option value="" hidden>
-                        Year
-                      </option>
-                      {years.map((selectedYear) => (
-                        <option key={selectedYear} value={selectedYear}>
-                          {selectedYear}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <div className="lg:flex  justify-between items-center ">
-                      <h1 className="text-xl">Paper Type :</h1>
-                      <span className="text-sm text-red-500">
-                        {state.errors.paper_type}
-                      </span>
-                    </div>
-                    <select
-                      name="paper_type"
-                      id=""
-                      onChange={(event) => setFileType(event.target.value)}
-                      className="w-full  border p-2 border-black  rounded-md"
-                      disabled={!(Campus && Department && Course)}
-                    >
-                      <option value="" hidden>
-                        Paper Type
-                      </option>
-                      {fileTypes.map((selectedFType) => (
-                        <option key={selectedFType} value={selectedFType}>
-                          {selectedFType}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <p className="text-xl font-extralight italic ">
-                    Admin Note** Every single paper that will be uploaded within
-                    the Web Repository should have a separate backup storage
-                    that can be used specially for backup purposes in case that
-                    the website is compromised.
-                  </p>
-                  <div className="flex justify-center items-center">
-                    {state.message ? (
-                      <p
-                        className={`text-sm ${state.success ? "text-green-600" : "text-red-500"}`}
-                      >
-                        {state.message}
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="flex justify-center items-center ">
-                    <button
-                      type="submit"
-                      className="bg-[#071437] px-15 py-3 disabled:opacity-70 text-white"
-                      disabled={isPending}
-                    >
-                      {isPending ? "Uploading..." : "Upload"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </form>
-          {/* FORM LOGICS HERE */}
+      {isLoading || !user || user.role !== "admin" ? (
+        <div className="flex min-h-screen items-center justify-center font-urbanist">
+          <h1>Unauthorized Access Detected</h1>
         </div>
-      </div>
+      ) : (
+        <div>
+          <Header></Header>
+          <div className="bg-white px-20 py-12 min-h-screen font-urbanist text-black">
+            <div className="h-full flex flex-col rounded-b-xl shadow-2xl border-black">
+              <div className="bg-[#800000] rounded-t-2xl">
+                <p className=" text-5xl py-5 px-10 text-white">Upload</p>
+              </div>
+
+              {/* FORM LOGICS HERE */}
+              <form
+                action={formAction}
+                className=" rounded-b-xl"
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                type="hidden"
+              >
+                <div className="lg:flex h-180">
+                  <div className=" w-full py-4 px-10 flex flex-col  text-black">
+                    <div className=" h-full flex flex-col justify-between">
+                      <div className="bg-white w-full p-2">
+                        <div className="text-xl flex flex-col gap-2">
+                          <div className="lg:flex justify-between items-center">
+                            <p>File Upload :</p>
+
+                            <span className="text-sm text-red-500">
+                              {state.errors.file}
+                              {error && (
+                                <p className="text-red-500 text-sm">{error}</p>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        {/* FILE DROP CONTAINER */}
+                        <div className="border-2 border-dashed divide-dashed border-[#686565] h-40">
+                          <div
+                            className={`bg-white  flex flex-col justify-center h-full items-center gap-2 cursor-pointer ${isDragOver ? "opacity-50" : "opacity-100"}`}
+                            onClick={() => uploadRef.current.click()}
+                            onDragOver={handleDragOver}
+                            onDrop={handleDrop}
+                            onDragLeave={() => setIsDragOver(false)}
+                          >
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="application/pdf"
+                              ref={uploadRef}
+                              name="file"
+                              onChange={handleChange}
+                            />
+                            <input type="hidden" name="token" value={token} />
+                            <svg
+                              width="22"
+                              height="22"
+                              viewBox="0 0 22 22"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M11 0.999794L11 13.6445M11 0.999794C10.1597 0.999794 8.58984 3.52154 8 4.16098M11 0.999794C11.8403 0.999794 13.4102 3.52154 14 4.16098"
+                                stroke="#686565"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                              <path
+                                d="M21 16.3193C21 20.1418 20.3525 20.9395 17.25 20.9395H4.75C1.6475 20.9395 1 20.1418 1 16.3193"
+                                stroke="#686565"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+
+                            <p className="text-[#686565]">
+                              {file ? file.name : "Drop Files Here"}
+                            </p>
+                          </div>
+                        </div>
+                        {/* FILE DROP CONTAINER */}
+                      </div>
+                      <div className=" w-full px-2 ">
+                        <div className="lg:flex  justify-between items-center">
+                          <p className="text-xl flex gap-2">
+                            Abstract/Summary :
+                          </p>
+                          <span className="text-sm text-red-500">
+                            {state.errors.abstract}
+                          </span>
+                        </div>
+                        <div className=" w-full h-50">
+                          <textarea
+                            className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
+                            placeholder="Abstract and Summary here ..."
+                            name="abstract/summary"
+                          />
+                        </div>
+                      </div>
+                      <div className=" w-full px-2 ">
+                        <div className="lg:flex justify-between items-center">
+                          <p className="text-xl flex gap-2">Title :</p>
+                          <span className="text-sm text-red-500">
+                            {state.errors.title}
+                          </span>
+                        </div>
+                        <div className="w-full">
+                          <input
+                            placeholder="Title ..."
+                            type="text"
+                            className="w-full h-full bg-white text-black border border-black rounded-md p-2"
+                            name="title"
+                          />
+                        </div>
+                      </div>
+                      <div className=" w-full px-2 ">
+                        <div className="lg:flex justify-between items-center">
+                          <p className="text-xl flex gap-2">Researchers :</p>
+                          <span className="text-sm text-red-500">
+                            {state.errors.researchers}
+                          </span>
+                        </div>
+                        <div className=" w-full h-30">
+                          <textarea
+                            placeholder="Name 1, Name 2, Name 3, ..."
+                            className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
+                            name="researchers"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className=" px-10 py-4 w-full  flex flex-col justify-center items-center ">
+                    <div className=" h-full  flex flex-col justify-between">
+                      <div>
+                        <div className="lg:flex  justify-between items-center ">
+                          <h1 className="text-xl">Campus :</h1>
+                          <span className="text-sm text-red-500">
+                            {state.errors.campus}
+                          </span>
+                        </div>
+                        <select
+                          name="campus"
+                          id=""
+                          value={Campus}
+                          onChange={(event) => setCampus(event.target.value)}
+                          className="w-full  border border-black p-2 rounded-md "
+                        >
+                          <option value="" hidden>
+                            Campus
+                          </option>
+                          {Object.keys(campusData).map((selectedCampus) => (
+                            <option
+                              key={selectedCampus}
+                              value={selectedCampus}
+                              className=""
+                            >
+                              {selectedCampus}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <div className="lg:flex  justify-between items-center ">
+                          <h1 className="text-xl">Department :</h1>
+                          <span className="text-sm text-red-500">
+                            {state.errors.department}
+                          </span>
+                        </div>
+                        <select
+                          name="department"
+                          id=""
+                          onChange={(event) =>
+                            setDepartment(event.target.value)
+                          }
+                          className="w-full  border p-2 border-black  rounded-md"
+                          disabled={!Campus}
+                        >
+                          <option value="" hidden>
+                            Department
+                          </option>
+                          {DepartmentOptions.map((selectedDepartment) => (
+                            <option
+                              key={selectedDepartment}
+                              value={selectedDepartment}
+                            >
+                              {selectedDepartment}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <div className="lg:flex  justify-between items-center ">
+                          <h1 className="text-xl">Course :</h1>
+                          <span className="text-sm text-red-500">
+                            {state.errors.course}
+                          </span>
+                        </div>
+                        <select
+                          name="course"
+                          id=""
+                          onChange={(event) => setCourse(event.target.value)}
+                          className="w-full  border p-2 border-black  rounded-md"
+                          disabled={!Department}
+                        >
+                          <option value="" hidden>
+                            Course
+                          </option>
+                          {CourseOptions.map((selectedCourse) => (
+                            <option key={selectedCourse} value={selectedCourse}>
+                              {selectedCourse}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <div className="lg:flex  justify-between items-center ">
+                          <h1 className="text-xl">Year :</h1>
+                          <span className="text-sm text-red-500">
+                            {state.errors.year}
+                          </span>
+                        </div>
+                        <select
+                          name="year"
+                          id=""
+                          className="w-full  border p-2 border-black  rounded-md"
+                        >
+                          <option value="" hidden>
+                            Year
+                          </option>
+                          {years.map((selectedYear) => (
+                            <option key={selectedYear} value={selectedYear}>
+                              {selectedYear}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <div className="lg:flex  justify-between items-center ">
+                          <h1 className="text-xl">Paper Type :</h1>
+                          <span className="text-sm text-red-500">
+                            {state.errors.paper_type}
+                          </span>
+                        </div>
+                        <select
+                          name="paper_type"
+                          id=""
+                          onChange={(event) => setFileType(event.target.value)}
+                          className="w-full  border p-2 border-black  rounded-md"
+                          disabled={!(Campus && Department && Course)}
+                        >
+                          <option value="" hidden>
+                            Paper Type
+                          </option>
+                          {fileTypes.map((selectedFType) => (
+                            <option key={selectedFType} value={selectedFType}>
+                              {selectedFType}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <p className="text-xl font-extralight italic ">
+                        Admin Note** Every single paper that will be uploaded
+                        within the Web Repository should have a separate backup
+                        storage that can be used specially for backup purposes
+                        in case that the website is compromised.
+                      </p>
+                      <div className="flex justify-center items-center">
+                        {state.message ? (
+                          <p
+                            className={`text-sm ${state.success ? "text-green-600" : "text-red-500"}`}
+                          >
+                            {state.message}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="flex justify-center items-center ">
+                        <button
+                          type="submit"
+                          className="bg-[#071437] px-15 py-3 disabled:opacity-70 text-white"
+                          disabled={isPending}
+                        >
+                          {isPending ? "Uploading..." : "Upload"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </form>
+              {/* FORM LOGICS HERE */}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
