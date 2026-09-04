@@ -3,10 +3,6 @@ import { useState, useRef, useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
 
-
-
-
-
 export default function ProfileModal() {
   const [isOpen, setIsOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
@@ -14,7 +10,7 @@ export default function ProfileModal() {
   const router = useRouter();
 
   const containerRef = useRef(null);
-// use effect that handles clicking outside that mini modal reveal thingey
+  // use effect that handles clicking outside that mini modal reveal thingey
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -54,12 +50,12 @@ export default function ProfileModal() {
   return (
     <div
       ref={containerRef}
-      className="relative flex flex-col justify-center items-center"
+      className="relative flex flex-col items-center justify-center"
     >
-      <div className="top-10 min-w-28 text-white font-light font-urbanist flex flex-col gap-7 justify-center items-center">
-        <div className="group relative px-1">
+      <div className="font-urbanist top-10 flex flex-col items-center justify-center gap-7 font-light text-white md:min-w-28">
+        <div className="group relative md:px-1">
           <button
-            className="flex justify-center items-center md:gap-1"
+            className="flex items-center justify-center gap-1"
             onClick={() => setIsOpen((prev) => !prev)}
           >
             {user.name}
@@ -77,7 +73,7 @@ export default function ProfileModal() {
             </svg>
           </button>
           <div
-            className="absolute inset-0 bg-white flex justify-center items-center [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437] md:gap-1"
+            className="absolute inset-0 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] md:gap-1"
             onClick={() => setIsOpen((prev) => !prev)}
           >
             {user.name}
@@ -98,7 +94,7 @@ export default function ProfileModal() {
       </div>
       <div className="absolute -bottom-34 text-lg">
         {isOpen && (
-          <div className="flex flex-col justify-center items-center bg-[#071437] rounded-xl gap-1 px-3 py-3">
+          <div className="flex flex-col items-center justify-center gap-1 rounded-xl bg-[#071437] px-3 py-3">
             {isAdmin && (
               <div className="group relative px-1">
                 <button
@@ -108,7 +104,7 @@ export default function ProfileModal() {
                   Upload
                 </button>
                 <div
-                  className="absolute inset-0 bg-white flex justify-center items-center [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437]"
+                  className="absolute inset-0 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]"
                   onClick={() => router.push("/upload")}
                 >
                   Upload
@@ -124,7 +120,7 @@ export default function ProfileModal() {
                   Dashboard
                 </button>
                 <div
-                  className="absolute inset-0 bg-white flex justify-center items-center [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437]"
+                  className="absolute inset-0 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]"
                   onClick={() => router.push("/dashboard")}
                 >
                   Dashboard
@@ -132,11 +128,11 @@ export default function ProfileModal() {
               </div>
             )}
             <div className="group relative px-1">
-              <button onClick={handleLogout} className="cursor-pointer ">
+              <button onClick={handleLogout} className="cursor-pointer">
                 Logout
               </button>
               <div
-                className="absolute inset-0 bg-white flex justify-center items-center [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437]"
+                className="absolute inset-0 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]"
                 onClick={handleLogout}
               >
                 Logout

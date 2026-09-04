@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -30,11 +29,8 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-
 input[type="checkbox"] {
-  accent-color: #0070f3; 
+  accent-color: #0070f3;
   border: 5px solid #ffffff;
   width: 15px;
 }
-
-

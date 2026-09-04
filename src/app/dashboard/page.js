@@ -155,21 +155,21 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-amber-900 font-urbanist">
+    <div className="font-urbanist min-h-screen bg-amber-900">
       <Header />
-      <div className="text-black flex flex-col bg-amber-300 px-10 py-10 flex-1">
+      <div className="flex flex-1 flex-col bg-amber-300 px-10 py-10 text-black">
         <div className="flex flex-col">
-          <h1 className="text-6xl bg-blue-200">Dashboard</h1>
+          <h1 className="bg-blue-200 text-6xl">Dashboard</h1>
 
           {error && (
-            <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+            <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
               {error}
             </p>
           )}
 
           <div className="flex flex-col gap-16">
             {/* stat cards */}
-            <div className="flex justify-between mt-10 px-10 bg-white">
+            <div className="mt-10 flex justify-between bg-white px-10">
               <StatCard
                 label="Thesis"
                 color="bg-green-200"
@@ -225,13 +225,13 @@ export default function Dashboard() {
 function StatCard({ label, value, color, className, ref }) {
   return (
     <div
-      className={`${color} h-60 w-60 px-5 py-10 flex flex-col justify-between rounded-2xl shadow-2xl`}
+      className={`${color} flex h-60 w-60 flex-col justify-between rounded-2xl px-5 py-10 shadow-2xl`}
     >
       <div>
-        <h1 className="font-light leading-none">Total</h1>
-        <h1 className="text-3xl italic leading-none">{label}</h1>
+        <h1 className="leading-none font-light">Total</h1>
+        <h1 className="text-3xl leading-none italic">{label}</h1>
       </div>
-      <h1 ref={ref} className="bg-blue-900 flex justify-end items-end text-7xl">
+      <h1 ref={ref} className="flex items-end justify-end bg-blue-900 text-7xl">
         0
       </h1>
     </div>
@@ -242,21 +242,21 @@ function StatCard({ label, value, color, className, ref }) {
 function PaperCard({ paper, isAdmin, onView }) {
   return (
     <div
-      className="bg-white border border-gray-200 rounded-2xl p-5 shadow cursor-pointer hover:border-gray-300 transition"
+      className="cursor-pointer rounded-2xl border border-gray-200 bg-white p-5 shadow transition hover:border-gray-300"
       onClick={onView}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="font-medium text-base truncate">{paper.title}</p>
+          <p className="truncate text-base font-medium">{paper.title}</p>
           <p className="text-sm text-gray-500">{paper.researchers}</p>
         </div>
 
         {isAdmin && (
-          <p className="text-xs text-gray-400 shrink-0">Click card to edit</p>
+          <p className="shrink-0 text-xs text-gray-400">Click card to edit</p>
         )}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 border-t border-gray-100 mt-3 pt-3">
+      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-gray-100 pt-3 sm:grid-cols-3">
         <Field label="Campus" value={paper.campus} />
         <Field label="Department" value={paper.department} />
         <Field label="Course" value={paper.course} />
@@ -294,18 +294,18 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center"
       onClick={onClose}
     >
       <div
-        className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-6 max-h-[85vh] overflow-y-auto"
+        className="max-h-[85vh] w-full overflow-y-auto rounded-t-2xl bg-white p-6 sm:max-w-md sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between mb-4">
+        <div className="mb-4 flex items-start justify-between">
           <h2 className="text-lg font-medium">Edit paper</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            className="text-2xl leading-none text-gray-400 hover:text-gray-600"
           >
             ×
           </button>
@@ -355,7 +355,7 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
 
               <label className="block">
                 <span className="text-[11px] text-gray-400">File</span>
-                <p className="text-sm text-blue-600 mb-1">
+                <p className="mb-1 text-sm text-blue-600">
                   {form.newFile ? form.newFile.name : form.file}
                 </p>
                 <input
@@ -367,17 +367,17 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
               </label>
             </div>
 
-            <div className="flex gap-2 mt-6 border-t border-gray-100 pt-4">
+            <div className="mt-6 flex gap-2 border-t border-gray-100 pt-4">
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex-1 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60"
+                className="flex-1 rounded-md bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
               >
                 {saving ? "Saving…" : "Submit edit"}
               </button>
               <button
                 onClick={() => setConfirmingDelete(true)}
-                className="flex-1 py-2 rounded-md border border-red-300 text-red-600 text-sm font-medium hover:bg-red-50"
+                className="flex-1 rounded-md border border-red-300 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
               >
                 Delete
               </button>
@@ -386,18 +386,18 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
         ) : (
           <div className="pt-2">
             <p className="text-base font-medium">Confirm delete?</p>
-            <p className="text-sm text-gray-500 mt-1">This cannot be undone.</p>
+            <p className="mt-1 text-sm text-gray-500">This cannot be undone.</p>
 
-            <div className="flex gap-2 mt-6">
+            <div className="mt-6 flex gap-2">
               <button
                 onClick={() => setConfirmingDelete(false)}
-                className="flex-1 py-2 rounded-md border border-gray-300 text-sm font-medium hover:bg-gray-50"
+                className="flex-1 rounded-md border border-gray-300 py-2 text-sm font-medium hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 onClick={() => onDelete(paper)}
-                className="flex-1 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700"
+                className="flex-1 rounded-md bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
                 Yes, delete
               </button>
@@ -417,7 +417,7 @@ function EditField({ label, value, onChange }) {
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full text-sm border border-gray-200 rounded-md px-2 py-1.5 mt-0.5 focus:outline-none focus:border-gray-400"
+        className="mt-0.5 w-full rounded-md border border-gray-200 px-2 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
       />
     </label>
   );
@@ -426,12 +426,12 @@ function EditField({ label, value, onChange }) {
 function EditTextarea({ label, value, onChange }) {
   return (
     <label className="block text-black">
-      <span className="text-[11px] text-gray-400 ">{label}</span>
+      <span className="text-[11px] text-gray-400">{label}</span>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={3}
-        className="w-full text-sm border border-gray-200 rounded-md px-2 py-1.5 mt-0.5 focus:outline-none resize-none focus:border-gray-400"
+        className="mt-0.5 w-full resize-none rounded-md border border-gray-200 px-2 py-1.5 text-sm focus:border-gray-400 focus:outline-none"
       />
     </label>
   );

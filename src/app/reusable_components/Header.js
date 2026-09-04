@@ -13,11 +13,11 @@ export default function Header() {
   const isLoading = useAuthStore((state) => state.isLoading);
 
   return (
-    <div className=" bg-white flex justify-between">
-      <div className="bg-[#800000] w-[55%] flex pl-10 py-4 items-center gap-4 font-bona_nova_sc">
-        <div className="bg-green-200 w-13 h-13 rounded-full"></div>
+    <div className="flex justify-between bg-white">
+      <div className="font-bona_nova_sc flex w-[55%] items-center gap-4 bg-[#800000] py-2 pl-5">
+        <div className="h-13 w-13 rounded-full bg-green-200"></div>
         <Link href="/">
-          <p className="flex flex-col sm:flex-row sm:gap-2 lg:text-4xl text-white">
+          <p className="flex flex-col text-white sm:flex-row sm:gap-2 lg:text-4xl">
             <span>Sorsogon</span>
             <span>State</span>
             <span>University</span>
@@ -25,12 +25,12 @@ export default function Header() {
         </Link>
       </div>
 
-      <div className=" lg:w-[25%] font-urbanist  text-2xl select-none">
-        <div className="bg-[#071437]  flex p-3 justify-center items-center font-light text-white">
-          <div className=" pr-3 border-r border-white flex items-center">
+      <div className="font-urbanist w-[45%] font-extralight select-none lg:w-[25%] lg:text-2xl">
+        <div className="flex w-full items-center justify-center bg-[#071437] p-3 text-white">
+          <div className="flex items-center border-r border-white pr-3">
             {/* Link */}
-            <div className="group relative cursor-pointer flex justify-center items-center lg:px-4 ">
-              <button className=" flex justify-center items-center gap-2  cursor-pointer">
+            <div className="group relative flex cursor-pointer items-center justify-center lg:px-4">
+              <button className="flex cursor-pointer items-center justify-center gap-2">
                 <svg
                   width="26"
                   height="26"
@@ -51,23 +51,23 @@ export default function Header() {
                 </svg>
                 Search
               </button>
-              <div className="absolute inset-0 z-20   bg-white flex justify-center items-center gap-2  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437] ">
+              <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]">
                 Search
               </div>
             </div>
             {/* Link */}
           </div>
 
-          <div className="pl-3 ">
+          <div className="pl-3">
             {isLoading ? (
               <div className="lg:px-4">Loading..</div>
             ) : user ? (
               <ProfileModal />
             ) : (
               <Link href="/login">
-                <div className="group relative cursor-pointer flex justify-center items-center lg:px-4">
+                <div className="group relative flex cursor-pointer items-center justify-center lg:px-4">
                   <button className="cursor-pointer">Login</button>
-                  <div className="absolute z-20 inset-0 bg-white flex justify-center items-center [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437]">
+                  <div className="absolute inset-0 z-20 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]">
                     Login
                   </div>
                 </div>

@@ -81,35 +81,35 @@ export default function Bulan() {
   return (
     <>
       <Header></Header>
-      <div className="bg-white min-h-screen px-5 lg:px-10 pt-10 ">
-        <div className="flex flex-col flex-1 bg-green-500">
-          <div className="bg-[#800000] font-bona_nova_sc text-4xl px-5 py-5 text-white">
+      <div className="min-h-screen bg-white px-5 pt-10 lg:px-10">
+        <div className="flex flex-1 flex-col bg-green-500">
+          <div className="font-bona_nova_sc bg-[#800000] px-5 py-5 text-4xl text-white">
             Bulan
           </div>
           {/* this div will contain both the divs for filter and the papers for pagination */}
-          <div className="lg:flex  flex-1 mt-5">
-            <div className="lg:w-72 lg:shrink-0 lg:pr-5 flex flex-col border-r border-black">
+          <div className="mt-5 flex-1 lg:flex">
+            <div className="flex flex-col border-r border-black lg:w-72 lg:shrink-0 lg:pr-5">
               <Filter onFilterChange={handleFilterChange}></Filter>
             </div>
-            <div className="flex flex-col flex-1">
+            <div className="flex flex-1 flex-col">
               {papers.map((paper) => (
                 <div
                   key={paper.id}
-                  className="bg-blue-500 lg:flex-1 w-full h-full lg:pl-5  py-2 font-urbanist"
+                  className="font-urbanist h-full w-full bg-blue-500 py-2 lg:flex-1 lg:pl-5"
                 >
-                  <div className="bg-green-900 h-full flex flex-col gap-5">
+                  <div className="flex h-full flex-col gap-5 bg-green-900">
                     {/* use js to generate these divs and the contents for each paper link that leads to the dynamic /thesis page */}
-                    <div className="bg-pink-500 min-h-40 flex flex-col justify-between">
+                    <div className="flex min-h-40 flex-col justify-between bg-pink-500">
                       <div>
                         <Link href={`/thesis/${paper.id}`}>
-                          <p className="font-bold text-lg bg-amber-950">
+                          <p className="bg-amber-950 text-lg font-bold">
                             {/* Level of Technology implementation in the classroom as
                           a predictor of students' achievment in English, Math
                           and Science */}
                             {paper.title}
                           </p>
                         </Link>
-                        <p className="italic font-light bg-green-400">
+                        <p className="bg-green-400 font-light italic">
                           {/* Ronald U. Mendoza, Jurel K. Yap, Gabrielle Ann S.
                         Mendoza, Leonardo M. Jaminola III, and Erica Celine Yu */}
                           {paper.researchers}
@@ -148,7 +148,7 @@ export default function Bulan() {
           {/* this div will contain both the divs for filter and the papers for pagination */}
         </div>
         {totalPages > 1 && (
-          <div className="flex  justify-end items-end text-black my-5 border-t border-black pt-5">
+          <div className="my-5 flex items-end justify-end border-t border-black pt-5 text-black">
             <Pagination
               currentPage={page}
               totalPages={totalPages}

@@ -2,33 +2,29 @@
 
 import Link from "next/link";
 
-
-
 import ProfileModal from "../reusable_components/ProfileModal";
-
 
 export default function Sample() {
   return (
     <>
       <div>
-        <div className="bg-white h-screen flex justify-center items-center gap-10">
+        <div className="flex h-screen items-center justify-center gap-10 bg-white">
           <Link href="/login">
-            <div className="group cursor-pointer h-20 w-20 relative flex justify-center items-center bg-black font-urbanist">
+            <div className="group font-urbanist relative flex h-20 w-20 cursor-pointer items-center justify-center bg-black">
               <button className="absolute text-white">Login</button>
-              <div className="absolute z-20 inset-0  bg-lime-500 flex justify-center items-center [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-lime-500 group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-black ">
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-lime-500 transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-lime-500 group-hover:text-black group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]">
                 Login
               </div>
             </div>
           </Link>
 
-          <div className="group cursor-pointer h-20 w-20 relative flex justify-center items-center bg-black font-urbanist">
-            <div className="absolute z-20 inset-0  bg-lime-500 flex justify-center items-center [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-lime-500 group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)] group-hover:text-black"></div>
+          <div className="group font-urbanist relative flex h-20 w-20 cursor-pointer items-center justify-center bg-black">
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-lime-500 transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] group-hover:bg-lime-500 group-hover:text-black group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)]"></div>
           </div>
         </div>
 
-        <div className="h-screen  flex justify-center items-center">
+        <div className="flex h-screen items-center justify-center">
           <ProfileModal></ProfileModal>
-          
         </div>
       </div>
     </>

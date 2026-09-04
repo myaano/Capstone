@@ -8,8 +8,6 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
 
 export default function Upload() {
-  
-
   //redirect
   const router = useRouter();
 
@@ -17,20 +15,12 @@ export default function Upload() {
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
 
-
   useEffect(() => {
     if (!user || user.role !== "admin") {
-      console.log("Unauthorized Access Detected")
+      console.log("Unauthorized Access Detected");
       router.push("/");
-    
-  }
-}, [isLoading, user])
-
-
-
-
-
-
+    }
+  }, [isLoading, user]);
 
   // file upload logics
   const uploadRef = useRef(null);
@@ -133,12 +123,7 @@ export default function Upload() {
     (_, i) => currentYear - i,
   );
 
-
-  const Category = [
-    "Business",
-    "Politics & Society",
-    "Technology"
-  ];
+  const Category = ["Business", "Politics & Society", "Technology"];
 
   const [FileType, setFileType] = useState("");
 
@@ -184,63 +169,64 @@ export default function Upload() {
   useEffect(() => {
     if (state.success) {
       setFile(null);
+      setCampus("");
       if (uploadRef.current) {
         uploadRef.current.value = "";
       }
     }
-  }, [state.success]);
+  }, [state]);
 
-//token
-const [token, setToken] = useState("");
+  //token
+  const [token, setToken] = useState("");
 
-useEffect(() => {
-  setToken(localStorage.getItem("token") || "");
-}, []);
+  useEffect(() => {
+    setToken(localStorage.getItem("token") || "");
+  }, []);
 
   return (
-    <div className="bg-white h-screen">
+    <div className="h-screen bg-white">
       {isLoading || !user || user.role !== "admin" ? (
-        <div className="flex min-h-screen items-center justify-center font-urbanist">
+        <div className="font-urbanist flex min-h-screen items-center justify-center">
           <h1>Unauthorized Access Detected</h1>
         </div>
       ) : (
         <div>
           <Header></Header>
-          <div className="bg-white px-20 py-12 min-h-screen font-urbanist text-black">
-            <div className="h-full flex flex-col rounded-b-xl shadow-2xl border-black">
-              <div className="bg-[#800000] rounded-t-2xl">
-                <p className=" text-5xl py-5 px-10 text-white">Upload</p>
+          <div className="font-urbanist min-h-screen bg-white px-20 py-12 text-black">
+            <div className="flex h-full flex-col rounded-b-xl border-black shadow-2xl">
+              <div className="rounded-t-2xl bg-[#800000]">
+                <p className="px-10 py-5 text-5xl text-white">Upload</p>
               </div>
 
               {/* FORM LOGICS HERE */}
               <form
                 action={formAction}
-                className=" rounded-b-xl"
+                className="rounded-b-xl"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 type="hidden"
               >
-                <div className="lg:flex h-180">
-                  <div className=" w-full py-4 px-10 flex flex-col  text-black">
-                    <div className=" h-full flex flex-col justify-between">
-                      <div className="bg-white w-full p-2">
-                        <div className="text-xl flex flex-col gap-2">
-                          <div className="lg:flex justify-between items-center">
+                <div className="h-180 lg:flex">
+                  <div className="flex w-full flex-col px-10 py-4 text-black">
+                    <div className="flex h-full flex-col justify-between">
+                      <div className="w-full bg-white p-2">
+                        <div className="flex flex-col gap-2 text-xl">
+                          <div className="items-center justify-between lg:flex">
                             <p>File Upload :</p>
 
                             <span className="text-sm text-red-500">
                               {state.errors.file}
                               {error && (
-                                <p className="text-red-500 text-sm">{error}</p>
+                                <p className="text-sm text-red-500">{error}</p>
                               )}
                             </span>
                           </div>
                         </div>
                         {/* FILE DROP CONTAINER */}
-                        <div className="border-2 border-dashed divide-dashed border-[#686565] h-40">
+                        <div className="h-40 divide-dashed border-2 border-dashed border-[#686565]">
                           <div
-                            className={`bg-white  flex flex-col justify-center h-full items-center gap-2 cursor-pointer ${isDragOver ? "opacity-50" : "opacity-100"}`}
+                            className={`flex h-full cursor-pointer flex-col items-center justify-center gap-2 bg-white ${isDragOver ? "opacity-50" : "opacity-100"}`}
                             onClick={() => uploadRef.current.click()}
                             onDragOver={handleDragOver}
                             onDrop={handleDrop}
@@ -285,26 +271,26 @@ useEffect(() => {
                         </div>
                         {/* FILE DROP CONTAINER */}
                       </div>
-                      <div className=" w-full px-2 ">
-                        <div className="lg:flex  justify-between items-center">
-                          <p className="text-xl flex gap-2">
+                      <div className="w-full px-2">
+                        <div className="items-center justify-between lg:flex">
+                          <p className="flex gap-2 text-xl">
                             Abstract/Summary :
                           </p>
                           <span className="text-sm text-red-500">
                             {state.errors.abstract}
                           </span>
                         </div>
-                        <div className=" w-full h-50">
+                        <div className="h-50 w-full">
                           <textarea
-                            className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
+                            className="h-full w-full resize-none overflow-y-auto rounded-md border border-black bg-white px-2 py-1 text-black focus:outline-none"
                             placeholder="Abstract and Summary here ..."
                             name="abstract/summary"
                           />
                         </div>
                       </div>
-                      <div className=" w-full px-2 ">
-                        <div className="lg:flex justify-between items-center">
-                          <p className="text-xl flex gap-2">Title :</p>
+                      <div className="w-full px-2">
+                        <div className="items-center justify-between lg:flex">
+                          <p className="flex gap-2 text-xl">Title :</p>
                           <span className="text-sm text-red-500">
                             {state.errors.title}
                           </span>
@@ -313,32 +299,32 @@ useEffect(() => {
                           <input
                             placeholder="Title ..."
                             type="text"
-                            className="w-full h-full bg-white text-black border border-black rounded-md p-2"
+                            className="h-full w-full rounded-md border border-black bg-white p-2 text-black"
                             name="title"
                           />
                         </div>
                       </div>
-                      <div className=" w-full px-2 ">
-                        <div className="lg:flex justify-between items-center">
-                          <p className="text-xl flex gap-2">Researchers :</p>
+                      <div className="w-full px-2">
+                        <div className="items-center justify-between lg:flex">
+                          <p className="flex gap-2 text-xl">Researchers :</p>
                           <span className="text-sm text-red-500">
                             {state.errors.researchers}
                           </span>
                         </div>
-                        <div className=" w-full h-30">
+                        <div className="h-30 w-full">
                           <textarea
                             placeholder="Name 1, Name 2, Name 3, ..."
-                            className="w-full h-full bg-white text-black border border-black rounded-md px-2 py-1 overflow-y-auto resize-none focus:outline-none"
+                            className="h-full w-full resize-none overflow-y-auto rounded-md border border-black bg-white px-2 py-1 text-black focus:outline-none"
                             name="researchers"
                           />
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div className=" px-10 py-4 w-full  flex flex-col justify-center items-center ">
-                    <div className=" h-full  flex flex-col justify-between">
+                  <div className="flex w-full flex-col items-center justify-center px-10 py-4">
+                    <div className="flex h-full flex-col justify-between">
                       <div>
-                        <div className="lg:flex  justify-between items-center ">
+                        <div className="items-center justify-between lg:flex">
                           <h1 className="text-xl">Campus :</h1>
                           <span className="text-sm text-red-500">
                             {state.errors.campus}
@@ -349,7 +335,7 @@ useEffect(() => {
                           id=""
                           value={Campus}
                           onChange={(event) => setCampus(event.target.value)}
-                          className="w-full  border border-black p-2 rounded-md "
+                          className="w-full rounded-md border border-black p-2"
                         >
                           <option value="" hidden>
                             Campus
@@ -366,7 +352,7 @@ useEffect(() => {
                         </select>
                       </div>
                       <div>
-                        <div className="lg:flex  justify-between items-center ">
+                        <div className="items-center justify-between lg:flex">
                           <h1 className="text-xl">Department :</h1>
                           <span className="text-sm text-red-500">
                             {state.errors.department}
@@ -378,7 +364,7 @@ useEffect(() => {
                           onChange={(event) =>
                             setDepartment(event.target.value)
                           }
-                          className="w-full  border p-2 border-black  rounded-md"
+                          className="w-full rounded-md border border-black p-2"
                           disabled={!Campus}
                         >
                           <option value="" hidden>
@@ -395,7 +381,7 @@ useEffect(() => {
                         </select>
                       </div>
                       <div>
-                        <div className="lg:flex  justify-between items-center ">
+                        <div className="items-center justify-between lg:flex">
                           <h1 className="text-xl">Course :</h1>
                           <span className="text-sm text-red-500">
                             {state.errors.course}
@@ -405,7 +391,7 @@ useEffect(() => {
                           name="course"
                           id=""
                           onChange={(event) => setCourse(event.target.value)}
-                          className="w-full  border p-2 border-black  rounded-md"
+                          className="w-full rounded-md border border-black p-2"
                           disabled={!Department}
                         >
                           <option value="" hidden>
@@ -419,7 +405,7 @@ useEffect(() => {
                         </select>
                       </div>
                       <div>
-                        <div className="lg:flex  justify-between items-center ">
+                        <div className="items-center justify-between lg:flex">
                           <h1 className="text-xl">Year :</h1>
                           <span className="text-sm text-red-500">
                             {state.errors.year}
@@ -428,7 +414,7 @@ useEffect(() => {
                         <select
                           name="year"
                           id=""
-                          className="w-full  border p-2 border-black  rounded-md"
+                          className="w-full rounded-md border border-black p-2"
                         >
                           <option value="" hidden>
                             Year
@@ -441,7 +427,7 @@ useEffect(() => {
                         </select>
                       </div>
                       <div>
-                        <div className="lg:flex  justify-between items-center ">
+                        <div className="items-center justify-between lg:flex">
                           <h1 className="text-xl">Paper Type :</h1>
                           <span className="text-sm text-red-500">
                             {state.errors.paper_type}
@@ -451,7 +437,7 @@ useEffect(() => {
                           name="paper_type"
                           id=""
                           onChange={(event) => setFileType(event.target.value)}
-                          className="w-full  border p-2 border-black  rounded-md"
+                          className="w-full rounded-md border border-black p-2"
                           disabled={!(Campus && Department && Course)}
                         >
                           <option value="" hidden>
@@ -464,13 +450,13 @@ useEffect(() => {
                           ))}
                         </select>
                       </div>
-                      <p className="text-xl font-extralight italic ">
+                      <p className="text-xl font-extralight italic">
                         Admin Note** Every single paper that will be uploaded
                         within the Web Repository should have a separate backup
                         storage that can be used specially for backup purposes
                         in case that the website is compromised.
                       </p>
-                      <div className="flex justify-center items-center">
+                      <div className="flex items-center justify-center">
                         {state.message ? (
                           <p
                             className={`text-sm ${state.success ? "text-green-600" : "text-red-500"}`}
@@ -479,10 +465,10 @@ useEffect(() => {
                           </p>
                         ) : null}
                       </div>
-                      <div className="flex justify-center items-center ">
+                      <div className="flex items-center justify-center">
                         <button
                           type="submit"
-                          className="bg-[#071437] px-15 py-3 disabled:opacity-70 text-white"
+                          className="bg-[#071437] px-15 py-3 text-white disabled:opacity-70"
                           disabled={isPending}
                         >
                           {isPending ? "Uploading..." : "Upload"}

@@ -8,5 +8,5 @@ export function useSearchDirect() {
     if (!trimmed) return;
     router.push(`/search?q=${encodeURIComponent(trimmed)}`);
   }
-  return {handleSearch}
+  return { handleSearch };
 }

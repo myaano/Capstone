@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 // fixed 18x18 box for both states so the row it sits in never resizes on toggle
 function ToggleIcon({ isOpen }) {
   return (
-    <span className="w-4.5 h-4.5 flex items-center justify-center shrink-0">
+    <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center">
       <svg
         width="18"
         height="18"
@@ -121,14 +121,14 @@ export default function Filter({ onFilterChange }) {
   );
 
   return (
-    <div className="bg-white flex-1 gap-4 flex flex-col font-urbanist">
+    <div className="font-urbanist flex flex-1 flex-col gap-4 bg-white">
       <div className="flex items-center justify-between">
-        <span className="text-xl lg:text-3xl text-black">Filter :</span>
+        <span className="text-xl text-black lg:text-3xl">Filter :</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setMobileFilterOpen((prev) => !prev)}
-            className="bg-white border text-[#071437] border-[#071437] px-4 py-1 cursor-pointer md:hidden"
+            className="cursor-pointer border border-[#071437] bg-white px-4 py-1 text-[#071437] md:hidden"
             aria-expanded={mobileFilterOpen}
             aria-controls="filter-options-panel"
           >
@@ -136,7 +136,7 @@ export default function Filter({ onFilterChange }) {
           </button>
           <button
             onClick={resetFilter}
-            className="bg-white border text-[#071437] border-[#071437] px-6 py-1 cursor-pointer transition-colors duration-200 hover:bg-[#071437] hover:text-white "
+            className="cursor-pointer border border-[#071437] bg-white px-6 py-1 text-[#071437] transition-colors duration-200 hover:bg-[#071437] hover:text-white"
           >
             Reset
           </button>
@@ -144,11 +144,11 @@ export default function Filter({ onFilterChange }) {
       </div>
       <div
         id="filter-options-panel"
-        className={`flex-1 flex flex-col gap-8 select-none overflow-hidden transition-all duration-300 ease-out md:max-h-none md:opacity-100 ${mobileFilterOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"}`}
+        className={`flex flex-1 flex-col gap-8 overflow-hidden transition-all duration-300 ease-out select-none md:max-h-none md:opacity-100 ${mobileFilterOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"}`}
       >
         <div className="bg-[#071437] px-5 py-4 text-white">
           <div
-            className="flex cursor-pointer justify-between items-center"
+            className="flex cursor-pointer items-center justify-between"
             onClick={() => setCampusOpen((prev) => !prev)}
           >
             <h1 className="text-xl text-white">Campus</h1>
@@ -179,7 +179,7 @@ export default function Filter({ onFilterChange }) {
 
         <div className="bg-[#071437] px-5 py-4 text-white">
           <div
-            className="flex cursor-pointer justify-between items-center"
+            className="flex cursor-pointer items-center justify-between"
             onClick={() => setDepartmentOpen((prev) => !prev)}
           >
             <h1 className="text-xl text-white">Departments</h1>
@@ -210,7 +210,7 @@ export default function Filter({ onFilterChange }) {
 
         <div className="bg-[#071437] px-5 py-4 text-white">
           <div
-            className="flex cursor-pointer justify-between items-center"
+            className="flex cursor-pointer items-center justify-between"
             onClick={() => setCourseOpen((prev) => !prev)}
           >
             <h1 className="text-xl text-white">Course/Program</h1>
@@ -243,7 +243,7 @@ export default function Filter({ onFilterChange }) {
 
         <div className="bg-[#071437] px-5 py-4 text-white">
           <div
-            className="flex cursor-pointer justify-between items-center"
+            className="flex cursor-pointer items-center justify-between"
             onClick={() => setYearOpen((prev) => !prev)}
           >
             <h1 className="text-xl text-white">Year</h1>
