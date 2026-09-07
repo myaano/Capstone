@@ -12,38 +12,35 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
   };
 
   const getPageNumbers = () => {
-    const siblingCount = 1; // pages shown on each side of current
-    const totalNumbers = siblingCount * 2 + 5; // first, last, current, 2 ellipses
+    const windowSize = 5;
 
-    if (totalPages <= totalNumbers) {
+    if (totalPages <= windowSize) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    const leftSibling = Math.max(currentPage - siblingCount, 1);
-    const rightSibling = Math.min(currentPage + siblingCount, totalPages);
+    const half = Math.floor(windowSize / 2);
+    let start = currentPage - half;
+    let end = currentPage + half;
 
-    const showLeftDots = leftSibling > 2;
-    const showRightDots = rightSibling < totalPages - 1;
-
-    const pages = [1];
-
-    if (showLeftDots) pages.push("...");
-
-    for (let i = leftSibling; i <= rightSibling; i++) {
-      if (i !== 1 && i !== totalPages) pages.push(i);
+    if (start < 1) {
+      end += 1 - start;
+      start = 1;
     }
 
-    if (showRightDots) pages.push("...");
+    if (end > totalPages) {
+      start -= end - totalPages;
+      end = totalPages;
+    }
 
-    pages.push(totalPages);
+    start = Math.max(start, 1);
 
-    return pages;
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   };
 
   return (
-    <div className="pagination flex gap-2 justify-center items-center font-urbanist">
+    <div className="pagination font-urbanist flex items-center justify-center gap-2">
       <button
-        className="border rounded px-3 cursor-pointer"
+        className="cursor-pointer rounded border px-3"
         onClick={handlePrev}
         disabled={currentPage === 1}
       >
@@ -59,8 +56,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
           <button
             key={num}
             onClick={() => onPageChange(num)}
-            className={`px-3 py-1 cursor-pointer ${
-              num === currentPage ? "bg-[#800000] text-white" : ""
+            className={`cursor-pointer px-3 py-1 ${
+              num === currentPage ? "rounded-lg bg-[#800000] text-white" : ""
             }`}
           >
             {num}
@@ -69,7 +66,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
       )}
 
       <button
-        className="border rounded px-3 cursor-pointer"
+        className="cursor-pointer rounded border px-3"
         onClick={handleNext}
         disabled={currentPage === totalPages}
       >

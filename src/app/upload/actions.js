@@ -12,8 +12,6 @@ export async function submitUpload(prevState, formData) {
     };
   }
 
-
-
   //retrieve data//retrieve data//retrieve data//retrieve data
   const file = formData.get("file");
   const abstract = formData.get("abstract/summary")?.toString().trim() || "";
@@ -111,7 +109,6 @@ export async function submitUpload(prevState, formData) {
       data: result,
       errors: {},
     };
-
   } catch (error) {
     return {
       success: false,
@@ -120,4 +117,3 @@ export async function submitUpload(prevState, formData) {
     };
   }
 }
-

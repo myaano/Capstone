@@ -81,7 +81,6 @@ export default function Home() {
         }
         const data = await response.json();
         setAnalytics(data);
-        console.log(data);
       } catch (error) {
         console.error("Failed to load data:", error);
       }
@@ -95,10 +94,6 @@ export default function Home() {
     if (!Analytics) return;
     gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase);
     CustomEase.create("hop", "0.85, 0, 0.15, 1");
-    console.log("useGSAP ran, mounting fresh");
-
-
-
 
     // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
     gsap.to(thesisCounterValue.current, {
@@ -147,7 +142,6 @@ export default function Home() {
   }, [Analytics]);
   //use Gsap
 
-
   //useAuthStore checks user and loading
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -164,15 +158,15 @@ export default function Home() {
         ref={lenisRef}
       >
         {/* body */}
-        <div className=" bg-[#fdfffc] ">
+        <div className="bg-[#fdfffc]">
           {/* header */}
-          <div className="bg-transparent flex justify-end items-center sticky top-0 ">
+          <div className="sticky top-0 flex items-center justify-end bg-transparent">
             {/*modal buttons*/}
-            <div className="select-none bg-[#071437] flex justify-center items-center w-[45%] lg:w-[25%] p-3 text-white font-urbanist font-extralight lg:text-2xl">
+            <div className="font-urbanist flex w-[45%] items-center justify-center bg-[#071437] p-3 font-extralight text-white select-none lg:w-[25%] lg:text-2xl">
               {/*button containers*/}
-              <div className="lg:pr-3 border-r border-white flex items-center">
-                <div className="group relative cursor-pointer flex justify-center items-center lg:px-4 ">
-                  <button className=" flex justify-center items-center gap-2  cursor-pointer focus:outline-none focus:ring-0">
+              <div className="flex items-center border-r border-white pr-3">
+                <div className="group relative flex cursor-pointer items-center justify-center lg:px-4">
+                  <button className="flex cursor-pointer items-center justify-center gap-2 focus:ring-0 focus:outline-none">
                     <svg
                       width="26"
                       height="26"
@@ -193,7 +187,7 @@ export default function Home() {
                     </svg>
                     Search
                   </button>
-                  <div className="absolute inset-0 z-20   bg-white flex justify-center items-center gap-2  [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437] ">
+                  <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]">
                     Search
                   </div>
                 </div>
@@ -205,9 +199,9 @@ export default function Home() {
                   <ProfileModal />
                 ) : (
                   <Link href="/login">
-                    <div className="group relative cursor-pointer flex justify-center items-center lg:px-4">
+                    <div className="group relative flex cursor-pointer items-center justify-center lg:px-4">
                       <button className="cursor-pointer">Login</button>
-                      <div className="absolute z-20 inset-0 bg-white flex justify-center items-center [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-white group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] group-hover:text-[#071437]">
+                      <div className="absolute inset-0 z-20 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]">
                         Login
                       </div>
                     </div>
@@ -221,9 +215,9 @@ export default function Home() {
           {/* header */}
 
           {/* title*/}
-          <div className="font-bona_nova_sc bg-[#800000] text-white w-[55%] pl-5 lg:px-10 py-2 lg:py-4 sticky top-0 flex items-center gap-4 lg:gap-10">
+          <div className="font-bona_nova_sc sticky top-0 flex w-[55%] items-center gap-4 bg-[#800000] py-2 pl-5 text-white lg:gap-10 lg:px-10 lg:py-4">
             {/* logo */}
-            <div className="bg-green-200 w-13 h-13 rounded-full"></div>
+            <div className="h-13 w-13 rounded-full bg-green-200"></div>
             {/* logo */}
             {/* uniTitle */}
 
@@ -237,23 +231,23 @@ export default function Home() {
           </div>
           {/* title */}
           {/* contents */}
-          <div className=" lg:flex lg:justify-between mt-10 lg:mt-12 sm:mx-0">
+          <div className="mt-10 sm:mx-0 lg:mt-12 lg:flex lg:justify-between">
             {/* about */}
-            <div className=" flex flex-1 flex-col  lg:mr-20">
-              <div className="flex flex-col  mx-5 sm:mx-0 lg:ml-10 ">
-                <div className="flex gap-2  border-b pb-3 lg:pb-4 border-black justify-start  items-center">
-                  <p className="font-bona_nova_sc text-[34px] lg:text-6xl text-[#800000] leading-none">
+            <div className="flex flex-1 flex-col lg:mr-20">
+              <div className="mx-5 flex flex-col sm:mx-0 lg:ml-10">
+                <div className="flex items-center justify-start gap-2 border-b border-black pb-3 lg:pb-4">
+                  <p className="font-bona_nova_sc text-[34px] leading-none text-[#800000] lg:text-6xl">
                     SorSu
                   </p>
-                  <p className="font-urbanist text-[#242423] text-[30px] lg:text-6x leading-none">
+                  <p className="font-urbanist lg:text-6x text-[30px] leading-none text-[#242423]">
                     :
                   </p>
-                  <div className="leading-none font-urbanist text-[#131312] text-[20px] lg:text-3xl">
+                  <div className="font-urbanist text-[20px] leading-none text-[#131312] lg:text-3xl">
                     <p>Sorsogon State University</p>
                     <p>Institutional Repository</p>
                   </div>
                 </div>
-                <div className=" pt-5 lg:pt-10 font-urbanist text-[#242423] ">
+                <div className="font-urbanist pt-5 text-[#242423] lg:pt-10">
                   <p>
                     A Web Thesis and Capstone Web Repository Developed by SorSU:
                     Bulan Campus for management, dissemenation and preservation
@@ -267,25 +261,25 @@ export default function Home() {
               {/* about */}
 
               {/* most viewed papers title */}
-              <div className="bg-[#071437] mr-5 sm:mr-0 mt-10 pl-5 lg:pl-10 text-2xl py-3  underline font-bona_nova text-white">
+              <div className="font-bona_nova mt-10 mr-5 bg-[#071437] py-3 pl-5 text-2xl text-white underline sm:mr-0 lg:pl-10">
                 <p>Most Viwed Papers</p>
               </div>
               {/* most viewed papers title */}
 
               {/* in this div, all of the most viewed will be displayed and will be full of javascript to retrieve data and present it here */}
-              <div className=" mx-5 sm:mx-0 lg:pl-10 pt-5 ">
-                <div className="flex flex-col gap-2 border-b pb-2 border-[#585757]">
+              <div className="mx-5 pt-5 sm:mx-0 lg:pl-10">
+                <div className="flex flex-col gap-2 border-b border-[#585757] pb-2">
                   {/* some sort of title retriever here probably like {title.retrieve} idk */}
-                  <p className="text-[#242423] font-urbanist text-[16px] font-semibold ">
+                  <p className="font-urbanist text-[16px] font-semibold text-[#242423]">
                     Level of Technology implementation in the classroom as a
                     predictor of students' achievment in English, Math and
                     Science
                   </p>
-                  <p className="font-urbanist text-[#585757] font-light italic text-sm">
+                  <p className="font-urbanist text-sm font-light text-[#585757] italic">
                     Ronald U. Mendoza, Jurel K. Yap, Gabrielle Ann S. Mendoza,
                     Leonardo M. Jaminola III, and Erica Celine Yu
                   </p>
-                  <div className="font-urbanist flex justify-between text-[#242423] pr-2 text-sm">
+                  <div className="font-urbanist flex justify-between pr-2 text-sm text-[#242423]">
                     <p>Bachelor of Science in Computer Science</p>
                     <p>2021</p>
                   </div>
@@ -295,20 +289,20 @@ export default function Home() {
             </div>
 
             {/* Research Papers Analytics */}
-            <div className=" lg:w-[45%] text-white">
-              <p className="font-bona_nova_sc text-[24px] lg:text-3xl pl-5 pt-4 sm:pt-0 sm:pl-0 pb-7 text-[#242423] ">
+            <div className="text-white lg:w-[45%]">
+              <p className="font-bona_nova_sc pt-4 pb-7 pl-5 text-[24px] text-[#242423] sm:pt-0 sm:pl-0 lg:text-3xl">
                 Research Papers
               </p>
-              <div className="bg-[#800000] h-100 ml-5 sm:ml-0 px-10 py-15 flex gap-15 flex-col justify-center items-center">
-                <div className="  flex flex-col justify-center w-full">
-                  <p className=" border-b border-white text-5xl font-bona_nova_sc pb-2 flex justify-between items-center">
+              <div className="ml-5 flex h-100 flex-col items-center justify-center gap-15 bg-[#800000] px-10 py-15 sm:ml-0">
+                <div className="flex w-full flex-col justify-center">
+                  <p className="font-bona_nova_sc flex items-center justify-between border-b border-white pb-2 text-5xl">
                     {/* this stupid number should have a counting animation from 0 to current number of papers */}
                     <span ref={thesisTimer}>0</span>
                     {/* this stupid number should have a counting animation from 0 to current number of papers */}
                     {/* this svg will be a <Link /> which is pressable and will send the user to the thesis section */}
                     <Link
                       href="/thesis"
-                      className="focus:outline-none focus:ring-0"
+                      className="focus:ring-0 focus:outline-none"
                     >
                       <svg
                         width="30"
@@ -325,16 +319,16 @@ export default function Home() {
                     </Link>
                     {/* this svg will be a <Link /> which is pressable and will send the user to the thesis section */}
                   </p>
-                  <p className="font-bona_nova_sc text-2xl pt-2 leading-none">
+                  <p className="font-bona_nova_sc pt-2 text-2xl leading-none">
                     Thesis Papers
                   </p>
                 </div>
-                <div className="  flex flex-col justify-center w-full">
-                  <p className=" border-b border-white text-5xl font-bona_nova_sc pb-2 flex justify-between items-center">
+                <div className="flex w-full flex-col justify-center">
+                  <p className="font-bona_nova_sc flex items-center justify-between border-b border-white pb-2 text-5xl">
                     <span ref={capstoneTimer}>0</span>
                     <Link
                       href="/capstone"
-                      className="focus:outline-none focus:ring-0"
+                      className="focus:ring-0 focus:outline-none"
                     >
                       <svg
                         width="30"
@@ -350,22 +344,22 @@ export default function Home() {
                       </svg>
                     </Link>
                   </p>
-                  <p className="font-bona_nova_sc text-2xl pt-2 leading-none">
+                  <p className="font-bona_nova_sc pt-2 text-2xl leading-none">
                     Capstone Papers
                   </p>
                 </div>
               </div>
               {/* Campuses Analytics */}
-              <div className="h-100 flex flex-col font-cormorant_infant text-6xl text-[#242423]   mt-20 ">
-                <div className="b flex justify-between items-center">
-                  <div className="flex flex-1 justify-between pr-5">
-                    <p className="cursor-pointer underline decoration-2 decoration-transparent underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current ">
+              <div className="font-cormorant_infant mt-20 flex h-100 flex-col text-6xl text-[#242423]">
+                <div className="b flex items-center justify-between">
+                  <div className="flex flex-1 justify-between px-5 lg:pr-5">
+                    <p className="cursor-pointer underline decoration-transparent decoration-2 underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current">
                       Bulan
                     </p>
-                    <div className="flex justify-end items-end gap-2 ">
+                    <div className="flex items-end justify-end gap-2">
                       {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
                       {/* add scrollTrigger on this campus analytics */}
-                      <span className=" bulan  italic" ref={bulanTimer}>
+                      <span className="bulan italic" ref={bulanTimer}>
                         0
                       </span>
                       {/* add scrollTrigger on this campus analytics */}

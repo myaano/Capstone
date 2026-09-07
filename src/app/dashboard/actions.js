@@ -13,16 +13,11 @@ export async function fetchPapers() {
   return res.json();
 }
 
-
-
-
 // Called from the dashboard overlay's "Submit edit" button.
 // Always sends FormData (not JSON) since a replacement file may be attached -
 // same POST + _method=PUT workaround used for multipart updates in Laravel.
 
-
 //update paper
-
 
 export async function updatePaper(id, formData) {
   formData.append("_method", "PUT");

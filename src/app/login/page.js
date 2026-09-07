@@ -12,7 +12,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const setUser = useAuthStore((state) => state.setUser); 
+  const setUser = useAuthStore((state) => state.setUser);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -47,8 +47,8 @@ export default function Login() {
 
   return (
     <div className="h-screen bg-[#800000] px-10 py-12">
-      <div className="h-full rounded-2xl flex">
-        <div className="bg-white overflow-hidden rounded-l-2xl w-[60%] hidden lg:block relative">
+      <div className="flex h-full rounded-2xl">
+        <div className="relative hidden w-[60%] overflow-hidden rounded-l-2xl bg-white lg:block">
           <div className="absolute h-full w-full">
             <Image
               src={Rizal}
@@ -59,18 +59,18 @@ export default function Login() {
               style={{ filter: "brightness(60%)" }}
             />
           </div>
-          <div className="font-urbanist z-10 absolute pl-5 bottom-20 select-none text-white ">
-            <p className="text-5xl font-semibold ">
+          <div className="font-urbanist absolute bottom-20 z-10 pl-5 text-white select-none">
+            <p className="text-5xl font-semibold">
               If Knowledge is the heritage of mankind, only the brave inherit
               it.
             </p>
             <p className="text-2xl font-light">— Jose Rizal, Noli Me Tangere</p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl lg:rounded-r-2xl lg:rounded-l-none flex justify-center items-center flex-1 px-2 lg:px-10">
-          <div className=" h-[50%] lg:h-[60%] w-[90%] flex flex-col ">
+        <div className="flex flex-1 items-center justify-center rounded-2xl bg-white px-2 lg:rounded-l-none lg:rounded-r-2xl lg:px-10">
+          <div className="flex h-[50%] w-[90%] flex-col lg:h-[60%]">
             <div className="">
-              <div className="bg-white border border-[#363633]  rounded-[10px] w-10 h-10 inline-flex justify-center items-center">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[#363633] bg-white">
                 <svg
                   width="23"
                   height="21"
@@ -86,7 +86,7 @@ export default function Login() {
                   />
                 </svg>
               </div>
-              <p className="font-urbanist text-[14px] my-1  text-[#999595] select-none">
+              <p className="font-urbanist my-1 text-[14px] text-[#999595] select-none">
                 SORSOGON STATE UNIVERSITY
               </p>
               <div className="inline-flex flex-col gap-1">
@@ -101,7 +101,7 @@ export default function Login() {
             <form
               action=""
               onSubmit={handleSubmit}
-              className="font-urbanist flex flex-1 flex-col  pt-7 lg:justify-end gap-7 "
+              className="font-urbanist flex flex-1 flex-col gap-7 pt-7 lg:justify-end"
             >
               {/*UsernameCONTAINER */}
               <div className="flex flex-col">
@@ -113,7 +113,7 @@ export default function Login() {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="bg-[#fffff6] border border-[#242423] rounded-lg px-2 py-1 placeholder:text-[#999595] text-[#363633]"
+                  className="rounded-lg border border-[#242423] bg-[#fffff6] px-2 py-1 text-[#363633] placeholder:text-[#999595]"
                 />
               </div>
               {/*UsernameCONTAINER */}
@@ -127,16 +127,16 @@ export default function Login() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-[#fffff6] border border-[#363633] rounded-lg px-2 py-1 outline-[#363633] placeholder:text-[#999595] text-[#363633]"
+                  className="rounded-lg border border-[#363633] bg-[#fffff6] px-2 py-1 text-[#363633] outline-[#363633] placeholder:text-[#999595]"
                 />
               </div>
               {/*PasswordContainer */}
-              {error && <p className="text-red-600 text-sm -mt-4">{error}</p>}
-              <div className="group relative flex flex-1 cursor-pointer active:opacity-70">
-                <button className="flex flex-1 justify-center items-center bg-[#C1FF30] text-xl text-black p-2 rounded-xl ">
+              {error && <p className="-mt-4 text-sm text-red-600">{error}</p>}
+              <div className="group relative flex w-full cursor-pointer active:opacity-70">
+                <button className="flex w-full items-center justify-center rounded-xl border border-[#071437] bg-white p-2 text-xl text-[#071437]">
                   Login
                 </button>
-                <div className="absolute z-20 inset-0  bg-[#071437] flex justify-center items-center [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] transition-[clip-path,background-color,color] duration-500 group-hover:bg-[#071437] group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)] group-hover:text-white rounded-xl text-xl">
+                <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[#071437] text-xl transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] group-hover:bg-[#071437] group-hover:text-white group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)]">
                   Login
                 </div>
               </div>

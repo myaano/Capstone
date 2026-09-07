@@ -19,14 +19,13 @@ export default async function PaperDetails({ params }) {
 
     if (!response.ok) {
       console.error(`Request failed: ${response.status}`);
-    return <div className="text-black">Paper not found.</div>;
+      return <div className="text-black">Paper not found.</div>;
     }
 
     data = await response.json();
   } catch (error) {
     console.error(error);
   }
-
 
   //continue the codeblock ^^^ above after the api route is done.
 
@@ -35,30 +34,30 @@ export default async function PaperDetails({ params }) {
   return (
     <div>
       <Header></Header>
-      <div className="bg-white min-h-screen  py-10 flex flex-col">
-        <div className="flex flex-col flex-1 px-4 lg:px-10">
+      <div className="flex min-h-screen flex-col bg-white py-10">
+        <div className="flex flex-1 flex-col px-4 lg:px-10">
           <p className="font-bona_nova text-3xl text-[#242423]">{data.title}</p>
-          <div className=" flex flex-col flex-1 mt-5">
-            <div className=" lg:w-[55%]">
-              <div className=" pb-10">
-                <p className="font-urbanist font-semibold border-b border-black pb-2 text-[#242423] ">
+          <div className="mt-5 flex flex-1 flex-col">
+            <div className="lg:w-[55%]">
+              <div className="pb-10">
+                <p className="font-urbanist border-b border-black pb-2 font-semibold text-[#242423]">
                   {data.researchers}
                 </p>
               </div>
             </div>
-            <div className=" flex flex-col gap-10 lg:gap-0 lg:flex lg:flex-row ">
-              <div className="bg-[#800000] lg:w-[55%] p-10 ">
+            <div className="flex flex-col gap-10 lg:flex lg:flex-row lg:gap-0">
+              <div className="bg-[#800000] p-10 lg:w-[55%]">
                 <div className="flex flex-col gap-6 text-white">
-                  <p className="text-3xl font-bona_nova_sc leading-relaxed">
+                  <p className="font-bona_nova_sc text-3xl leading-relaxed">
                     Abstract
                   </p>
-                  <p className={`font-urbanist text-[1.1rem] max-w[65ch]  `}>
+                  <p className={`font-urbanist max-w[65ch] text-[1.1rem]`}>
                     {data.abstract}
                   </p>
                 </div>
               </div>
-              <div className="flex flex-1 px-5  gap-5 font-urbanist text-[#242423]">
-                <div className=" flex flex-col gap-5  flex-1">
+              <div className="font-urbanist flex flex-1 gap-5 px-5 text-[#242423]">
+                <div className="flex flex-1 flex-col gap-5">
                   <div className="">
                     <p className="font-semibold">Document Type :</p>
                     <p className="">{data.paper_type}</p>

@@ -43,12 +43,12 @@ function SearchContent() {
 
   return (
     <>
-      <div className=" bg-red-400 flex flex-1 mt-5">
-        <div className="lg:w-72 pr-2 border-r border-black">
+      <div className="mt-5 flex flex-1 bg-red-400">
+        <div className="border-r border-black pr-2 lg:w-72">
           <Filter></Filter>
         </div>
-        <div className="bg-blue-500 lg:flex-1 w-full h-full py-2 font-urbanist ml-2">
-          <div className="bg-green-900 h-full flex flex-col gap-5">
+        <div className="font-urbanist ml-2 h-full w-full bg-blue-500 py-2 lg:flex-1">
+          <div className="flex h-full flex-col gap-5 bg-green-900">
             {loading && <p className="text-xl">Loading...</p>}
             {!loading && papers.length === 0 && <p>No results found.</p>}
 
@@ -56,22 +56,22 @@ function SearchContent() {
               papers.map((paper) => (
                 <div
                   key={paper.id}
-                  className="bg-pink-500 h-40 flex flex-col justify-between"
+                  className="flex h-40 flex-col justify-between bg-pink-500"
                 >
                   <div className="flex gap-2">
                     <div className="font-cormorant_infant text-xl text-black">
                       Searched for :
                     </div>
-                    <h1 className="text-black font-urbanist ">Placeholder</h1>
+                    <h1 className="font-urbanist text-black">Placeholder</h1>
                   </div>
                   <div>
-                    <p className="font-bold text-lg bg-amber-950">
+                    <p className="bg-amber-950 text-lg font-bold">
                       Level of Technology implementation in the classroom as a
                       predictor of students' achievment in English, Math and
                       Science
                       {/* {paper.title} */}
                     </p>
-                    <p className="italic font-light bg-green-400">
+                    <p className="bg-green-400 font-light italic">
                       Ronald U. Mendoza, Jurel K. Yap, Gabrielle Ann S. Mendoza,
                       Leonardo M. Jaminola III, and Erica Celine Yu
                       {/* {paper.researchers} */}
@@ -131,9 +131,9 @@ export default function Search() {
   return (
     <>
       <Header></Header>
-      <div className="bg-white h-300 px-5 lg:px-10 pt-10 ">
-        <div className="bg-pink-400 h-[90%] flex flex-col ">
-          <div className="bg-[#800000] font-bona_nova_sc text-4xl px-5 py-5 text-white">
+      <div className="h-300 bg-white px-5 pt-10 lg:px-10">
+        <div className="flex h-[90%] flex-col bg-pink-400">
+          <div className="font-bona_nova_sc bg-[#800000] px-5 py-5 text-4xl text-white">
             Searched For :
           </div>
           <Suspense fallback={<div>Loading ...</div>}>
