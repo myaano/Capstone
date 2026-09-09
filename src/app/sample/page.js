@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { useEffect } from "react";
+
 import ProfileModal from "../reusable_components/ProfileModal";
 
 export default function Sample() {

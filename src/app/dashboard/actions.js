@@ -3,8 +3,9 @@
 // Same pattern as /upload/actions.js - point this at your Laravel LAN IP.
 const API_URL = "https://application-production-cfb3.up.railway.app/api"; // TODO: swap in your actual LAN IP
 
-export async function fetchPapers() {
-  const res = await fetch(`${API_URL}/papers`, { cache: "no-store" });
+export async function fetchPapers(page) {
+  const params = new URLSearchParams({ page });
+  const res = await fetch(`${API_URL}/papers?${params}`, { cache: "no-store" });
 
   if (!res.ok) {
     throw new Error("Failed to fetch papers");

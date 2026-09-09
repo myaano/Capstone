@@ -5,11 +5,13 @@ import Footer from "./reusable_components/Footer";
 //component immport
 
 // nextjs imports
-
+import Image from "next/image";
 import Link from "next/link";
 // nextjs imports
 
-// MAKE A CHECKLIST OF WHAT TO DO ON EACH DAY OF DEVELOPMENT SO THERES NO BURNOUT
+//image import
+import SorSu from "../../public/Sorsu.png";
+//image import
 
 // react imports
 import { useEffect, useRef, useState, useLayoutEffect } from "react";
@@ -26,6 +28,10 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { CustomEase } from "gsap/CustomEase";
 // gsap
+
+//pie chart imports
+
+import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 import { useAuthStore } from "./store/useAuthStore";
 
@@ -146,6 +152,22 @@ export default function Home() {
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
 
+  //analytics pie chart fetch
+
+  // useEffect(() => {
+  //   async function PieChartData() {
+  //     try {
+  //     } catch {}
+  //   }
+  // }, []);
+
+  //dummy pie chart data
+  const dummyData = [
+    { category: "Technology", total: 42, fill: "#02a9f7" },
+    { category: "Politics & Society", total: 30, fill: "#FF9D50" },
+    { category: "Business", total: 18, fill: "#403d39" },
+  ];
+
   return (
     <>
       <ReactLenis
@@ -160,7 +182,7 @@ export default function Home() {
         {/* body */}
         <div className="bg-[#fdfffc]">
           {/* header */}
-          <div className="sticky top-0 flex items-center justify-end bg-transparent">
+          <div className="sticky top-0 z-50 flex items-center justify-end bg-transparent">
             {/*modal buttons*/}
             <div className="font-urbanist flex w-[45%] items-center justify-center bg-[#071437] p-3 font-extralight text-white select-none lg:w-[25%] lg:text-2xl">
               {/*button containers*/}
@@ -215,9 +237,20 @@ export default function Home() {
           {/* header */}
 
           {/* title*/}
-          <div className="font-bona_nova_sc sticky top-0 flex w-[55%] items-center gap-4 bg-[#800000] py-2 pl-5 text-white lg:gap-10 lg:px-10 lg:py-4">
+          <div className="font-bona_nova_sc sticky top-0 z-50 flex w-[55%] items-center gap-4 bg-[#800000] py-2 pl-5 text-white lg:gap-10 lg:px-10 lg:py-4">
             {/* logo */}
-            <div className="h-13 w-13 rounded-full bg-green-200"></div>
+            <div className="flex h-13 w-13 items-center justify-center overflow-hidden rounded-full lg:h-16 lg:w-16">
+              <div className="relative h-full w-full">
+                <Image
+                  src={SorSu}
+                  alt="SorSU Logo"
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 52px, 64px"
+                  className="object-contain"
+                />
+              </div>
+            </div>
             {/* logo */}
             {/* uniTitle */}
 
@@ -262,7 +295,7 @@ export default function Home() {
 
               {/* most viewed papers title */}
               <div className="font-bona_nova mt-10 mr-5 bg-[#071437] py-3 pl-5 text-2xl text-white underline sm:mr-0 lg:pl-10">
-                <p>Most Viwed Papers</p>
+                <p>Most Viewed Papers</p>
               </div>
               {/* most viewed papers title */}
 
@@ -349,32 +382,52 @@ export default function Home() {
                   </p>
                 </div>
               </div>
-              {/* Campuses Analytics */}
-              <div className="font-cormorant_infant mt-20 flex h-100 flex-col text-6xl text-[#242423]">
-                <div className="b flex items-center justify-between">
-                  <div className="flex flex-1 justify-between px-5 lg:pr-5">
-                    <p className="cursor-pointer underline decoration-transparent decoration-2 underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current">
-                      Bulan
-                    </p>
-                    <div className="flex items-end justify-end gap-2">
-                      {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
-                      {/* add scrollTrigger on this campus analytics */}
-                      <span className="bulan italic" ref={bulanTimer}>
-                        0
-                      </span>
-                      {/* add scrollTrigger on this campus analytics */}
-                      {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
-                      <p className="text-sm">Total Papers</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Campuses Analytics */}
             </div>
             {/* Research Papers Analytics */}
           </div>
           {/* contents */}
-
+          <div className="min-h-screen w-full justify-center py-20 lg:flex">
+            <div className="flex flex-1 items-center justify-center">
+              <div className="flex h-[50vh] w-[70%] md:h-[80vh]">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={dummyData}
+                      dataKey="total"
+                      nameKey="category"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={120}
+                      label
+                    ></Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            {/* Campuses Analytics */}
+            <div className="font-cormorant_infant flex flex-1 flex-col items-center justify-center text-6xl text-[#242423]">
+              <div className="b lg: flex w-full items-center justify-between">
+                <div className="flex flex-1 justify-between px-5 lg:pr-5">
+                  <p className="cursor-pointer underline decoration-transparent decoration-2 underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current">
+                    Bulan
+                  </p>
+                  <div className="flex items-end justify-end gap-2">
+                    {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
+                    {/* add scrollTrigger on this campus analytics */}
+                    <span className="bulan italic" ref={bulanTimer}>
+                      0
+                    </span>
+                    {/* add scrollTrigger on this campus analytics */}
+                    {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
+                    <p className="text-sm">Total Papers</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Campuses Analytics */}
+          </div>
           <Footer></Footer>
         </div>
         {/* body */}
