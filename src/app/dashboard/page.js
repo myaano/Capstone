@@ -2,15 +2,32 @@
 
 import { useEffect, useState, useRef } from "react";
 import Header from "../reusable_components/Header";
-import { useAuthStore } from "../store/useAuthStore";
+import Pagination from "../reusable_components/Pagination";
+
 import { fetchPapers, updatePaper, deletePaper } from "./actions";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 
+//useAuthStore, authorize who can go in or not
+import { useAuthStore } from "../store/useAuthStore";
+//rerout someone
+import { useRouter } from "next/navigation";
+
 export default function Dashboard() {
+  //rerout
+  const router = useRouter();
+
+  //check admin or not
   const user = useAuthStore((s) => s.user);
   const isAdmin = user?.role === "admin";
+  const isLoading = useAuthStore((state) => state.isLoading);
+  useEffect(() => {
+    if (!user || user.role !== "admin") {
+      console.log("Unauthorized Access Detected");
+      router.push("/");
+    }
+  }, [isLoading, user]);
 
   const [papers, setPapers] = useState([]);
 
@@ -19,6 +36,11 @@ export default function Dashboard() {
 
   const [activePaper, setActivePaper] = useState(null); // controls the overlay
 
+  //pagination useStates
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  //main fetching of papers from actions.js of /dashboard
   useEffect(() => {
     let cancelled = false;
 
@@ -26,10 +48,12 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
       try {
-        const papersData = await fetchPapers();
+        const papersData = await fetchPapers(page);
         if (!cancelled) {
-          setPapers(papersData);
+          setPapers(papersData.data ?? []);
         }
+        console.log(papersData);
+        setTotalPages(papersData.last_page ?? 1);
       } catch (err) {
         if (!cancelled) setError(err.message);
       } finally {
@@ -41,7 +65,7 @@ export default function Dashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page]);
 
   const thesisTimer = useRef(null);
   const capstoneTimer = useRef(null);
@@ -129,6 +153,7 @@ export default function Dashboard() {
     body.append("department", updatedPaper.department);
     body.append("course", updatedPaper.course);
     body.append("year", updatedPaper.year);
+    body.append("fileType", updatedPaper.paper_type);
     if (updatedPaper.newFile) {
       body.append("file", updatedPaper.newFile);
     }
@@ -208,6 +233,15 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
+        {totalPages > 1 && (
+          <div className="my-5 flex items-end justify-end border-t border-black pt-5 text-black">
+            <Pagination
+              currentPage={page}
+              totalPages={totalPages}
+              onPageChange={(newPage) => setPage(newPage)}
+            />
+          </div>
+        )}
       </div>
 
       {activePaper && (
@@ -261,10 +295,15 @@ function PaperCard({ paper, isAdmin, onView }) {
         <Field label="Department" value={paper.department} />
         <Field label="Course" value={paper.course} />
         <Field label="Year" value={paper.year} />
-        <Field label="File type" value={paper.fileType} />
+        <Field label="File type" value={formatPaperType(paper.paper_type)} />
       </div>
     </div>
   );
+}
+
+function formatPaperType(value) {
+  if (!value) return "";
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function Field({ label, value }) {
@@ -302,7 +341,7 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between">
-          <h2 className="text-lg font-medium">Edit paper</h2>
+          <h2 className="text-lg font-medium text-[#242423]">Edit paper</h2>
           <button
             onClick={onClose}
             className="text-2xl leading-none text-gray-400 hover:text-gray-600"
@@ -350,6 +389,11 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
                   label="Year"
                   value={form.year}
                   onChange={(v) => updateField("year", v)}
+                />
+                <EditField
+                  label="paper_type"
+                  value={form.paper_type}
+                  onChange={(v) => updateField("paper_type", v)}
                 />
               </div>
 
@@ -412,7 +456,7 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
 function EditField({ label, value, onChange }) {
   return (
     <label className="block text-black">
-      <span className="text-[11px] text-gray-400">{label}</span>
+      <span className="text-[11px] text-[#242423]">{label}</span>
       <input
         type="text"
         value={value}
@@ -426,7 +470,7 @@ function EditField({ label, value, onChange }) {
 function EditTextarea({ label, value, onChange }) {
   return (
     <label className="block text-black">
-      <span className="text-[11px] text-gray-400">{label}</span>
+      <span className="text-[11px] text-[#242423]">{label}</span>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}

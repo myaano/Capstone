@@ -63,7 +63,7 @@ export default function Thesis() {
         }
 
         const data = await response.json();
-        console.log(data);
+
         setPapers(Array.isArray(data) ? data : (data.data ?? []));
         setTotalPages(data.last_page ?? 1);
       } catch (error) {

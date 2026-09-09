@@ -5,6 +5,7 @@ import Link from "next/link";
 //next
 
 import { useAuthStore } from "../store/useAuthStore";
+import SorSu from "../../../public/Sorsu.png";
 
 import ProfileModal from "./ProfileModal";
 
@@ -14,8 +15,19 @@ export default function Header() {
 
   return (
     <div className="flex justify-between bg-white">
-      <div className="font-bona_nova_sc flex w-[55%] items-center gap-4 bg-[#800000] py-2 pl-5">
-        <div className="h-13 w-13 rounded-full bg-green-200"></div>
+      <div className="font-bona_nova_sc flex w-[55%] items-center gap-4 bg-[#800000] py-2 pl-5 lg:pl-10">
+        <div className="flex h-13 w-13 items-center justify-center overflow-hidden rounded-full lg:h-16 lg:w-16">
+          <div className="relative h-full w-full">
+            <Image
+              src={SorSu}
+              alt="SorSU Logo"
+              fill
+              priority
+              sizes="(max-width: 1024px) 52px, 64px"
+              className="object-contain"
+            />
+          </div>
+        </div>
         <Link href="/">
           <p className="flex flex-col text-white sm:flex-row sm:gap-2 lg:text-4xl">
             <span>Sorsogon</span>

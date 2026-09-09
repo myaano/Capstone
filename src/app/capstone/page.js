@@ -65,7 +65,7 @@ export default function Capstone() {
     };
     fetchPapers();
     return () => controller.abort();
-  }, [filters]);
+  }, [filters, page]);
 
   // pagination useStates
 
@@ -100,7 +100,7 @@ export default function Capstone() {
                     {/* use js to generate these divs and the contents for each paper link that leads to the dynamic /thesis page */}
                     <div className="flex min-h-40 flex-col justify-between">
                       <div>
-                        <Link href={`/thesis/${paper.id}`}>
+                        <Link href={`/capstone/${paper.id}`}>
                           <p className="line-clamp-2 text-xl font-semibold underline decoration-1 underline-offset-3">
                             {/* Level of Technology implementation in the classroom as
                             a predictor of students' achievment in English, Math
