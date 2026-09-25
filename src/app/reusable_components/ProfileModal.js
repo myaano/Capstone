@@ -52,7 +52,7 @@ export default function ProfileModal() {
       ref={containerRef}
       className="relative flex flex-col items-center justify-center"
     >
-      <div className="font-urbanist top-10 flex flex-col items-center justify-center gap-7 font-light text-white md:min-w-28">
+      <div className="font-urbanist top-10 flex flex-col items-center justify-center gap-7 font-light text-white">
         <div className="group relative md:px-1">
           <button
             className="flex items-center justify-center gap-1"
@@ -92,7 +92,7 @@ export default function ProfileModal() {
           </div>
         </div>
       </div>
-      <div className="absolute -bottom-34 text-lg">
+      <div className="absolute top-full left-1/2 z-30 mt-5 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 text-lg">
         {isOpen && (
           <div className="flex flex-col items-center justify-center gap-1 rounded-xl bg-[#071437] px-3 py-3">
             {isAdmin && (
@@ -124,6 +124,22 @@ export default function ProfileModal() {
                   onClick={() => router.push("/dashboard")}
                 >
                   Dashboard
+                </div>
+              </div>
+            )}
+            {isAdmin && (
+              <div className="group relative px-1">
+                <button
+                  onClick={() => router.push("/campus")}
+                  className="cursor-pointer"
+                >
+                  Campus Editor
+                </button>
+                <div
+                  className="absolute inset-0 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]"
+                  onClick={() => router.push("/campus")}
+                >
+                  Campus Editor
                 </div>
               </div>
             )}

@@ -36,6 +36,7 @@ import { PieChart, Pie, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { useAuthStore } from "./store/useAuthStore";
 
 import ProfileModal from "./reusable_components/ProfileModal";
+import Search from "./reusable_components/Search";
 
 export default function Home() {
   //lenis function
@@ -75,18 +76,32 @@ export default function Home() {
   }
 
   const [Analytics, setAnalytics] = useState(null);
+  const [pieOuterRadius, setPieOuterRadius] = useState(100);
+
+  useEffect(() => {
+    const updatePieOuterRadius = () => {
+      setPieOuterRadius(window.innerWidth >= 1024 ? 200 : 100);
+    };
+
+    updatePieOuterRadius();
+    window.addEventListener("resize", updatePieOuterRadius);
+
+    return () => window.removeEventListener("resize", updatePieOuterRadius);
+  }, []);
+
   // fetch paper analytics
   useEffect(() => {
     async function loadAnalyticsData() {
       try {
         const response = await fetch(
-          "https://application-production-cfb3.up.railway.app/api/papers/analytics",
+          "https://application-production-cfb3.up.railway.app/api/analytics",
         );
         if (!response.ok) {
           throw new Error(`Request failed: ${response.status}`);
         }
         const data = await response.json();
         setAnalytics(data);
+        console.log(data);
       } catch (error) {
         console.error("Failed to load data:", error);
       }
@@ -183,37 +198,7 @@ export default function Home() {
         <div className="bg-[#fdfffc]">
           {/* header */}
           <div className="sticky top-0 z-50 flex items-center justify-end bg-transparent">
-            {/*modal buttons*/}
-            <div className="font-urbanist flex w-[45%] items-center justify-center bg-[#071437] p-3 font-extralight text-white select-none lg:w-[25%] lg:text-2xl">
-              {/*button containers*/}
-              <div className="flex items-center border-r border-white pr-3">
-                <div className="group relative flex cursor-pointer items-center justify-center lg:px-4">
-                  <button className="flex cursor-pointer items-center justify-center gap-2 focus:ring-0 focus:outline-none">
-                    <svg
-                      width="26"
-                      height="26"
-                      viewBox="0 0 26 26"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M10.7879 20.2424C16.0095 20.2424 20.2424 16.0095 20.2424 10.7879C20.2424 5.56626 16.0095 1.33331 10.7879 1.33331C5.56626 1.33331 1.33331 5.56626 1.33331 10.7879C1.33331 16.0095 5.56626 20.2424 10.7879 20.2424Z"
-                        stroke="white"
-                        strokeWidth="2.66667"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M24.0917 25.1204C24.3758 25.4043 24.8363 25.4043 25.1204 25.1204C25.4043 24.8363 25.4043 24.3758 25.1204 24.0917L24.0917 25.1204ZM25.1204 24.0917L17.8476 16.819L16.819 17.8476L24.0917 25.1204L25.1204 24.0917Z"
-                        fill="white"
-                      />
-                    </svg>
-                    Search
-                  </button>
-                  <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]">
-                    Search
-                  </div>
-                </div>
-              </div>
+            <div className="font-urbanist flex w-[45%] items-center justify-center bg-[#071437] p-3 font-extralight text-white select-none lg:w-[15%] lg:text-2xl">
               <div className="pl-3">
                 {isLoading ? (
                   <div className="lg:px-4">Loading..</div>
@@ -230,9 +215,7 @@ export default function Home() {
                   </Link>
                 )}
               </div>
-              {/*button containers */}
             </div>
-            {/*modal buttons*/}
           </div>
           {/* header */}
 
@@ -254,7 +237,6 @@ export default function Home() {
             {/* logo */}
             {/* uniTitle */}
 
-            {/* !!!!!!!!!!!!!!!!!!!!!!!!!!!! THE TITLE SHOULD BE A CLICKABLE LINK THAT RETURNS THE USER TO HOME PAGE!!!!!!!!!!!! */}
             <p className="flex flex-col sm:flex-row sm:gap-2 lg:text-4xl">
               <span>Sorsogon</span>
               <span>State</span>
@@ -276,8 +258,8 @@ export default function Home() {
                     :
                   </p>
                   <div className="font-urbanist text-[20px] leading-none text-[#131312] lg:text-3xl">
-                    <p>Sorsogon State University</p>
-                    <p>Institutional Repository</p>
+                    <p>Institutional Repository of</p>
+                    <p>Theses and Capstone Projects</p>
                   </div>
                 </div>
                 <div className="font-urbanist pt-5 text-[#242423] lg:pt-10">
@@ -292,6 +274,10 @@ export default function Home() {
                 </div>
               </div>
               {/* about */}
+
+              <div className="px-10 py-10">
+                <Search />
+              </div>
 
               {/* most viewed papers title */}
               <div className="font-bona_nova mt-10 mr-5 bg-[#071437] py-3 pl-5 text-2xl text-white underline sm:mr-0 lg:pl-10">
@@ -334,7 +320,7 @@ export default function Home() {
                     {/* this stupid number should have a counting animation from 0 to current number of papers */}
                     {/* this svg will be a <Link /> which is pressable and will send the user to the thesis section */}
                     <Link
-                      href="/thesis"
+                      href="/theses"
                       className="focus:ring-0 focus:outline-none"
                     >
                       <svg
@@ -353,7 +339,7 @@ export default function Home() {
                     {/* this svg will be a <Link /> which is pressable and will send the user to the thesis section */}
                   </p>
                   <p className="font-bona_nova_sc pt-2 text-2xl leading-none">
-                    Thesis Papers
+                    Theses Papers
                   </p>
                 </div>
                 <div className="flex w-full flex-col justify-center">
@@ -378,7 +364,7 @@ export default function Home() {
                     </Link>
                   </p>
                   <p className="font-bona_nova_sc pt-2 text-2xl leading-none">
-                    Capstone Papers
+                    Capstone Projects
                   </p>
                 </div>
               </div>
@@ -386,9 +372,9 @@ export default function Home() {
             {/* Research Papers Analytics */}
           </div>
           {/* contents */}
-          <div className="min-h-screen w-full justify-center py-20 lg:flex">
+          <div className="min-h-screen w-full justify-center py-20 lg:flex lg:gap-0">
             <div className="flex flex-1 items-center justify-center">
-              <div className="flex h-[50vh] w-[70%] md:h-[80vh]">
+              <div className="flex h-[50vh] w-full md:h-screen">
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie
@@ -397,7 +383,7 @@ export default function Home() {
                       nameKey="category"
                       cx="50%"
                       cy="50%"
-                      outerRadius={120}
+                      outerRadius={pieOuterRadius}
                       label
                     ></Pie>
                     <Tooltip />
@@ -407,9 +393,9 @@ export default function Home() {
               </div>
             </div>
             {/* Campuses Analytics */}
-            <div className="font-cormorant_infant flex flex-1 flex-col items-center justify-center text-6xl text-[#242423]">
-              <div className="b lg: flex w-full items-center justify-between">
-                <div className="flex flex-1 justify-between px-5 lg:pr-5">
+            <div className="font-cormorant_infant mt-20 flex flex-1 flex-col items-center justify-center text-6xl text-[#242423] lg:mt-0">
+              <div className="b w-full items-center justify-between lg:flex">
+                <div className="flex flex-1 justify-between px-5 lg:px-25">
                   <p className="cursor-pointer underline decoration-transparent decoration-2 underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current">
                     Bulan
                   </p>

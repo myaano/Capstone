@@ -20,9 +20,14 @@ export async function submitUpload(prevState, formData) {
   const campus = formData.get("campus")?.toString().trim() || "";
   const department = formData.get("department")?.toString().trim() || "";
   const course = formData.get("course")?.toString().trim() || "";
+  const campus_id = formData.get("campus_id")?.toString().trim() || "";
+  const college_id = formData.get("college_id")?.toString().trim() || "";
+  const program_id = formData.get("program_id")?.toString().trim() || "";
   const year = formData.get("year")?.toString().trim() || "";
   const paper_type =
     formData.get("paper_type")?.toLowerCase().toString().trim() || "";
+  const category = formData.get("category")?.toString().trim() || "";
+  const category_id = formData.get("category_id")?.toString().trim() || "";
   //retrieve data//retrieve data//retrieve data//retrieve data
 
   //error validations //error validations //error validations //error validations //error validations
@@ -41,11 +46,12 @@ export async function submitUpload(prevState, formData) {
   if (!abstract) errors.abstract = "Abstract/Summary is required.";
   if (!title) errors.title = "Title is required.";
   if (!researchers) errors.researchers = "Researchers are required.";
-  if (!campus) errors.campus = "Campus is required.";
-  if (!department) errors.department = "Department is required.";
-  if (!course) errors.course = "Course is required.";
+  if (!campus || !campus_id) errors.campus = "Campus is required.";
+  if (!department || !college_id) errors.department = "Department is required.";
+  if (!course || !program_id) errors.course = "Course is required.";
   if (!year) errors.year = "Year is required.";
   if (!paper_type) errors.paper_type = "Paper type is required.";
+  if (!category || !category_id) errors.category = "Paper must be categorized.";
 
   if (Object.keys(errors).length > 0) {
     return {
@@ -62,11 +68,12 @@ export async function submitUpload(prevState, formData) {
   uploadData.append("abstract", abstract);
   uploadData.append("title", title);
   uploadData.append("researchers", researchers);
-  uploadData.append("campus", campus);
-  uploadData.append("department", department);
-  uploadData.append("course", course);
+  uploadData.append("campus_id", campus_id);
+  uploadData.append("college_id", college_id);
+  uploadData.append("program_id", program_id);
   uploadData.append("year", year);
   uploadData.append("paper_type", paper_type);
+  uploadData.append("category_id", category_id);
 
   // fix this variable next time and attach link it to a true env file variable
   const uploadUrl = process.env.NEXT_PUBLIC_API_URL;

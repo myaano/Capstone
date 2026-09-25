@@ -180,39 +180,31 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="font-urbanist min-h-screen bg-amber-900">
+    <div className="font-urbanist min-h-screen bg-white">
       <Header />
-      <div className="flex flex-1 flex-col bg-amber-300 px-10 py-10 text-black">
+      <div className="mx-auto flex max-w-6xl flex-1 flex-col px-6 py-10 text-black sm:px-10">
         <div className="flex flex-col">
-          <h1 className="bg-blue-200 text-6xl">Dashboard</h1>
+          <div className="flex flex-col gap-1 border-b border-black/10 pb-6">
+            <p className="text-xs tracking-[0.2em] text-[#242423]/50 uppercase">
+              Overview
+            </p>
+            <h1 className="font-cormorant_infant text-6xl text-[#800000]">
+              Dashboard
+            </h1>
+          </div>
 
           {error && (
-            <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            <p className="mt-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
               {error}
             </p>
           )}
 
           <div className="flex flex-col gap-16">
             {/* stat cards */}
-            <div className="mt-10 flex justify-between bg-white px-10">
-              <StatCard
-                label="Thesis"
-                color="bg-green-200"
-                className=""
-                ref={thesisTimer}
-              />
-              <StatCard
-                label="Capstone"
-                color="bg-green-300"
-                className=""
-                ref={capstoneTimer}
-              />
-              <StatCard
-                label="Papers"
-                color="bg-green-500"
-                className=""
-                ref={totalTimer}
-              />
+            <div className="mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-black/10 bg-black/10 sm:grid-cols-3">
+              <StatCard label="Thesis" ref={thesisTimer} />
+              <StatCard label="Capstone" ref={capstoneTimer} />
+              <StatCard label="Papers" ref={totalTimer} />
             </div>
 
             <div className="flex flex-col gap-4">
@@ -234,7 +226,7 @@ export default function Dashboard() {
           </div>
         </div>
         {totalPages > 1 && (
-          <div className="my-5 flex items-end justify-end border-t border-black pt-5 text-black">
+          <div className="my-5 flex items-end justify-end border-t border-black/10 pt-5 text-black">
             <Pagination
               currentPage={page}
               totalPages={totalPages}
@@ -256,16 +248,21 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ label, value, color, className, ref }) {
+function StatCard({ label, ref }) {
   return (
-    <div
-      className={`${color} flex h-60 w-60 flex-col justify-between rounded-2xl px-5 py-10 shadow-2xl`}
-    >
+    <div className="flex h-52 flex-col justify-between bg-white px-6 py-8">
       <div>
-        <h1 className="leading-none font-light">Total</h1>
-        <h1 className="text-3xl leading-none italic">{label}</h1>
+        <p className="text-xs leading-none font-light tracking-wide text-[#242423]/50 uppercase">
+          Total
+        </p>
+        <p className="font-cormorant_infant text-3xl leading-none text-[#800000] italic">
+          {label}
+        </p>
       </div>
-      <h1 ref={ref} className="flex items-end justify-end bg-blue-900 text-7xl">
+      <h1
+        ref={ref}
+        className="text-right text-7xl leading-none font-light tabular-nums"
+      >
         0
       </h1>
     </div>

@@ -1,5 +1,5 @@
 //react imports
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 //react imports
 
 // fixed 18x18 box for both states so the row it sits in never resizes on toggle
@@ -38,80 +38,177 @@ function ToggleIcon({ isOpen }) {
   );
 }
 
+// pulls { id, name } pairs out of a list of college/program-ish objects,
+// deduped by id
+function toOptions(items) {
+  const map = new Map();
+  (items || []).forEach((item) => {
+    if (item && item.id != null && !map.has(item.id)) {
+      map.set(item.id, { id: item.id, name: item.name });
+    }
+  });
+  return [...map.values()];
+}
+
 export default function Filter({ onFilterChange }) {
-  //request block here
+  //request block here — full campus -> college -> program -> category tree,
+  // same endpoint/shape the campus editor and upload form use
+
+  const [locations, setLocations] = useState([]);
 
   useEffect(() => {
-    const data = async () => {
+    const controller = new AbortController();
+    const fetchLocations = async () => {
       try {
-        const response = await fetch("data.com/api/sample");
+        const response = await fetch(
+          "https://application-production-cfb3.up.railway.app/api/locations",
+          { signal: controller.signal },
+        );
         if (!response.ok) {
           throw new Error(`Request failed: ${response.status}`);
         }
-
-        const data = await response.json();
-
-        // get the filter details (campus, dept, course, year)
+        const json = await response.json();
+        const list = Array.isArray(json)
+          ? json
+          : (json.campuses ?? json.data ?? []);
+        setLocations(list);
       } catch (error) {
-        console.error("Failed to Fetch Data", error);
+        if (error.name !== "AbortError") {
+          console.error("Failed to fetch locations", error);
+        }
       }
     };
+    fetchLocations();
+    return () => controller.abort();
   }, []);
 
   //request block here
 
-  // each paper data are (title, researchers, campus, dept, course, year)
+  // each paper data are (title, researchers, campus, college, program, category, year)
 
-  // filter data are (campus, dept, course, year)
+  // filter data are (campus_id, college_id, program_id, category_id, year)
 
   // these usestates are for opening and closing the filter options
   const [CampusOpen, setCampusOpen] = useState(false);
-  const [DepartmentOpen, setDepartmentOpen] = useState(false);
-  const [CourseOpen, setCourseOpen] = useState(false);
+  const [CollegeOpen, setCollegeOpen] = useState(false);
+  const [ProgramOpen, setProgramOpen] = useState(false);
+  const [CategoryOpen, setCategoryOpen] = useState(false);
   const [YearOpen, setYearOpen] = useState(false);
   // these usestates are for opening and closing the filter options
 
-  //selected options use states
+  //selected options use states — these hold ids, not names
   const [selectedCampus, setSelectedCampus] = useState([]);
-  const [selectedDepartment, setSelectedDepartment] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState([]);
+  const [selectedCollege, setSelectedCollege] = useState([]);
+  const [selectedProgram, setSelectedProgram] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState([]);
   const [selectedYear, setSelectedYear] = useState([]);
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
 
   //selected options use states
 
+  // ---- cascading option lists ----
+  // campuses are always the full list — nothing narrows them
+  const campusOptions = useMemo(
+    () => toOptions(locations.map((c) => ({ id: c.id, name: c.name }))),
+    [locations],
+  );
+
+  // colleges: all colleges under the selected campuses, or every college if
+  // no campus is selected yet
+  const visibleColleges = useMemo(() => {
+    const campuses =
+      selectedCampus.length === 0
+        ? locations
+        : locations.filter((c) => selectedCampus.includes(c.id));
+    const pool = [];
+    campuses.forEach((campus) => pool.push(...(campus.colleges || [])));
+    return pool;
+  }, [locations, selectedCampus]);
+  const collegeOptions = useMemo(
+    () => toOptions(visibleColleges),
+    [visibleColleges],
+  );
+
+  // programs: all programs under the selected (or all visible) colleges
+  const visiblePrograms = useMemo(() => {
+    const colleges =
+      selectedCollege.length === 0
+        ? visibleColleges
+        : visibleColleges.filter((c) => selectedCollege.includes(c.id));
+    const pool = [];
+    colleges.forEach((college) => pool.push(...(college.programs || [])));
+    return pool;
+  }, [visibleColleges, selectedCollege]);
+  const programOptions = useMemo(
+    () => toOptions(visiblePrograms),
+    [visiblePrograms],
+  );
+
+  // categories: all categories under the selected (or all visible) programs
+  const visibleCategories = useMemo(() => {
+    const programs =
+      selectedProgram.length === 0
+        ? visiblePrograms
+        : visiblePrograms.filter((p) => selectedProgram.includes(p.id));
+    const pool = [];
+    programs.forEach((program) => pool.push(...(program.categories || [])));
+    return pool;
+  }, [visiblePrograms, selectedProgram]);
+  const categoryOptions = useMemo(
+    () => toOptions(visibleCategories),
+    [visibleCategories],
+  );
+
+  // when a parent level narrows, drop any child selections that are no
+  // longer valid (e.g. a selected college that isn't under the campus
+  // you just picked)
+  useEffect(() => {
+    const validIds = new Set(collegeOptions.map((c) => c.id));
+    setSelectedCollege((prev) => {
+      const next = prev.filter((id) => validIds.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [collegeOptions]);
+
+  useEffect(() => {
+    const validIds = new Set(programOptions.map((p) => p.id));
+    setSelectedProgram((prev) => {
+      const next = prev.filter((id) => validIds.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [programOptions]);
+
+  useEffect(() => {
+    const validIds = new Set(categoryOptions.map((c) => c.id));
+    setSelectedCategory((prev) => {
+      const next = prev.filter((id) => validIds.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [categoryOptions]);
+
   const resetFilter = () => {
     setSelectedCampus([]);
-    setSelectedDepartment([]);
-    setSelectedCourse([]);
+    setSelectedCollege([]);
+    setSelectedProgram([]);
+    setSelectedCategory([]);
     setSelectedYear([]);
   };
 
   useEffect(() => {
     onFilterChange?.({
-      campus: selectedCampus,
-      department: selectedDepartment,
-      course: selectedCourse,
+      campus_id: selectedCampus,
+      college_id: selectedCollege,
+      program_id: selectedProgram,
+      category_id: selectedCategory,
       year: selectedYear,
     });
-  }, [selectedCampus, selectedDepartment, selectedCourse, selectedYear]);
-
-  // this is the current sample of the details that will arrive from the db/server.
-  // the incoming data should be stored within this object and presented in the ui for filtering
-  const FilterOptions = {
-    Bulan: {
-      CICT: [
-        "Bachelor of Science in Computer Science",
-        "Bachelor of Science in Information Technology",
-        "Bachelor of Science in Information System",
-      ],
-      BME: [
-        "Bachelor of Science in Accountancy",
-        "Bachelor of Science in Entrepreneurship",
-        "Bachelor of Science in Public Administration",
-      ],
-    },
-  };
+  }, [
+    selectedCampus,
+    selectedCollege,
+    selectedProgram,
+    selectedCategory,
+    selectedYear,
+  ]);
 
   const startYear = 2018;
   const currentYear = new Date().getFullYear();
@@ -158,20 +255,20 @@ export default function Filter({ onFilterChange }) {
           <div
             className={`overflow-hidden transition-all duration-300 ease-out ${CampusOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"}`}
           >
-            {Object.keys(FilterOptions).map((campus) => (
-              <label key={campus} className="flex gap-2 py-1">
+            {campusOptions.map((campus) => (
+              <label key={campus.id} className="flex gap-2 py-1">
                 <input
                   type="checkbox"
-                  checked={selectedCampus.includes(campus)}
+                  checked={selectedCampus.includes(campus.id)}
                   onChange={() =>
                     setSelectedCampus((previous) =>
-                      previous.includes(campus)
-                        ? previous.filter((x) => x !== campus)
-                        : [...previous, campus],
+                      previous.includes(campus.id)
+                        ? previous.filter((x) => x !== campus.id)
+                        : [...previous, campus.id],
                     )
                   }
                 />
-                <span>{campus}</span>
+                <span>{campus.name}</span>
               </label>
             ))}
           </div>
@@ -180,29 +277,29 @@ export default function Filter({ onFilterChange }) {
         <div className="bg-[#071437] px-5 py-4 text-white">
           <div
             className="flex cursor-pointer items-center justify-between"
-            onClick={() => setDepartmentOpen((prev) => !prev)}
+            onClick={() => setCollegeOpen((prev) => !prev)}
           >
-            <h1 className="text-xl text-white">Departments</h1>
-            <ToggleIcon isOpen={DepartmentOpen} />
+            <h1 className="text-xl text-white">Colleges</h1>
+            <ToggleIcon isOpen={CollegeOpen} />
           </div>
 
           <div
-            className={`overflow-hidden transition-all duration-300 ease-out ${DepartmentOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"}`}
+            className={`overflow-hidden transition-all duration-300 ease-out ${CollegeOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"}`}
           >
-            {Object.keys(FilterOptions.Bulan).map((departments) => (
-              <label key={departments} className="flex gap-2 py-1">
+            {collegeOptions.map((college) => (
+              <label key={college.id} className="flex gap-2 py-1">
                 <input
                   type="checkbox"
-                  checked={selectedDepartment.includes(departments)}
+                  checked={selectedCollege.includes(college.id)}
                   onChange={() =>
-                    setSelectedDepartment((previous) =>
-                      previous.includes(departments)
-                        ? previous.filter((x) => x !== departments)
-                        : [...previous, departments],
+                    setSelectedCollege((previous) =>
+                      previous.includes(college.id)
+                        ? previous.filter((x) => x !== college.id)
+                        : [...previous, college.id],
                     )
                   }
                 />
-                <span>{departments}</span>
+                <span>{college.name}</span>
               </label>
             ))}
           </div>
@@ -211,33 +308,62 @@ export default function Filter({ onFilterChange }) {
         <div className="bg-[#071437] px-5 py-4 text-white">
           <div
             className="flex cursor-pointer items-center justify-between"
-            onClick={() => setCourseOpen((prev) => !prev)}
+            onClick={() => setProgramOpen((prev) => !prev)}
           >
-            <h1 className="text-xl text-white">Course/Program</h1>
-            <ToggleIcon isOpen={CourseOpen} />
+            <h1 className="text-xl text-white">Program</h1>
+            <ToggleIcon isOpen={ProgramOpen} />
           </div>
 
           <div
-            className={`overflow-hidden transition-all duration-300 ease-out ${CourseOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"}`}
+            className={`overflow-hidden transition-all duration-300 ease-out ${ProgramOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"}`}
           >
-            {Object.keys(FilterOptions.Bulan).flatMap((department) =>
-              FilterOptions.Bulan[department].map((course) => (
-                <label key={course} className="flex gap-2 pb-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedCourse.includes(course)}
-                    onChange={() =>
-                      setSelectedCourse((previous) =>
-                        previous.includes(course)
-                          ? previous.filter((x) => x !== course)
-                          : [...previous, course],
-                      )
-                    }
-                  />
-                  <span className="leading-5">{course}</span>
-                </label>
-              )),
-            )}
+            {programOptions.map((program) => (
+              <label key={program.id} className="flex gap-2 pb-2">
+                <input
+                  type="checkbox"
+                  checked={selectedProgram.includes(program.id)}
+                  onChange={() =>
+                    setSelectedProgram((previous) =>
+                      previous.includes(program.id)
+                        ? previous.filter((x) => x !== program.id)
+                        : [...previous, program.id],
+                    )
+                  }
+                />
+                <span className="leading-5">{program.name}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-[#071437] px-5 py-4 text-white">
+          <div
+            className="flex cursor-pointer items-center justify-between"
+            onClick={() => setCategoryOpen((prev) => !prev)}
+          >
+            <h1 className="text-xl text-white">Category</h1>
+            <ToggleIcon isOpen={CategoryOpen} />
+          </div>
+
+          <div
+            className={`overflow-hidden transition-all duration-300 ease-out ${CategoryOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"}`}
+          >
+            {categoryOptions.map((category) => (
+              <label key={category.id} className="flex gap-2 py-1">
+                <input
+                  type="checkbox"
+                  checked={selectedCategory.includes(category.id)}
+                  onChange={() =>
+                    setSelectedCategory((previous) =>
+                      previous.includes(category.id)
+                        ? previous.filter((x) => x !== category.id)
+                        : [...previous, category.id],
+                    )
+                  }
+                />
+                <span>{category.name}</span>
+              </label>
+            ))}
           </div>
         </div>
 
