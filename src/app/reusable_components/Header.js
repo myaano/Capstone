@@ -37,39 +37,8 @@ export default function Header() {
         </Link>
       </div>
 
-      <div className="font-urbanist w-[45%] font-extralight select-none lg:w-[25%] lg:text-2xl">
+      <div className="font-urbanist w-[45%] font-extralight select-none lg:w-[15%] lg:text-2xl">
         <div className="flex w-full items-center justify-center bg-[#071437] p-3 text-white">
-          <div className="flex items-center border-r border-white pr-3">
-            {/* Link */}
-            <div className="group relative flex cursor-pointer items-center justify-center lg:px-4">
-              <button className="flex cursor-pointer items-center justify-center gap-2">
-                <svg
-                  width="26"
-                  height="26"
-                  viewBox="0 0 26 26"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M10.7879 20.2424C16.0095 20.2424 20.2424 16.0095 20.2424 10.7879C20.2424 5.56626 16.0095 1.33331 10.7879 1.33331C5.56626 1.33331 1.33331 5.56626 1.33331 10.7879C1.33331 16.0095 5.56626 20.2424 10.7879 20.2424Z"
-                    stroke="white"
-                    strokeWidth="2.66667"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M24.0917 25.1204C24.3758 25.4043 24.8363 25.4043 25.1204 25.1204C25.4043 24.8363 25.4043 24.3758 25.1204 24.0917L24.0917 25.1204ZM25.1204 24.0917L17.8476 16.819L16.819 17.8476L24.0917 25.1204L25.1204 24.0917Z"
-                    fill="white"
-                  />
-                </svg>
-                Search
-              </button>
-              <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]">
-                Search
-              </div>
-            </div>
-            {/* Link */}
-          </div>
-
           <div className="pl-3">
             {isLoading ? (
               <div className="lg:px-4">Loading..</div>

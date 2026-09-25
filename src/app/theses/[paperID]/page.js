@@ -8,6 +8,10 @@ export default async function PaperDetails({ params }) {
   const { paperID } = await params;
   let data = null;
   //in the fetch get request here, make the fetch know which paper it will be in /thesis
+  function fieldLabel(value) {
+    if (value && typeof value === "object") return value.name ?? "";
+    return value ?? "";
+  }
 
   //this damn variable is for the damn link of a singular paper alone so that the user can view it
   const API_URL = "https://application-production-cfb3.up.railway.app";
@@ -15,7 +19,7 @@ export default async function PaperDetails({ params }) {
   try {
     //sample url only, put the real url of the api
     const response = await fetch(
-      `https://application-production-cfb3.up.railway.app/api/papers/thesis/${paperID}`,
+      `${API_URL}/api/papers/${paperID}?paper_type=thesis`,
       {
         cache: "no-store",
       },
@@ -40,6 +44,7 @@ export default async function PaperDetails({ params }) {
   return (
     <div>
       <Header></Header>
+
       <div className="flex min-h-screen flex-col bg-white py-10">
         <div className="flex flex-1 flex-col px-4 lg:px-10">
           <p className="font-bona_nova text-3xl text-[#242423]">{data.title}</p>
@@ -74,16 +79,16 @@ export default async function PaperDetails({ params }) {
                     </p>
                   </div>
                   <div className="">
-                    <p className="font-semibold">Department :</p>
-                    <p>{data.department}</p>
+                    <p className="font-semibold">College :</p>
+                    <p>{fieldLabel(data.college)}</p>
                   </div>
                   <div className="">
                     <p className="font-semibold">Program :</p>
-                    <p>{data.course}</p>
+                    <p>{fieldLabel(data.program)}</p>
                   </div>
                   <div className="">
                     <p className="font-semibold">Campus Library :</p>
-                    <p>{data.campus} Campus</p>
+                    <p>{fieldLabel(data.campus)} Campus</p>
                   </div>
                   <div className="">
                     <p className="font-semibold">Year :</p>
@@ -92,8 +97,11 @@ export default async function PaperDetails({ params }) {
                   <div>
                     <p className="font-semibold">File:</p>
                     <p>
-                      <a href={`${API_URL}/storage/${data.file_url}`}>
-                        Download?
+                      <a
+                        href={`${API_URL}/storage/${data.file_url}`}
+                        className="text-[#0000EE] underline"
+                      >
+                        View
                       </a>
                     </p>
                   </div>

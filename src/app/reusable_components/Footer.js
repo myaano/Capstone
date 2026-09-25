@@ -33,7 +33,7 @@ export default function Footer() {
 
         {/* use grid here */}
         <div className="justify-between md:flex">
-          <div className="grid grid-cols-2 gap-5 text-xl md:text-lg">
+          <div className="grid grid-cols-1 gap-5 text-xl sm:grid-cols-2 md:text-lg">
             <div>
               <h1 className="border-b border-white text-white/80">Portal</h1>
               <Link

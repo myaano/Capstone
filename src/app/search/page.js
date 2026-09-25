@@ -19,7 +19,7 @@ function SearchContent() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const handlChange = (newPage) => {
+  const handleChange = (newPage) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", newPage);
     router.push(`${pathname}?${params.toString()}`);
@@ -43,8 +43,8 @@ function SearchContent() {
 
   return (
     <>
-      <div className="mt-5 flex flex-1 bg-red-400">
-        <div className="border-r border-black pr-2 lg:w-72">
+      <div className="mt-5 flex flex-1 bg-red-400 text-black">
+        <div className="border-black pr-2 lg:w-72 lg:border-r">
           <Filter></Filter>
         </div>
         <div className="font-urbanist ml-2 h-full w-full bg-blue-500 py-2 lg:flex-1">

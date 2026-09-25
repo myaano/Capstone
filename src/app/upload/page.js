@@ -7,6 +7,45 @@ import { useRef, useState, useEffect, useActionState } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
 
+const LOCATIONS_URL =
+  "https://application-production-cfb3.up.railway.app/api/locations";
+
+// same endpoint/shape as getCampuses() in the campus editor page
+async function getCampuses() {
+  const res = await fetch(LOCATIONS_URL);
+  if (!res.ok) throw new Error("Failed to load campuses");
+  const json = await res.json();
+  const list = Array.isArray(json) ? json : (json.campuses ?? json.data);
+  return Array.isArray(list) ? list : [];
+}
+
+// turns [{ id, name, colleges: [{ id, name, programs: [{ id, name }] }] }, ...]
+// into { [campusName]: { id, colleges: { [collegeName]: { id, programs: [{ id, name }] } } } }
+// for the cascading Campus -> College -> Program dropdowns below — the ids are
+// what actually get submitted to the backend (campus_id/college_id/program_id),
+// the names are only for display in the selects
+function buildCampusData(campuses) {
+  const campusData = {};
+  campuses.forEach((campus) => {
+    const colleges = {};
+    (campus.colleges || []).forEach((college) => {
+      colleges[college.name] = {
+        id: college.id,
+        programs: (college.programs || []).map((program) => ({
+          id: program.id,
+          name: program.name,
+          categories: (program.categories || []).map((category) => ({
+            id: category.id,
+            name: category.name,
+          })),
+        })),
+      };
+    });
+    campusData[campus.name] = { id: campus.id, colleges };
+  });
+  return campusData;
+}
+
 export default function Upload() {
   //redirect
   const router = useRouter();
@@ -98,22 +137,30 @@ export default function Upload() {
 
   //dropdown options
 
-  const campusData = {
-    Bulan: {
-      CICT: [
-        "Bachelor of Science in Computer Science",
-        "Bachelor of Science in Information Technology",
-        "Bachelor of Science in Information System",
-      ],
-      BME: [
-        "Bachelor of Science in Accountancy",
-        "Bachelor of Science in Entrepreneurship",
-        "Bachelor of Science in Public Administration",
-      ],
-    },
+  const [campusData, setCampusData] = useState({});
+  const [campusDataError, setCampusDataError] = useState("");
 
-    // list all the campuses and departments of each campuses in this array to be used by the cascading dropdown
-  };
+  useEffect(() => {
+    let cancelled = false;
+
+    async function populateCampusData() {
+      try {
+        const campuses = await getCampuses();
+        if (!cancelled) setCampusData(buildCampusData(campuses));
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          setCampusDataError("Couldn't load campus list. Please refresh.");
+        }
+      }
+    }
+
+    populateCampusData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const currentYear = new Date().getFullYear();
   const startYear = 2018;
@@ -123,7 +170,8 @@ export default function Upload() {
     (_, i) => currentYear - i,
   );
 
-  const Category = ["Business", "Politics & Society", "Technology"];
+  const [SelectedCategory, setSelectedCategory] = useState("");
+  const [CategoryOptions, setCategoryOptions] = useState([]);
 
   const [FileType, setFileType] = useState("");
 
@@ -140,7 +188,7 @@ export default function Upload() {
   // cascading dropdown logic
   useEffect(() => {
     if (Campus) {
-      setDepartmentOptions(Object.keys(campusData[Campus] || {}));
+      setDepartmentOptions(Object.keys(campusData[Campus]?.colleges || {}));
       setDepartment("");
       setCourse("");
       setCourseOptions([]);
@@ -154,14 +202,44 @@ export default function Upload() {
 
   useEffect(() => {
     if (Campus && Department) {
-      setCourseOptions(campusData[Campus]?.[Department] || []);
+      const programs =
+        campusData[Campus]?.colleges?.[Department]?.programs || [];
+      setCourseOptions(programs.map((program) => program.name));
       setCourse("");
     } else {
       setCourseOptions([]);
       setCourse("");
     }
   }, [Campus, Department]);
+  useEffect(() => {
+    if (Campus && Department && Course) {
+      const programs =
+        campusData[Campus]?.colleges?.[Department]?.programs || [];
+      const selectedProgram = programs.find(
+        (program) => program.name === Course,
+      );
+      setCategoryOptions(
+        (selectedProgram?.categories || []).map((category) => category.name),
+      );
+      setSelectedCategory("");
+    } else {
+      setCategoryOptions([]);
+      setSelectedCategory("");
+    }
+  }, [Campus, Department, Course]);
   // cascading dropdown logic
+
+  // derive the actual DB ids from the selected names, for submission
+  const campusId = campusData[Campus]?.id ?? "";
+  const collegeId = campusData[Campus]?.colleges?.[Department]?.id ?? "";
+  const selectedProgram = campusData[Campus]?.colleges?.[
+    Department
+  ]?.programs?.find((program) => program.name === Course);
+  const programId = selectedProgram?.id ?? "";
+  const categoryId =
+    selectedProgram?.categories?.find(
+      (category) => category.name === SelectedCategory,
+    )?.id ?? "";
 
   //dropdown options
 
@@ -183,8 +261,9 @@ export default function Upload() {
     setToken(localStorage.getItem("token") || "");
   }, []);
 
+  const Categories = ["Business", "Politics & Society", "Technology"];
   return (
-    <div className="h-screen bg-white">
+    <div className="min-h-screen bg-white">
       {isLoading || !user || user.role !== "admin" ? (
         <div className="font-urbanist flex min-h-screen items-center justify-center">
           <h1>Unauthorized Access Detected</h1>
@@ -192,10 +271,12 @@ export default function Upload() {
       ) : (
         <div>
           <Header></Header>
-          <div className="font-urbanist min-h-screen bg-white px-20 py-12 text-black">
-            <div className="flex h-full flex-col rounded-b-xl border-black shadow-2xl">
+          <div className="font-urbanist min-h-screen bg-white px-4 py-6 text-black sm:px-10 lg:px-20 lg:py-12">
+            <div className="flex flex-col rounded-b-xl border-black shadow-2xl">
               <div className="rounded-t-2xl bg-[#800000]">
-                <p className="px-10 py-5 text-5xl text-white">Upload</p>
+                <p className="px-4 py-4 text-3xl text-white sm:px-10 sm:py-5 sm:text-5xl">
+                  Upload
+                </p>
               </div>
 
               {/* FORM LOGICS HERE */}
@@ -207,11 +288,11 @@ export default function Upload() {
                 onDrop={handleDrop}
                 type="hidden"
               >
-                <div className="h-180 lg:flex">
-                  <div className="flex w-full flex-col px-10 py-4 text-black">
-                    <div className="flex h-full flex-col justify-between">
+                <div className="lg:flex lg:h-180">
+                  <div className="flex w-full flex-col px-4 py-4 text-black sm:px-10">
+                    <div className="flex h-full flex-col justify-between gap-6 lg:gap-0">
                       <div className="w-full bg-white p-2">
-                        <div className="flex flex-col gap-2 text-xl">
+                        <div className="flex flex-col gap-2 text-lg sm:text-xl">
                           <div className="items-center justify-between lg:flex">
                             <p>File Upload :</p>
 
@@ -283,7 +364,7 @@ export default function Upload() {
                         <div className="h-50 w-full">
                           <textarea
                             className="h-full w-full resize-none overflow-y-auto rounded-md border border-black bg-white px-2 py-1 text-black focus:outline-none"
-                            placeholder="Abstract and Summary here ..."
+                            placeholder="Abstract or Summary here ..."
                             name="abstract/summary"
                           />
                         </div>
@@ -321,13 +402,13 @@ export default function Upload() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex w-full flex-col items-center justify-center px-10 py-4">
-                    <div className="flex h-full flex-col justify-between">
+                  <div className="flex w-full flex-col items-center justify-center px-4 py-4 sm:px-10">
+                    <div className="flex h-full w-full flex-col justify-between gap-4 lg:gap-0">
                       <div>
                         <div className="items-center justify-between lg:flex">
                           <h1 className="text-xl">Campus :</h1>
                           <span className="text-sm text-red-500">
-                            {state.errors.campus}
+                            {state.errors.campus || campusDataError}
                           </span>
                         </div>
                         <select
@@ -353,7 +434,7 @@ export default function Upload() {
                       </div>
                       <div>
                         <div className="items-center justify-between lg:flex">
-                          <h1 className="text-xl">Department :</h1>
+                          <h1 className="text-xl">College :</h1>
                           <span className="text-sm text-red-500">
                             {state.errors.department}
                           </span>
@@ -368,7 +449,7 @@ export default function Upload() {
                           disabled={!Campus}
                         >
                           <option value="" hidden>
-                            Department
+                            College
                           </option>
                           {DepartmentOptions.map((selectedDepartment) => (
                             <option
@@ -382,7 +463,7 @@ export default function Upload() {
                       </div>
                       <div>
                         <div className="items-center justify-between lg:flex">
-                          <h1 className="text-xl">Course :</h1>
+                          <h1 className="text-xl">Program :</h1>
                           <span className="text-sm text-red-500">
                             {state.errors.course}
                           </span>
@@ -395,7 +476,7 @@ export default function Upload() {
                           disabled={!Department}
                         >
                           <option value="" hidden>
-                            Course
+                            Program
                           </option>
                           {CourseOptions.map((selectedCourse) => (
                             <option key={selectedCourse} value={selectedCourse}>
@@ -404,6 +485,17 @@ export default function Upload() {
                           ))}
                         </select>
                       </div>
+                      <input type="hidden" name="campus_id" value={campusId} />
+                      <input
+                        type="hidden"
+                        name="college_id"
+                        value={collegeId}
+                      />
+                      <input
+                        type="hidden"
+                        name="program_id"
+                        value={programId}
+                      />
                       <div>
                         <div className="items-center justify-between lg:flex">
                           <h1 className="text-xl">Year :</h1>
@@ -450,7 +542,42 @@ export default function Upload() {
                           ))}
                         </select>
                       </div>
-                      <p className="text-xl font-extralight italic">
+                      <div>
+                        <div className="items-center justify-between lg:flex">
+                          <h1 className="text-xl">Category</h1>
+                          <span className="text-sm text-red-500">
+                            {state.errors.category}
+                          </span>
+                        </div>
+                        <select
+                          name="category"
+                          id=""
+                          value={SelectedCategory}
+                          onChange={(event) =>
+                            setSelectedCategory(event.target.value)
+                          }
+                          className="w-full rounded-md border border-black p-2"
+                          disabled={!Course}
+                        >
+                          <option value="" hidden>
+                            Category
+                          </option>
+                          {CategoryOptions.map((selectedCategory) => (
+                            <option
+                              key={selectedCategory}
+                              value={selectedCategory}
+                            >
+                              {selectedCategory}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          type="hidden"
+                          name="category_id"
+                          value={categoryId}
+                        />
+                      </div>
+                      <p className="text-sm font-extralight italic sm:text-xl">
                         Admin Note** Every single paper that will be uploaded
                         within the Web Repository should have a separate backup
                         storage that can be used specially for backup purposes
@@ -468,7 +595,7 @@ export default function Upload() {
                       <div className="flex items-center justify-center">
                         <button
                           type="submit"
-                          className="bg-[#071437] px-15 py-3 text-white disabled:opacity-70"
+                          className="w-full bg-[#071437] px-8 py-3 text-white disabled:opacity-70 sm:w-auto sm:px-15"
                           disabled={isPending}
                         >
                           {isPending ? "Uploading..." : "Upload"}

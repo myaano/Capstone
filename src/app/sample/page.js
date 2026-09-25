@@ -2,33 +2,122 @@
 
 import Link from "next/link";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { gsap } from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ReactLenis } from "lenis/react";
 
 import ProfileModal from "../reusable_components/ProfileModal";
 
 export default function Sample() {
+  const lenisRef = useRef(null);
+  useEffect(() => {
+    let rafId;
+
+    const loop = (time) => {
+      lenisRef.current?.lenis?.raf(time);
+      rafId = requestAnimationFrame(loop);
+    };
+
+    rafId = requestAnimationFrame(loop);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  const container = useRef(null);
+
+  const box1 = useRef(null);
+  const box2 = useRef(null);
+  const box3 = useRef(null);
+
+  useGSAP(() => {
+    gsap.registerPlugin(ScrollTrigger);
+
+    const context = gsap.context(() => {
+      //
+      const timeline = gsap.timeline({
+        scrollTrigger: {
+          target: container.current,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
+
+      timeline.to(box1.current, { y: -50 }, 0);
+      timeline.to(box2.current, { y: -100 }, 0);
+      timeline.to(box3.current, { x: -550 }, 0);
+    });
+
+    return () => context.revert();
+  }, []);
+
+  useEffect(() => {
+    const retrieve = async () => {
+      try {
+        const params = new URLSearchParams();
+        const response = await fetch(
+          `https://application-production-cfb3.up.railway.app/api/analytics`,
+        );
+
+        const data = await response.json();
+
+        console.log(data);
+        console.log("wahduawdbwada");
+      } catch (error) {
+        console.error("Failed to retrieve papers", error);
+      }
+    };
+
+    retrieve();
+  }, []);
   return (
     <>
-      <div>
-        <div className="flex h-screen items-center justify-center gap-10 bg-white">
-          <Link href="/login">
-            <div className="group font-urbanist relative flex h-20 w-20 cursor-pointer items-center justify-center bg-black">
-              <button className="absolute text-white">Login</button>
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-lime-500 transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-lime-500 group-hover:text-black group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]">
-                Login
+      <ReactLenis
+        root
+        options={{
+          autoRaf: false,
+          duration: 3,
+        }}
+        smoothWheel={true}
+        ref={lenisRef}
+      >
+        <div>
+          <div className="flex h-screen items-center justify-center gap-10 bg-white">
+            <Link href="/login">
+              <div className="group font-urbanist relative flex h-20 w-20 cursor-pointer items-center justify-center bg-black">
+                <button className="absolute text-white">Login</button>
+                <div className="absolute inset-0 z-20 flex items-center justify-center bg-lime-500 transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-lime-500 group-hover:text-black group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]">
+                  Login
+                </div>
               </div>
-            </div>
-          </Link>
+            </Link>
 
-          <div className="group font-urbanist relative flex h-20 w-20 cursor-pointer items-center justify-center bg-black">
-            <div className="absolute inset-0 z-20 flex items-center justify-center bg-lime-500 transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] group-hover:bg-lime-500 group-hover:text-black group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)]"></div>
+            <div className="group font-urbanist relative flex h-20 w-20 cursor-pointer items-center justify-center bg-black">
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-lime-500 transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] group-hover:bg-lime-500 group-hover:text-black group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)]"></div>
+            </div>
+          </div>
+          <div className="relative container flex h-screen items-center justify-center">
+            <div className="font-cormorant_infant text-9xl">SAMPLE TEXT</div>
+            <div
+              ref={container}
+              className="absolute flex h-screen items-center justify-center gap-10"
+            >
+              <div ref={box1} className="box1 h-50 w-50 bg-pink-500"></div>
+              <div ref={box2} className="box2 h-50 w-50 bg-lime-500"></div>
+              <div ref={box3} className="box3 h-50 w-50 bg-white"></div>
+            </div>
+          </div>
+
+          <div className="flex h-screen items-center justify-center">
+            <ProfileModal></ProfileModal>
           </div>
         </div>
-
-        <div className="flex h-screen items-center justify-center">
-          <ProfileModal></ProfileModal>
-        </div>
-      </div>
+      </ReactLenis>
     </>
   );
 }
