@@ -14,7 +14,7 @@ export default function AuthLoader() {
       return;
     }
 
-    fetch("https://application-production-cfb3.up.railway.app/api/user", {
+    fetch("https://capstone-backend-1yta.onrender.com/api/user", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

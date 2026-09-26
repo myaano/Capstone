@@ -32,15 +32,12 @@ export default function ProfileModal() {
   const handleLogout = async () => {
     const token = localStorage.getItem("token");
 
-    await fetch(
-      "https://application-production-cfb3.up.railway.app/api/logout",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    await fetch("https://capstone-backend-1yta.onrender.com/api/logout", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    );
+    });
 
     localStorage.removeItem("token");
     logout();

@@ -15,7 +15,7 @@ export default async function CapstoneID({ params, searchParams }) {
   }
 
   //this damn variable is for the damn link of a singular paper alone so that the user can view it
-  const API_URL = "https://application-production-cfb3.up.railway.app";
+  const API_URL = "https://capstone-backend-1yta.onrender.com";
 
   let data = null;
   //in the fetch get request here, make the fetch know which paper it will be in /thesis
@@ -106,7 +106,7 @@ export default async function CapstoneID({ params, searchParams }) {
                       <p className="font-semibold">File:</p>
                       <p>
                         <a
-                          href={`${API_URL}/storage/${data.file_url}`}
+                          href={`${API_URL}/api/papers/${data.id}/file`}
                           className="text-[#0000EE] underline"
                         >
                           View

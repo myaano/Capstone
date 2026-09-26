@@ -63,7 +63,7 @@ export default function Thesis() {
         params.append("paper_type", "thesis");
 
         const response = await fetch(
-          `https://application-production-cfb3.up.railway.app/api/papers?${params.toString()}`,
+          `https://capstone-backend-1yta.onrender.com/api/papers?${params.toString()}`,
           {
             signal: controller.signal,
           },

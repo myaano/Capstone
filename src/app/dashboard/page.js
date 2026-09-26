@@ -14,6 +14,13 @@ import { useAuthStore } from "../store/useAuthStore";
 //rerout someone
 import { useRouter } from "next/navigation";
 
+// campus/college/program/category on a paper are nested { id, name } objects
+// — render the name instead of handing React the raw object.
+function fieldLabel(value) {
+  if (value && typeof value === "object") return value.name ?? "";
+  return value ?? "";
+}
+
 export default function Dashboard() {
   //rerout
   const router = useRouter();
@@ -81,7 +88,7 @@ export default function Dashboard() {
     async function loadAnalyticsData() {
       try {
         const response = await fetch(
-          "https://application-production-cfb3.up.railway.app/api/papers/analytics",
+          "https://capstone-backend-1yta.onrender.com/api/analytics",
         );
         if (!response.ok) {
           throw new Error(`Request failed: ${response.status}`);
@@ -149,23 +156,33 @@ export default function Dashboard() {
     body.append("title", updatedPaper.title);
     body.append("researchers", updatedPaper.researchers);
     body.append("abstract", updatedPaper.abstract);
-    body.append("campus", updatedPaper.campus);
-    body.append("department", updatedPaper.department);
-    body.append("course", updatedPaper.course);
     body.append("year", updatedPaper.year);
-    body.append("fileType", updatedPaper.paper_type);
+    body.append("paper_type", updatedPaper.paper_type);
+    // campus/college/program/category aren't editable from this form yet
+    // (they need real dropdowns, not text input) - send the existing ids
+    // back unchanged so the update doesn't blank out these relations
+    body.append("campus_id", updatedPaper.campus_id);
+    body.append("college_id", updatedPaper.college_id);
+    body.append("program_id", updatedPaper.program_id);
+    body.append("category_id", updatedPaper.category_id);
     if (updatedPaper.newFile) {
       body.append("file", updatedPaper.newFile);
     }
 
+    // returns a result object instead of touching page-level state, so
+    // the overlay can show its own success/error message and decide
+    // when to close itself
     try {
       const saved = await updatePaper(updatedPaper.id, body);
       setPapers((prev) =>
         prev.map((p) => (p.id === updatedPaper.id ? saved : p)),
       );
-      setActivePaper(null);
+      return { success: true, message: "Paper updated successfully." };
     } catch (err) {
-      setError(err.message);
+      return {
+        success: false,
+        message: err.message || "Failed to update paper.",
+      };
     }
   }
 
@@ -173,9 +190,12 @@ export default function Dashboard() {
     try {
       await deletePaper(paper.id);
       setPapers((prev) => prev.filter((p) => p.id !== paper.id));
-      setActivePaper(null);
+      return { success: true, message: "Paper deleted." };
     } catch (err) {
-      setError(err.message);
+      return {
+        success: false,
+        message: err.message || "Failed to delete paper.",
+      };
     }
   }
 
@@ -288,9 +308,9 @@ function PaperCard({ paper, isAdmin, onView }) {
       </div>
 
       <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-gray-100 pt-3 sm:grid-cols-3">
-        <Field label="Campus" value={paper.campus} />
-        <Field label="Department" value={paper.department} />
-        <Field label="Course" value={paper.course} />
+        <Field label="Campus" value={fieldLabel(paper.campus)} />
+        <Field label="Department" value={fieldLabel(paper.college)} />
+        <Field label="Course" value={fieldLabel(paper.program)} />
         <Field label="Year" value={paper.year} />
         <Field label="File type" value={formatPaperType(paper.paper_type)} />
       </div>
@@ -314,9 +334,21 @@ function Field({ label, value }) {
 
 // the overlay doubles as the edit form and the delete trigger.
 function PaperOverlay({ paper, onClose, onSave, onDelete }) {
-  const [form, setForm] = useState({ ...paper });
+  // campus/college/program on `paper` are nested { id, name } objects -
+  // pull out plain values for the editable fields, and keep the ids
+  // around unchanged so handleSave can send them back even though
+  // they're not editable here yet
+  const [form, setForm] = useState({
+    ...paper,
+    campus_id: paper.campus_id ?? paper.campus?.id,
+    college_id: paper.college_id ?? paper.college?.id,
+    program_id: paper.program_id ?? paper.program?.id,
+    category_id: paper.category_id ?? paper.category?.id,
+  });
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [feedback, setFeedback] = useState(null); // { type: "error"|"success", message }
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -324,8 +356,36 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
 
   async function handleSubmit() {
     setSaving(true);
-    await onSave(form);
+    setFeedback(null);
+    const result = await onSave(form);
     setSaving(false);
+
+    if (result?.success) {
+      setFeedback({ type: "success", message: result.message });
+      setTimeout(onClose, 1200); // let them see the success message, then close
+    } else {
+      setFeedback({
+        type: "error",
+        message: result?.message || "Failed to save changes.",
+      });
+    }
+  }
+
+  async function handleConfirmDelete() {
+    setDeleting(true);
+    setFeedback(null);
+    const result = await onDelete(paper);
+    setDeleting(false);
+
+    if (result?.success) {
+      setFeedback({ type: "success", message: result.message });
+      setTimeout(onClose, 1000);
+    } else {
+      setFeedback({
+        type: "error",
+        message: result?.message || "Failed to delete paper.",
+      });
+    }
   }
 
   return (
@@ -347,6 +407,18 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
           </button>
         </div>
 
+        {feedback && (
+          <p
+            className={`mb-4 rounded-md border px-3 py-2 text-sm ${
+              feedback.type === "success"
+                ? "border-green-200 bg-green-50 text-green-600"
+                : "border-red-200 bg-red-50 text-red-600"
+            }`}
+          >
+            {feedback.message}
+          </p>
+        )}
+
         {!confirmingDelete ? (
           <>
             <div className="flex flex-col gap-3">
@@ -367,20 +439,20 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
               />
 
               <div className="grid grid-cols-2 gap-3">
-                <EditField
+                {/* read-only for now: changing these needs cascading
+                    dropdowns tied to real campus/college/program data
+                    (like Filter.js), not a plain text field */}
+                <ReadOnlyField
                   label="Campus"
-                  value={form.campus}
-                  onChange={(v) => updateField("campus", v)}
+                  value={fieldLabel(paper.campus)}
                 />
-                <EditField
+                <ReadOnlyField
                   label="Department"
-                  value={form.department}
-                  onChange={(v) => updateField("department", v)}
+                  value={fieldLabel(paper.college)}
                 />
-                <EditField
+                <ReadOnlyField
                   label="Course"
-                  value={form.course}
-                  onChange={(v) => updateField("course", v)}
+                  value={fieldLabel(paper.program)}
                 />
                 <EditField
                   label="Year"
@@ -412,13 +484,13 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex-1 rounded-md bg-blue-600 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                className="flex-1 rounded-md border border-[#071437] bg-[#071437] py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-white hover:text-[#071437] disabled:opacity-60"
               >
                 {saving ? "Saving…" : "Submit edit"}
               </button>
               <button
                 onClick={() => setConfirmingDelete(true)}
-                className="flex-1 rounded-md border border-red-300 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                className="flex-1 rounded-md border border-red-400 bg-red-600 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-white hover:text-red-600"
               >
                 Delete
               </button>
@@ -431,22 +503,37 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
 
             <div className="mt-6 flex gap-2">
               <button
-                onClick={() => setConfirmingDelete(false)}
+                onClick={() => {
+                  setConfirmingDelete(false);
+                  setFeedback(null);
+                }}
                 className="flex-1 rounded-md border border-gray-300 py-2 text-sm font-medium hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
-                onClick={() => onDelete(paper)}
-                className="flex-1 rounded-md bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="flex-1 rounded-md bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
               >
-                Yes, delete
+                {deleting ? "Deleting…" : "Yes, delete"}
               </button>
             </div>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function ReadOnlyField({ label, value }) {
+  return (
+    <label className="block text-black">
+      <span className="text-[11px] text-[#242423]">{label}</span>
+      <p className="mt-0.5 w-full rounded-md border border-gray-100 bg-gray-50 px-2 py-1.5 text-sm text-gray-600">
+        {value}
+      </p>
+    </label>
   );
 }
 
