@@ -50,6 +50,22 @@ function toOptions(items) {
   return [...map.values()];
 }
 
+// like toOptions, but groups by name — merges categories that share a
+// name (e.g. "Technology" under 3 different programs) into one checkbox
+// that carries all their ids
+function toGroupedOptions(items) {
+  const map = new Map();
+  (items || []).forEach((item) => {
+    if (!item || item.id == null) return;
+    if (!map.has(item.name)) {
+      map.set(item.name, { name: item.name, ids: [item.id] });
+    } else {
+      map.get(item.name).ids.push(item.id);
+    }
+  });
+  return [...map.values()];
+}
+
 export default function Filter({ onFilterChange }) {
   //request block here — full campus -> college -> program -> category tree,
   // same endpoint/shape the campus editor and upload form use
@@ -61,7 +77,7 @@ export default function Filter({ onFilterChange }) {
     const fetchLocations = async () => {
       try {
         const response = await fetch(
-          "https://application-production-cfb3.up.railway.app/api/locations",
+          "https://capstone-backend-1yta.onrender.com/api/locations",
           { signal: controller.signal },
         );
         if (!response.ok) {
@@ -155,7 +171,7 @@ export default function Filter({ onFilterChange }) {
     return pool;
   }, [visiblePrograms, selectedProgram]);
   const categoryOptions = useMemo(
-    () => toOptions(visibleCategories),
+    () => toGroupedOptions(visibleCategories),
     [visibleCategories],
   );
 
@@ -179,7 +195,7 @@ export default function Filter({ onFilterChange }) {
   }, [programOptions]);
 
   useEffect(() => {
-    const validIds = new Set(categoryOptions.map((c) => c.id));
+    const validIds = new Set(categoryOptions.flatMap((c) => c.ids));
     setSelectedCategory((prev) => {
       const next = prev.filter((id) => validIds.has(id));
       return next.length === prev.length ? prev : next;
@@ -253,7 +269,7 @@ export default function Filter({ onFilterChange }) {
           </div>
 
           <div
-            className={`overflow-hidden transition-all duration-300 ease-out ${CampusOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"}`}
+            className={`transition-all duration-300 ease-out ${CampusOpen ? "max-h-52 overflow-y-auto opacity-100" : "max-h-0 overflow-hidden opacity-0"}`}
           >
             {campusOptions.map((campus) => (
               <label key={campus.id} className="flex gap-2 py-1">
@@ -284,7 +300,7 @@ export default function Filter({ onFilterChange }) {
           </div>
 
           <div
-            className={`overflow-hidden transition-all duration-300 ease-out ${CollegeOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"}`}
+            className={`transition-all duration-300 ease-out ${CollegeOpen ? "max-h-52 overflow-y-auto opacity-100" : "max-h-0 overflow-hidden opacity-0"}`}
           >
             {collegeOptions.map((college) => (
               <label key={college.id} className="flex gap-2 py-1">
@@ -315,7 +331,7 @@ export default function Filter({ onFilterChange }) {
           </div>
 
           <div
-            className={`overflow-hidden transition-all duration-300 ease-out ${ProgramOpen ? "max-h-80 opacity-100" : "max-h-0 opacity-0"}`}
+            className={`transition-all duration-300 ease-out ${ProgramOpen ? "max-h-80 overflow-y-auto opacity-100" : "max-h-0 overflow-hidden opacity-0"}`}
           >
             {programOptions.map((program) => (
               <label key={program.id} className="flex gap-2 pb-2">
@@ -346,24 +362,29 @@ export default function Filter({ onFilterChange }) {
           </div>
 
           <div
-            className={`overflow-hidden transition-all duration-300 ease-out ${CategoryOpen ? "max-h-52 opacity-100" : "max-h-0 opacity-0"}`}
+            className={`transition-all duration-300 ease-out ${CategoryOpen ? "max-h-52 overflow-y-auto opacity-100" : "max-h-0 overflow-hidden opacity-0"}`}
           >
-            {categoryOptions.map((category) => (
-              <label key={category.id} className="flex gap-2 py-1">
-                <input
-                  type="checkbox"
-                  checked={selectedCategory.includes(category.id)}
-                  onChange={() =>
-                    setSelectedCategory((previous) =>
-                      previous.includes(category.id)
-                        ? previous.filter((x) => x !== category.id)
-                        : [...previous, category.id],
-                    )
-                  }
-                />
-                <span>{category.name}</span>
-              </label>
-            ))}
+            {categoryOptions.map((category) => {
+              const isChecked = category.ids.some((id) =>
+                selectedCategory.includes(id),
+              );
+              return (
+                <label key={category.name} className="flex gap-2 py-1">
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() =>
+                      setSelectedCategory((previous) =>
+                        isChecked
+                          ? previous.filter((x) => !category.ids.includes(x))
+                          : [...new Set([...previous, ...category.ids])],
+                      )
+                    }
+                  />
+                  <span>{category.name}</span>
+                </label>
+              );
+            })}
           </div>
         </div>
 
@@ -377,7 +398,7 @@ export default function Filter({ onFilterChange }) {
           </div>
 
           <div
-            className={`overflow-hidden transition-all duration-300 ease-out ${YearOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
+            className={`transition-all duration-300 ease-out ${YearOpen ? "max-h-96 overflow-y-auto opacity-100" : "max-h-0 overflow-hidden opacity-0"}`}
           >
             {Object.values(yearOptions).map((year) => (
               <label key={year} className="flex gap-2 py-1">

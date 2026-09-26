@@ -20,7 +20,7 @@ export default function Login() {
 
     try {
       const res = await fetch(
-        "https://application-production-cfb3.up.railway.app/api/login",
+        "https://capstone-backend-1yta.onrender.com/api/login",
         {
           method: "POST",
           headers: {

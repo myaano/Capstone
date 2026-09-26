@@ -61,7 +61,7 @@ export default function Sample() {
       try {
         const params = new URLSearchParams();
         const response = await fetch(
-          `https://application-production-cfb3.up.railway.app/api/analytics`,
+          `https://capstone-backend-1yta.onrender.com/api/analytics`,
         );
 
         const data = await response.json();

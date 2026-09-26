@@ -1,7 +1,7 @@
 "use server";
 
 // Same pattern as /upload/actions.js - point this at your Laravel LAN IP.
-const API_URL = "https://application-production-cfb3.up.railway.app/api"; // TODO: swap in your actual LAN IP
+const API_URL = "https://capstone-backend-1yta.onrender.com/api"; // TODO: swap in your actual LAN IP
 
 export async function fetchPapers(page) {
   const params = new URLSearchParams({ page });

@@ -8,7 +8,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
 
 const LOCATIONS_URL =
-  "https://application-production-cfb3.up.railway.app/api/locations";
+  "https://capstone-backend-1yta.onrender.com/api/locations";
 
 // same endpoint/shape as getCampuses() in the campus editor page
 async function getCampuses() {

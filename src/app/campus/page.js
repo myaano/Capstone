@@ -9,8 +9,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import { useRouter } from "next/navigation";
 
 // ---- placeholder API endpoints, swap these for your real routes ----
-const API_URL =
-  "https://application-production-cfb3.up.railway.app/api/locations";
+const API_URL = "https://capstone-backend-1yta.onrender.com/api/locations";
 
 // get campuses
 async function getCampuses() {
@@ -28,7 +27,7 @@ async function postCampus(campus) {
 
   console.log("token:", token);
   const res = await fetch(
-    `https://application-production-cfb3.up.railway.app/api/locations`,
+    `https://capstone-backend-1yta.onrender.com/api/locations`,
     {
       method: "POST",
       headers: {
@@ -62,7 +61,7 @@ async function postCampus(campus) {
 async function putCampus(id, campus) {
   const token = localStorage.getItem("token");
   const res = await fetch(
-    `https://application-production-cfb3.up.railway.app/api/locations/${id}`,
+    `https://capstone-backend-1yta.onrender.com/api/locations/${id}`,
     {
       method: "PUT",
       headers: {
@@ -92,7 +91,7 @@ async function putCampus(id, campus) {
 async function deleteCampus(id) {
   const token = localStorage.getItem("token");
   const res = await fetch(
-    `https://application-production-cfb3.up.railway.app/api/campus/${id}`,
+    `https://capstone-backend-1yta.onrender.com/api/campus/${id}`,
     {
       method: "DELETE",
       headers: {

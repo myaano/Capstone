@@ -63,13 +63,17 @@ export default function Home() {
   }
   const thesisTimer = useRef(null);
   const capstoneTimer = useRef(null);
-  const bulanTimer = useRef(null);
 
   //change the counterValue to the current value of the current available papers in the datbase
   const thesisCounterValue = useRef({ value: 0 });
   const capstoneCounterValue = useRef({ value: 0 });
-  const bulanCounterValue = useRef({ value: 0 });
   //change the thesisCounterValue to the current value of the current available papers in the datbase
+
+  // per-campus refs, keyed by campus name — one entry gets created for
+  // every campus that shows up in Analytics.papers_by_campus, so adding a
+  // new campus in the backend automatically gets its own counter here
+  const campusTimerRefs = useRef({});
+  const campusCounterRefs = useRef({});
   //counter animation for both types of research papers and for the total amount of papers on each campuses
   {
     /* RESEARCH TIMER VARS */
@@ -77,6 +81,37 @@ export default function Home() {
 
   const [Analytics, setAnalytics] = useState(null);
   const [pieOuterRadius, setPieOuterRadius] = useState(100);
+
+  // papers_by_category / papers_by_campus come back from Laravel as
+  // { "Technology": 4, "Business": 1, ... } style maps - this turns that
+  // into the [{ name, total }] shape the pie chart and campus loop need.
+  // Also tolerates it already being an array, just in case.
+  function toChartArray(collection) {
+    if (!collection) return [];
+    if (Array.isArray(collection)) return collection;
+    return Object.entries(collection).map(([name, total]) => ({
+      name,
+      total: Number(total) || 0,
+    }));
+  }
+
+  const CATEGORY_COLORS = [
+    "#02a9f7",
+    "#FF9D50",
+    "#403d39",
+    "#800000",
+    "#071437",
+    "#2a9d8f",
+  ];
+
+  const categoryData = toChartArray(Analytics?.papers_by_category).map(
+    (item, index) => ({
+      ...item,
+      fill: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+    }),
+  );
+
+  const campusData = toChartArray(Analytics?.papers_by_campus);
 
   useEffect(() => {
     const updatePieOuterRadius = () => {
@@ -94,7 +129,7 @@ export default function Home() {
     async function loadAnalyticsData() {
       try {
         const response = await fetch(
-          "https://application-production-cfb3.up.railway.app/api/analytics",
+          "https://capstone-backend-1yta.onrender.com/api/analytics",
         );
         if (!response.ok) {
           throw new Error(`Request failed: ${response.status}`);
@@ -142,22 +177,30 @@ export default function Home() {
         }
       },
     });
-    // campus counter animations
-    gsap.to(bulanCounterValue.current, {
-      value: Analytics.total_papers,
-      ease: "power2.out",
-      scrollTrigger: {
-        trigger: ".bulan",
-        start: "bottom bottom",
-        once: true,
-      },
-      onUpdate: () => {
-        if (bulanTimer.current) {
-          bulanTimer.current.textContent = Math.floor(
-            bulanCounterValue.current.value,
-          );
-        }
-      },
+    // campus counter animations - one gsap tween per campus, so a new
+    // campus added on the backend gets an animated counter automatically
+    campusData.forEach((campus) => {
+      const slug = campus.name.replace(/\s+/g, "-").toLowerCase();
+      if (!campusCounterRefs.current[campus.name]) {
+        campusCounterRefs.current[campus.name] = { value: 0 };
+      }
+      gsap.to(campusCounterRefs.current[campus.name], {
+        value: campus.total,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: `.campus-${slug}`,
+          start: "bottom bottom",
+          once: true,
+        },
+        onUpdate: () => {
+          const el = campusTimerRefs.current[campus.name];
+          if (el) {
+            el.textContent = Math.floor(
+              campusCounterRefs.current[campus.name].value,
+            );
+          }
+        },
+      });
     });
     // campus counter animations
   }, [Analytics]);
@@ -175,13 +218,6 @@ export default function Home() {
   //     } catch {}
   //   }
   // }, []);
-
-  //dummy pie chart data
-  const dummyData = [
-    { category: "Technology", total: 42, fill: "#02a9f7" },
-    { category: "Politics & Society", total: 30, fill: "#FF9D50" },
-    { category: "Business", total: 18, fill: "#403d39" },
-  ];
 
   return (
     <>
@@ -378,9 +414,9 @@ export default function Home() {
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie
-                      data={dummyData}
+                      data={categoryData}
                       dataKey="total"
-                      nameKey="category"
+                      nameKey="name"
                       cx="50%"
                       cy="50%"
                       outerRadius={pieOuterRadius}
@@ -394,23 +430,32 @@ export default function Home() {
             </div>
             {/* Campuses Analytics */}
             <div className="font-cormorant_infant mt-20 flex flex-1 flex-col items-center justify-center text-6xl text-[#242423] lg:mt-0">
-              <div className="b w-full items-center justify-between lg:flex">
-                <div className="flex flex-1 justify-between px-5 lg:px-25">
-                  <p className="cursor-pointer underline decoration-transparent decoration-2 underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current">
-                    Bulan
-                  </p>
-                  <div className="flex items-end justify-end gap-2">
-                    {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
-                    {/* add scrollTrigger on this campus analytics */}
-                    <span className="bulan italic" ref={bulanTimer}>
-                      0
-                    </span>
-                    {/* add scrollTrigger on this campus analytics */}
-                    {/* WARNING  WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING */}
-                    <p className="text-sm">Total Papers</p>
+              {campusData.map((campus) => {
+                const slug = campus.name.replace(/\s+/g, "-").toLowerCase();
+                return (
+                  <div
+                    key={campus.name}
+                    className={`campus-${slug} b w-full items-center justify-between lg:flex`}
+                  >
+                    <div className="flex flex-1 justify-between px-5 lg:px-25">
+                      <p className="cursor-pointer underline decoration-transparent decoration-2 underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current">
+                        {campus.name}
+                      </p>
+                      <div className="flex items-end justify-end gap-2">
+                        <span
+                          className="italic"
+                          ref={(el) => {
+                            campusTimerRefs.current[campus.name] = el;
+                          }}
+                        >
+                          0
+                        </span>
+                        <p className="text-sm">Total Papers</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
             {/* Campuses Analytics */}
           </div>
