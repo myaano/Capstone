@@ -134,7 +134,7 @@ function CapstoneContent() {
                     className="font-urbanist border-b border-[#e1e7ec] px-3 py-2 text-black shadow shadow-black/10"
                   >
                     {/* use js to generate these divs and the contents for each paper link that leads to the dynamic /thesis page */}
-                    <div className="flex min-h-40 flex-col justify-between">
+                    <div className="flex min-h-40 flex-col justify-between gap-10 lg:gap-0">
                       <div>
                         <Link href={`/capstone/${paper.id}?page=${page}`}>
                           <p className="line-clamp-2 text-xl font-semibold underline decoration-1 underline-offset-3">
@@ -170,10 +170,12 @@ function CapstoneContent() {
                           </div>
                           <div className="flex justify-between">
                             <div className="flex gap-2">
-                              <h1>{fieldLabel(paper.category)}</h1>
                               <h1>{fieldLabel(paper.year)}</h1>
                             </div>
                           </div>
+                        </div>
+                        <div className="items- flex items-end justify-end lg:items-stretch lg:justify-normal">
+                          <h1>{fieldLabel(paper.category)}</h1>
                         </div>
                       </div>
                     </div>

@@ -173,8 +173,6 @@ export default function Upload() {
   const [SelectedCategory, setSelectedCategory] = useState("");
   const [CategoryOptions, setCategoryOptions] = useState([]);
 
-  const [FileType, setFileType] = useState("");
-
   const fileTypes = ["Capstone", "Thesis"];
 
   // campus, department, course use states HERE
@@ -261,7 +259,6 @@ export default function Upload() {
     setToken(localStorage.getItem("token") || "");
   }, []);
 
-  const Categories = ["Business", "Politics & Society", "Technology"];
   return (
     <div className="min-h-screen bg-white">
       {isLoading || !user || user.role !== "admin" ? (
@@ -528,7 +525,6 @@ export default function Upload() {
                         <select
                           name="paper_type"
                           id=""
-                          onChange={(event) => setFileType(event.target.value)}
                           className="w-full rounded-md border border-black p-2"
                           disabled={!(Campus && Department && Course)}
                         >

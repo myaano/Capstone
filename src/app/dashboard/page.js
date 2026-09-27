@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Header from "../reusable_components/Header";
 import Pagination from "../reusable_components/Pagination";
 
 import { fetchPapers, updatePaper, deletePaper } from "./actions";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
-import { SplitText } from "gsap/SplitText";
 
 //useAuthStore, authorize who can go in or not
 import { useAuthStore } from "../store/useAuthStore";
@@ -30,6 +29,7 @@ export default function Dashboard() {
   const isAdmin = user?.role === "admin";
   const isLoading = useAuthStore((state) => state.isLoading);
   useEffect(() => {
+    if (isLoading) return; // user data hasn't loaded yet on this refresh - wait
     if (!user || user.role !== "admin") {
       console.log("Unauthorized Access Detected");
       router.push("/");
@@ -41,6 +41,23 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // campus -> college -> program tree, same endpoint/shape Filter.js and
+  // the campus editor use - needed so the edit overlay can offer real
+  // dropdowns for campus/college/program instead of plain text
+  const [locations, setLocations] = useState([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("https://capstone-backend-1yta.onrender.com/api/locations", {
+      signal: controller.signal,
+    })
+      .then((res) => res.json())
+      .then((json) => setLocations(json.campuses ?? json.data ?? json ?? []))
+      .catch((err) => {
+        if (err.name !== "AbortError") console.error(err);
+      });
+    return () => controller.abort();
+  }, []);
+
   const [activePaper, setActivePaper] = useState(null); // controls the overlay
 
   //pagination useStates
@@ -48,31 +65,33 @@ export default function Dashboard() {
   const [totalPages, setTotalPages] = useState(1);
 
   //main fetching of papers from actions.js of /dashboard
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadDashboard() {
-      setLoading(true);
-      setError(null);
-      try {
-        const papersData = await fetchPapers(page);
-        if (!cancelled) {
-          setPapers(papersData.data ?? []);
-        }
-        console.log(papersData);
-        setTotalPages(papersData.last_page ?? 1);
-      } catch (err) {
-        if (!cancelled) setError(err.message);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+  // pulled out of the effect so it can also be called after a successful
+  // edit/delete - Laravel's update response only has flat *_id fields, not
+  // the nested campus/college/program objects the card display needs, so
+  // patching the list in place leaves those blank until a real re-fetch
+  const refreshPapers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const papersData = await fetchPapers(page);
+      // safety net: dedupe by id in case the backend query returns the
+      // same paper twice for a page (e.g. a duplicating join) - this is
+      // a symptom worth checking on the Laravel side too, not just here
+      const deduped = Array.from(
+        new Map((papersData.data ?? []).map((p) => [p.id, p])).values(),
+      );
+      setPapers(deduped);
+      setTotalPages(papersData.last_page ?? 1);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    loadDashboard();
-    return () => {
-      cancelled = true;
-    };
   }, [page]);
+
+  useEffect(() => {
+    refreshPapers();
+  }, [refreshPapers]);
 
   const thesisTimer = useRef(null);
   const capstoneTimer = useRef(null);
@@ -106,7 +125,6 @@ export default function Dashboard() {
   // analytics animation
   useGSAP(() => {
     if (!Analytics) return;
-    gsap.registerPlugin(SplitText);
 
     console.log("useGSAP ran, mounting fresh");
 
@@ -168,15 +186,18 @@ export default function Dashboard() {
     if (updatedPaper.newFile) {
       body.append("file", updatedPaper.newFile);
     }
+    body.append("token", localStorage.getItem("token") || "");
 
     // returns a result object instead of touching page-level state, so
     // the overlay can show its own success/error message and decide
     // when to close itself
     try {
-      const saved = await updatePaper(updatedPaper.id, body);
-      setPapers((prev) =>
-        prev.map((p) => (p.id === updatedPaper.id ? saved : p)),
-      );
+      await updatePaper(updatedPaper.id, body);
+      // re-fetch instead of patching the list in place - Laravel's update
+      // response doesn't include the nested campus/college/program objects
+      // the card needs, so this is what makes the change show up without
+      // a manual hard refresh
+      await refreshPapers();
       return { success: true, message: "Paper updated successfully." };
     } catch (err) {
       return {
@@ -188,8 +209,8 @@ export default function Dashboard() {
 
   async function handleDelete(paper) {
     try {
-      await deletePaper(paper.id);
-      setPapers((prev) => prev.filter((p) => p.id !== paper.id));
+      await deletePaper(paper.id, localStorage.getItem("token") || "");
+      await refreshPapers();
       return { success: true, message: "Paper deleted." };
     } catch (err) {
       return {
@@ -262,6 +283,7 @@ export default function Dashboard() {
           onClose={() => setActivePaper(null)}
           onSave={handleSave}
           onDelete={handleDelete}
+          locations={locations}
         />
       )}
     </div>
@@ -309,8 +331,8 @@ function PaperCard({ paper, isAdmin, onView }) {
 
       <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-gray-100 pt-3 sm:grid-cols-3">
         <Field label="Campus" value={fieldLabel(paper.campus)} />
-        <Field label="Department" value={fieldLabel(paper.college)} />
-        <Field label="Course" value={fieldLabel(paper.program)} />
+        <Field label="College" value={fieldLabel(paper.college)} />
+        <Field label="Program" value={fieldLabel(paper.program)} />
         <Field label="Year" value={paper.year} />
         <Field label="File type" value={formatPaperType(paper.paper_type)} />
       </div>
@@ -333,7 +355,7 @@ function Field({ label, value }) {
 }
 
 // the overlay doubles as the edit form and the delete trigger.
-function PaperOverlay({ paper, onClose, onSave, onDelete }) {
+function PaperOverlay({ paper, onClose, onSave, onDelete, locations }) {
   // campus/college/program on `paper` are nested { id, name } objects -
   // pull out plain values for the editable fields, and keep the ids
   // around unchanged so handleSave can send them back even though
@@ -352,6 +374,30 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
 
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  // cascading campus -> college -> program options, derived from the
+  // currently selected ids (same tree Filter.js uses)
+  const selectedCampus = locations.find((c) => c.id === Number(form.campus_id));
+  const collegeOptions = selectedCampus?.colleges ?? [];
+  const selectedCollege = collegeOptions.find(
+    (c) => c.id === Number(form.college_id),
+  );
+  const programOptions = selectedCollege?.programs ?? [];
+
+  function handleCampusChange(id) {
+    // changing campus invalidates whatever college/program was selected,
+    // since they belong to the old campus's tree
+    setForm((prev) => ({
+      ...prev,
+      campus_id: id,
+      college_id: "",
+      program_id: "",
+    }));
+  }
+
+  function handleCollegeChange(id) {
+    setForm((prev) => ({ ...prev, college_id: id, program_id: "" }));
   }
 
   async function handleSubmit() {
@@ -439,28 +485,32 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
               />
 
               <div className="grid grid-cols-2 gap-3">
-                {/* read-only for now: changing these needs cascading
-                    dropdowns tied to real campus/college/program data
-                    (like Filter.js), not a plain text field */}
-                <ReadOnlyField
+                <SelectField
                   label="Campus"
-                  value={fieldLabel(paper.campus)}
+                  value={form.campus_id}
+                  onChange={handleCampusChange}
+                  options={locations}
                 />
-                <ReadOnlyField
-                  label="Department"
-                  value={fieldLabel(paper.college)}
+                <SelectField
+                  label="College"
+                  value={form.college_id}
+                  onChange={handleCollegeChange}
+                  options={collegeOptions}
+                  disabled={!form.campus_id}
                 />
-                <ReadOnlyField
-                  label="Course"
-                  value={fieldLabel(paper.program)}
+                <SelectField
+                  label="Program"
+                  value={form.program_id}
+                  onChange={(v) => updateField("program_id", v)}
+                  options={programOptions}
+                  disabled={!form.college_id}
                 />
                 <EditField
                   label="Year"
                   value={form.year}
                   onChange={(v) => updateField("year", v)}
                 />
-                <EditField
-                  label="paper_type"
+                <PaperTypeField
                   value={form.paper_type}
                   onChange={(v) => updateField("paper_type", v)}
                 />
@@ -484,20 +534,20 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
               <button
                 onClick={handleSubmit}
                 disabled={saving}
-                className="flex-1 rounded-md border border-[#071437] bg-[#071437] py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-white hover:text-[#071437] disabled:opacity-60"
+                className="flex-1 rounded-md border border-[#071437] bg-white py-2 text-sm font-medium text-[#071437] transition-colors duration-200 hover:bg-[#071437] hover:text-white disabled:opacity-60"
               >
                 {saving ? "Saving…" : "Submit edit"}
               </button>
               <button
                 onClick={() => setConfirmingDelete(true)}
-                className="flex-1 rounded-md border border-red-400 bg-red-600 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-white hover:text-red-600"
+                className="flex-1 rounded-md border border-red-400 bg-white py-2 text-sm font-medium text-red-600 transition-colors duration-200 hover:bg-red-600 hover:text-white"
               >
                 Delete
               </button>
             </div>
           </>
         ) : (
-          <div className="pt-2">
+          <div className="pt-2 text-black">
             <p className="text-base font-medium">Confirm delete?</p>
             <p className="mt-1 text-sm text-gray-500">This cannot be undone.</p>
 
@@ -526,13 +576,48 @@ function PaperOverlay({ paper, onClose, onSave, onDelete }) {
   );
 }
 
-function ReadOnlyField({ label, value }) {
+// fixed dropdown instead of free text - Laravel validates paper_type
+// against an exact set of values ("thesis"/"capstone"), so a text field
+// lets through typos and case mismatches (like "Capstone") that a select
+// simply can't produce
+function PaperTypeField({ value, onChange }) {
+  return (
+    <label className="block text-black">
+      <span className="text-[11px] text-[#242423]">Paper Type</span>
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-0.5 w-full rounded-md border border-gray-300 p-2 text-sm"
+      >
+        <option value="" disabled>
+          Select Paper Type
+        </option>
+        <option value="thesis">Thesis</option>
+        <option value="capstone">Capstone</option>
+      </select>
+    </label>
+  );
+}
+
+function SelectField({ label, value, onChange, options, disabled }) {
   return (
     <label className="block text-black">
       <span className="text-[11px] text-[#242423]">{label}</span>
-      <p className="mt-0.5 w-full rounded-md border border-gray-100 bg-gray-50 px-2 py-1.5 text-sm text-gray-600">
-        {value}
-      </p>
+      <select
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className="mt-0.5 w-full rounded-md border border-gray-300 p-2 text-sm disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-400"
+      >
+        <option value="" disabled>
+          Select {label}
+        </option>
+        {options.map((opt) => (
+          <option key={opt.id} value={opt.id}>
+            {opt.name}
+          </option>
+        ))}
+      </select>
     </label>
   );
 }

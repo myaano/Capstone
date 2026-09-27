@@ -1,6 +1,6 @@
 "use server";
 
-export async function submitUpload(prevState, formData) {
+export async function submitUpload(_prevState, formData) {
   //token
   const token = formData.get("token")?.toString().trim() || "";
 
@@ -76,7 +76,7 @@ export async function submitUpload(prevState, formData) {
   uploadData.append("category_id", category_id);
 
   // fix this variable next time and attach link it to a true env file variable
-  const uploadUrl = process.env.NEXT_PUBLIC_API_URL;
+  const uploadUrl = "https://capstone-backend-1yta.onrender.com/api/papers";
   // fix this variable next time and attach link it to a true env file variable
 
   //error val

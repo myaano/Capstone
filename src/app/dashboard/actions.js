@@ -1,7 +1,7 @@
 "use server";
 
 // Same pattern as /upload/actions.js - point this at your Laravel LAN IP.
-const API_URL = "https://capstone-backend-1yta.onrender.com/api"; // TODO: swap in your actual LAN IP
+const API_URL = "https://capstone-backend-1yta.onrender.com/api";
 
 export async function fetchPapers(page) {
   const params = new URLSearchParams({ page });
@@ -14,35 +14,46 @@ export async function fetchPapers(page) {
   return res.json();
 }
 
-// Called from the dashboard overlay's "Submit edit" button.
-// Always sends FormData (not JSON) since a replacement file may be attached -
-// same POST + _method=PUT workaround used for multipart updates in Laravel.
-
 //update paper
 
 export async function updatePaper(id, formData) {
   formData.append("_method", "PUT");
+  // token travels inside the FormData (same pattern as submitUpload) since
+  // this runs server-side and can't read the browser's localStorage itself -
+  // pull it out here so it isn't also sent as a stray form field to Laravel
+  const token = formData.get("token")?.toString().trim() || "";
+  formData.delete("token");
 
   const res = await fetch(`${API_URL}/papers/${id}`, {
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     body: formData,
   });
 
   if (!res.ok) {
-    throw new Error("Failed to update paper");
+    const errorText = await res.text();
+    console.error(`updatePaper failed: ${res.status} - ${errorText}`);
+    throw new Error(errorText || "Failed to update paper");
   }
 
   return res.json();
 }
 
 // Called from the overlay's "Yes, delete" confirmation step.
-export async function deletePaper(id) {
+export async function deletePaper(id, token) {
   const res = await fetch(`${API_URL}/papers/${id}`, {
     method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   if (!res.ok) {
-    throw new Error("Failed to delete paper");
+    const errorText = await res.text();
+    console.error(`deletePaper failed: ${res.status} - ${errorText}`);
+    throw new Error(errorText || "Failed to delete paper");
   }
 
   return true;
