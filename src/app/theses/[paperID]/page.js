@@ -1,6 +1,7 @@
 // component import
 import Header from "../../reusable_components/Header";
 import Footer from "../../reusable_components/Footer";
+import ViewTracker from "../../reusable_components/ViewTracker";
 
 // component import
 import Link from "next/link";
@@ -40,13 +41,15 @@ export default async function PaperDetails({ params, searchParams }) {
     console.error(error);
   }
 
-  //continue the codeblock ^^^ above after the api route is done.
-
   // retrieve the data from backend using fetch here
   // store it in a variable, and display the data
   return (
     <div>
       <Header></Header>
+      {/* client-side ping so this specific paper's view actually gets
+          counted (session_id lives in the browser's localStorage) -
+          renders nothing visually */}
+      <ViewTracker paperId={data.id} />
 
       <div className="bg-white py-10">
         <div className="font-urbanist px-5 lg:px-10">
@@ -76,7 +79,9 @@ export default async function PaperDetails({ params, searchParams }) {
                     <p className="font-bona_nova_sc text-3xl leading-relaxed">
                       Abstract
                     </p>
-                    <p className={`font-urbanist max-w[65ch] text-[1.1rem]`}>
+                    <p
+                      className={`font-urbanist max-w[65ch] text-[1.1rem] wrap-break-word`}
+                    >
                       {data.abstract}
                     </p>
                   </div>

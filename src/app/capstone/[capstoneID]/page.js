@@ -1,5 +1,6 @@
 import Header from "../../reusable_components/Header";
 import Footer from "../../reusable_components/Footer";
+import ViewTracker from "../../reusable_components/ViewTracker";
 import Link from "next/link";
 
 export default async function CapstoneID({ params, searchParams }) {
@@ -42,6 +43,10 @@ export default async function CapstoneID({ params, searchParams }) {
   return (
     <div>
       <Header></Header>
+      {/* client-side ping so this specific paper's view actually gets
+          counted (session_id lives in the browser's localStorage) -
+          renders nothing visually */}
+      <ViewTracker paperId={data.id} />
       <div className="bg-white py-10">
         <div className="font-urbanist px-5 lg:px-10">
           <Link
@@ -53,13 +58,13 @@ export default async function CapstoneID({ params, searchParams }) {
         </div>
         <div className="flex min-h-screen flex-col bg-white py-10">
           <div className="flex flex-1 flex-col px-4 lg:px-10">
-            <p className="font-bona_nova text-3xl text-[#242423]">
+            <p className="font-bona_nova text-3xl wrap-break-word text-[#242423]">
               {data.title}
             </p>
             <div className="mt-5 flex flex-1 flex-col">
               <div className="lg:w-[55%]">
                 <div className="pb-10">
-                  <p className="font-urbanist border-b border-black pb-2 font-semibold text-[#242423]">
+                  <p className="font-urbanist border-b border-black pb-2 font-semibold wrap-break-word text-[#242423]">
                     {data.researchers}
                   </p>
                 </div>
@@ -70,7 +75,9 @@ export default async function CapstoneID({ params, searchParams }) {
                     <p className="font-bona_nova_sc text-3xl leading-relaxed">
                       Summary
                     </p>
-                    <p className={`font-urbanist max-w[65ch] text-[1.1rem]`}>
+                    <p
+                      className={`font-urbanist max-w[65ch] text-[1.1rem] wrap-break-word`}
+                    >
                       {data.abstract}
                     </p>
                   </div>

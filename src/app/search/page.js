@@ -1,145 +1,203 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 
 import Filter from "../reusable_components/Filter";
 import Pagination from "../reusable_components/Pagination";
+import Searchbar from "../reusable_components/Search";
 import Header from "../reusable_components/Header";
+import { useSearchStore } from "../store/useSearchStore";
+
+// campus/college/program/category on a paper are nested { id, name }
+// objects - render the name instead of handing React the raw object.
+function fieldLabel(value) {
+  if (value && typeof value === "object") return value.name ?? "";
+  return value ?? "";
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") || "";
   const page = Number(searchParams.get("page")) || 1;
 
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const setStoredQuery = useSearchStore((state) => state.setQuery);
+  // keep the search bar's shared store in sync with the URL - covers a
+  // direct link or a hard refresh landing on /search?q=... where the
+  // store would otherwise still be empty
+  useEffect(() => {
+    setStoredQuery(q);
+  }, [q, setStoredQuery]);
+
   const [papers, setPapers] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const router = useRouter();
-  const pathname = usePathname();
+  // filters stay as local state (not written to the URL) - same pattern
+  // as /thesis's Filter usage; only `q` and `page` live in the URL here
+  const [filters, setFilters] = useState({
+    campus_id: [],
+    college_id: [],
+    program_id: [],
+    category_id: [],
+    year: [],
+  });
 
-  const handleChange = (newPage) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", newPage);
-    router.push(`${pathname}?${params.toString()}`);
-  };
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(newFilters);
+  }, []);
+
+  const handlePageChange = useCallback(
+    (newPage) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("page", newPage);
+      router.push(`${pathname}?${params.toString()}`);
+    },
+    [searchParams, router, pathname],
+  );
 
   useEffect(() => {
-    if (!q) return;
-    setLoading(true);
-    fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/papers/search?q=${encodeURIComponent(q)}&page=${page}`,
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        setPapers(data.papers); // matched papers from your Laravel search endpoint
-        setPagination(data.pagination);
-        setLoading(false);
-      });
-  }, [q, page]);
+    const controller = new AbortController();
 
-  // if (loading) return <div>Loading...</div>;
+    async function fetchResults() {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (q) params.append("search", q);
+        filters.campus_id.forEach((v) => params.append("campus_id", v));
+        filters.college_id.forEach((v) => params.append("college_id", v));
+        filters.program_id.forEach((v) => params.append("program_id", v));
+        filters.category_id.forEach((v) => params.append("category_id", v));
+        filters.year.forEach((v) => params.append("year", v));
+        params.append("page", page);
+        // no paper_type here on purpose - search covers both thesis and
+        // capstone papers at once; each result shows its own type below
+
+        const response = await fetch(
+          `https://capstone-backend-1yta.onrender.com/api/papers?${params.toString()}`,
+          { signal: controller.signal },
+        );
+
+        if (!response.ok) {
+          throw new Error(`Request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setPapers(Array.isArray(data) ? data : (data.data ?? []));
+        setPagination(data);
+      } catch (error) {
+        if (error.name !== "AbortError") console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchResults();
+    return () => controller.abort();
+  }, [q, filters, page]);
 
   return (
-    <>
-      <div className="mt-5 flex flex-1 bg-red-400 text-black">
-        <div className="border-black pr-2 lg:w-72 lg:border-r">
-          <Filter></Filter>
+    <div className="flex flex-1 flex-col">
+      <div className="font-bona_nova_sc bg-[#800000] px-5 py-5 text-4xl text-white">
+        {q ? `Searched for: ${q}` : "All Papers"}
+      </div>
+      <div className="mt-5 flex-1 lg:flex">
+        <div className="flex flex-col border-black lg:w-72 lg:shrink-0 lg:border-r lg:pr-5">
+          <Filter onFilterChange={handleFilterChange}></Filter>
         </div>
-        <div className="font-urbanist ml-2 h-full w-full bg-blue-500 py-2 lg:flex-1">
-          <div className="flex h-full flex-col gap-5 bg-green-900">
-            {loading && <p className="text-xl">Loading...</p>}
-            {!loading && papers.length === 0 && <p>No results found.</p>}
+        <div className="font-urbanist flex flex-1 flex-col gap-5 lg:ml-5">
+          {loading ? (
+            <div className="flex flex-1 items-center justify-center py-10 text-xl">
+              <p className="text-black">Searching...</p>
+            </div>
+          ) : papers.length === 0 ? (
+            <div className="flex flex-1 items-center justify-center py-10 text-xl">
+              <p className="text-black">No results found.</p>
+            </div>
+          ) : (
+            papers.map((paper) => {
+              const detailHref =
+                paper.paper_type === "capstone"
+                  ? `/capstone/${paper.id}`
+                  : `/theses/${paper.id}`;
 
-            {!loading &&
-              papers.map((paper) => (
+              return (
                 <div
                   key={paper.id}
-                  className="flex h-40 flex-col justify-between bg-pink-500"
+                  className="border-b border-[#86c9ff] bg-[#ffffffef] px-3 py-2 shadow shadow-black/10"
                 >
-                  <div className="flex gap-2">
-                    <div className="font-cormorant_infant text-xl text-black">
-                      Searched for :
+                  <div className="flex min-h-40 flex-col justify-between">
+                    <div className="text-black">
+                      <Link href={`${detailHref}?page=${page}`}>
+                        <p className="line-clamp-2 text-xl underline decoration-1 underline-offset-3 lg:text-2xl">
+                          {paper.title}
+                        </p>
+                      </Link>
+                      <p className="line-clamp-1 font-light italic">
+                        {paper.researchers}
+                      </p>
                     </div>
-                    <h1 className="font-urbanist text-black">Placeholder</h1>
-                  </div>
-                  <div>
-                    <p className="bg-amber-950 text-lg font-bold">
-                      Level of Technology implementation in the classroom as a
-                      predictor of students' achievment in English, Math and
-                      Science
-                      {/* {paper.title} */}
-                    </p>
-                    <p className="bg-green-400 font-light italic">
-                      Ronald U. Mendoza, Jurel K. Yap, Gabrielle Ann S. Mendoza,
-                      Leonardo M. Jaminola III, and Erica Celine Yu
-                      {/* {paper.researchers} */}
-                    </p>
-                  </div>
-                  <div>
-                    <div className="flex justify-between bg-gray-500">
-                      <div className="flex gap-2">
-                        <h1>Department :</h1>
-                        <h1>CICT {/* {paper.department} */}</h1>
-                      </div>
-                      <h1>Bulan {/* {paper.campus} */}</h1>
-                    </div>
-
-                    <div className="flex justify-between bg-blue-900">
-                      <div>
-                        <div className="flex gap-2">
-                          <h1>Program/Course :</h1>
-                          <h1>
-                            Bachelor of Science in Computer Science{" "}
-                            {/* {paper.course} */}
-                          </h1>
-                        </div>
-                      </div>
+                    <div className="text-black">
                       <div className="flex justify-between">
                         <div className="flex gap-2">
-                          <h1>Year :</h1>
-                          <h1>2021 {/* {paper.year} */}</h1>
+                          <h1>Department :</h1>
+                          <h1>{fieldLabel(paper.college)}</h1>
                         </div>
+                        <h1>{fieldLabel(paper.campus)}</h1>
+                      </div>
+                      <div className="flex justify-between">
+                        <h1>{fieldLabel(paper.program)}</h1>
+                        <div className="flex gap-2">
+                          <h1>{fieldLabel(paper.category)}</h1>
+                          <h1>{paper.year}</h1>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {paper.paper_type
+                          ? paper.paper_type.charAt(0).toUpperCase() +
+                            paper.paper_type.slice(1)
+                          : ""}
                       </div>
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })
+          )}
 
-            {/* pagination */}
-            {!loading && pagination && (
+          {!loading && pagination && pagination.last_page > 1 && (
+            <div className="my-5 flex items-end justify-end border-t border-black pt-5">
               <Pagination
-                page={page}
-                lastPage={pagination.last_page}
+                currentPage={page}
+                totalPages={pagination.last_page}
                 onPageChange={handlePageChange}
               />
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
-    </>
+    </div>
   );
 }
-
-/// change the hardcoded ui above to render papers not just by a single paper^^^^^
-/// the ui above only returns single paper block so you need to make a map? to render all papers that is being retrieved
-
-/// next step is make a pagination
 
 export default function Search() {
   return (
     <>
       <Header></Header>
-      <div className="h-300 bg-white px-5 pt-10 lg:px-10">
-        <div className="flex h-[90%] flex-col bg-pink-400">
-          <div className="font-bona_nova_sc bg-[#800000] px-5 py-5 text-4xl text-white">
-            Searched For :
-          </div>
-          <Suspense fallback={<div>Loading ...</div>}>
-            <SearchContent />
-          </Suspense>
+      <div className="font-urbanist flex w-full justify-between bg-white px-5 pt-10 text-black lg:px-10">
+        <div className="w-1/2">
+          <Searchbar />
         </div>
+      </div>
+
+      <div className="min-h-screen bg-white px-5 pt-5 lg:px-10">
+        <Suspense fallback={<p className="mt-5 text-black">Loading...</p>}>
+          <SearchContent />
+        </Suspense>
       </div>
     </>
   );

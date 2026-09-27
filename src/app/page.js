@@ -38,6 +38,13 @@ import { useAuthStore } from "./store/useAuthStore";
 import ProfileModal from "./reusable_components/ProfileModal";
 import Search from "./reusable_components/Search";
 
+// campus/college/program/category on a paper are nested { id, name }
+// objects - render the name instead of handing React the raw object.
+function fieldLabel(value) {
+  if (value && typeof value === "object") return value.name ?? "";
+  return value ?? "";
+}
+
 export default function Home() {
   //lenis function
   const lenisRef = useRef(null);
@@ -95,19 +102,23 @@ export default function Home() {
     }));
   }
 
-  const CATEGORY_COLORS = [
-    "#02a9f7",
-    "#FF9D50",
-    "#403d39",
-    "#800000",
-    "#071437",
-    "#2a9d8f",
-  ];
+  // generates a color from the category's own name instead of a fixed
+  // palette array - scales to however many categories exist, and the same
+  // category name always lands on the same color (not reshuffled every
+  // render like plain Math.random() would do)
+  function categoryColor(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 65%, 55%)`;
+  }
 
   const categoryData = toChartArray(Analytics?.papers_by_category).map(
-    (item, index) => ({
+    (item) => ({
       ...item,
-      fill: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+      fill: categoryColor(item.name),
     }),
   );
 
@@ -206,6 +217,20 @@ export default function Home() {
   }, [Analytics]);
   //use Gsap
 
+  // Lenis calculates the page's scrollable height near mount, before the
+  // Analytics fetch resolves - the pie chart/campus list/most-viewed
+  // papers that get added afterward make the page taller, but Lenis
+  // never finds out unless told to resize, so scroll gets capped short
+  // of the real bottom. requestAnimationFrame waits for that new content
+  // to actually paint before recalculating.
+  useEffect(() => {
+    if (!Analytics) return;
+    const id = requestAnimationFrame(() => {
+      lenisRef.current?.lenis?.resize();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [Analytics]);
+
   //useAuthStore checks user and loading
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
@@ -284,7 +309,7 @@ export default function Home() {
           {/* contents */}
           <div className="mt-10 sm:mx-0 lg:mt-12 lg:flex lg:justify-between">
             {/* about */}
-            <div className="flex flex-1 flex-col lg:mr-20">
+            <div className="flex flex-1 flex-col lg:mr-20 lg:w-[55%]">
               <div className="mx-5 flex flex-col sm:mx-0 lg:ml-10">
                 <div className="flex items-center justify-start gap-2 border-b border-black pb-3 lg:pb-4">
                   <p className="font-bona_nova_sc text-[34px] leading-none text-[#800000] lg:text-6xl">
@@ -310,37 +335,52 @@ export default function Home() {
                 </div>
               </div>
               {/* about */}
-
-              <div className="px-10 py-10">
-                <Search />
-              </div>
-
               {/* most viewed papers title */}
               <div className="font-bona_nova mt-10 mr-5 bg-[#071437] py-3 pl-5 text-2xl text-white underline sm:mr-0 lg:pl-10">
                 <p>Most Viewed Papers</p>
               </div>
               {/* most viewed papers title */}
 
-              {/* in this div, all of the most viewed will be displayed and will be full of javascript to retrieve data and present it here */}
-              <div className="mx-5 pt-5 sm:mx-0 lg:pl-10">
-                <div className="flex flex-col gap-2 border-b border-[#585757] pb-2">
-                  {/* some sort of title retriever here probably like {title.retrieve} idk */}
-                  <p className="font-urbanist text-[16px] font-semibold text-[#242423]">
-                    Level of Technology implementation in the classroom as a
-                    predictor of students' achievment in English, Math and
-                    Science
-                  </p>
-                  <p className="font-urbanist text-sm font-light text-[#585757] italic">
-                    Ronald U. Mendoza, Jurel K. Yap, Gabrielle Ann S. Mendoza,
-                    Leonardo M. Jaminola III, and Erica Celine Yu
-                  </p>
-                  <div className="font-urbanist flex justify-between pr-2 text-sm text-[#242423]">
-                    <p>Bachelor of Science in Computer Science</p>
-                    <p>2021</p>
-                  </div>
-                </div>
+              {/* researchers/program/year require the backend's
+                  most_viewed_papers query to actually select/eager-load
+                  them - until then these render blank. Sorted defensively
+                  before slicing, in case the backend doesn't already
+                  return it in views_count order. */}
+              <div className="mx-5 flex flex-col gap-5 pt-5 sm:mx-0 lg:pl-10">
+                {[...(Analytics?.most_viewed_papers ?? [])]
+                  .sort((a, b) => b.views_count - a.views_count)
+                  .slice(0, 3)
+                  .map((paper) => {
+                    // falling back to "thesis" is a guess, not a real
+                    // fix; add paper_type to that backend query so this
+                    // routes correctly for capstone papers too
+                    const detailHref =
+                      paper.paper_type === "capstone"
+                        ? `/capstone/${paper.id}`
+                        : `/theses/${paper.id}`;
+                    return (
+                      <div
+                        key={paper.id}
+                        className="flex flex-col gap-10 border-b border-[#585757] pb-2"
+                      >
+                        <div>
+                          <Link href={detailHref}>
+                            <p className="font-urbanist line-clamp-2 text-[16px] font-semibold wrap-break-word text-[#242423] underline decoration-transparent underline-offset-2 transition-colors duration-200 hover:decoration-current">
+                              {paper.title}
+                            </p>
+                          </Link>
+                          <p className="font-urbanist line-clamp-1 text-sm font-light wrap-break-word text-[#585757] italic">
+                            {paper.researchers}
+                          </p>
+                        </div>
+                        <div className="font-urbanist flex justify-between pr-2 text-sm text-[#242423]">
+                          <p>{fieldLabel(paper.program)}</p>
+                          <p>{paper.year}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
-              {/* in this div, all of the most viewed will be displayed and will be full of javascript to retrieve data and present it here */}
             </div>
 
             {/* Research Papers Analytics */}
@@ -407,8 +447,16 @@ export default function Home() {
             </div>
             {/* Research Papers Analytics */}
           </div>
+          {/* Search sits below the whole two-column row (about/most-viewed
+              on one side, the maroon Research Papers box on the other) -
+              it was previously a third item inside that same lg:flex row,
+              landing beside the maroon box instead of underneath it */}
+          <div className="px-10 pt-5 lg:px-10 lg:py-15">
+            <Search />
+          </div>
           {/* contents */}
-          <div className="min-h-screen w-full justify-center py-20 lg:flex lg:gap-0">
+
+          <div className="min-h-screen w-full justify-center py-20 lg:flex">
             <div className="flex flex-1 items-center justify-center">
               <div className="flex h-[50vh] w-full md:h-screen">
                 <ResponsiveContainer>
@@ -422,14 +470,19 @@ export default function Home() {
                       outerRadius={pieOuterRadius}
                       label
                     ></Pie>
-                    <Tooltip />
+                    <Tooltip
+                      formatter={(value, name) => [
+                        value,
+                        `${name} Total Papers`,
+                      ]}
+                    />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
             </div>
             {/* Campuses Analytics */}
-            <div className="font-cormorant_infant mt-20 flex flex-1 flex-col items-center justify-center text-6xl text-[#242423] lg:mt-0">
+            <div className="font-cormorant_infant mt-20 flex flex-1 flex-col items-center justify-center gap-10 text-6xl text-[#242423] lg:mt-0">
               {campusData.map((campus) => {
                 const slug = campus.name.replace(/\s+/g, "-").toLowerCase();
                 return (
@@ -438,7 +491,7 @@ export default function Home() {
                     className={`campus-${slug} b w-full items-center justify-between lg:flex`}
                   >
                     <div className="flex flex-1 justify-between px-5 lg:px-25">
-                      <p className="cursor-pointer underline decoration-transparent decoration-2 underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current">
+                      <p className="underline decoration-transparent decoration-2 underline-offset-[0.10em] transition-colors duration-300 hover:decoration-current">
                         {campus.name}
                       </p>
                       <div className="flex items-end justify-end gap-2">

@@ -127,7 +127,7 @@ export default function Thesis() {
                     className="font-urbanist border-b border-[#86c9ff] bg-[#ffffffef] px-3 py-2 shadow shadow-black/10"
                   >
                     {/* use js to generate these divs and the contents for each paper link that leads to the dynamic /thesis page */}
-                    <div className="flex min-h-40 flex-col justify-between">
+                    <div className="flex min-h-40 flex-col justify-between gap-10 lg:gap-0">
                       <div className="text-black">
                         <Link href={`/theses/${paper.id}`}>
                           <p className="line-clamp-2 text-xl underline decoration-1 underline-offset-3 lg:text-2xl">
@@ -159,10 +159,12 @@ export default function Thesis() {
                           </div>
                           <div className="flex justify-between">
                             <div className="flex gap-2">
-                              <h1>{fieldLabel(paper.category)}</h1>
                               <h1>{fieldLabel(paper.year)}</h1>
                             </div>
                           </div>
+                        </div>
+                        <div className="items- flex items-end justify-end lg:items-stretch lg:justify-normal">
+                          <h1>{fieldLabel(paper.category)}</h1>
                         </div>
                       </div>
                     </div>
