@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 
@@ -47,9 +47,32 @@ function SearchContent() {
     year: [],
   });
 
-  const handleFilterChange = useCallback((newFilters) => {
-    setFilters(newFilters);
-  }, []);
+  // remembers the last filters we actually applied, so we can tell a real
+  // change apart from Filter.js's on-mount call (which sends the same
+  // empty filters again) - without this, landing on /search?q=x&page=3
+  // would immediately get bounced back to page 1
+  const filtersRef = useRef(filters);
+
+  const handleFilterChange = useCallback(
+    (newFilters) => {
+      if (JSON.stringify(filtersRef.current) === JSON.stringify(newFilters)) {
+        return; // nothing actually changed
+      }
+      filtersRef.current = newFilters;
+      setFilters(newFilters);
+
+      // the page number lives in the URL on this route, so resetting it
+      // means editing the URL: no ?page= at all counts as page 1.
+      // replace (not push) so Back doesn't step through every filter click
+      const params = new URLSearchParams(searchParams.toString());
+      if (params.has("page")) {
+        params.delete("page");
+        const qs = params.toString();
+        router.replace(qs ? `${pathname}?${qs}` : pathname);
+      }
+    },
+    [searchParams, router, pathname],
+  );
 
   const handlePageChange = useCallback(
     (newPage) => {
@@ -170,7 +193,7 @@ function SearchContent() {
           )}
 
           {!loading && pagination && pagination.last_page > 1 && (
-            <div className="my-5 flex items-end justify-end border-t border-black pt-5">
+            <div className="my-5 flex items-end justify-end border-t border-black pt-5 text-black">
               <Pagination
                 currentPage={page}
                 totalPages={pagination.last_page}

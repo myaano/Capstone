@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, Suspense } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
 import Header from "../reusable_components/Header";
@@ -48,8 +48,19 @@ function CapstoneContent() {
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // remembers the last filters we actually applied, so we can tell a real
+  // change apart from Filter.js's on-mount call (which sends the same
+  // empty filters again) - without this, arriving via /capstone?page=3
+  // would immediately get bounced back to page 1
+  const filtersRef = useRef(filters);
+
   const handleFilterChange = useCallback((newFilters) => {
+    if (JSON.stringify(filtersRef.current) === JSON.stringify(newFilters)) {
+      return; // nothing actually changed - don't touch the page or refetch
+    }
+    filtersRef.current = newFilters;
     setFilters(newFilters);
+    setPage(1); // a different filter set means a different result set
   }, []);
 
   //fetch and filter
