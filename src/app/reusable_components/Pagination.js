@@ -41,6 +41,14 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
     <div className="pagination font-urbanist flex items-center justify-center gap-2">
       <button
         className="cursor-pointer rounded border px-3"
+        onClick={() => onPageChange(1)}
+        disabled={currentPage === 1}
+      >
+        First
+      </button>
+
+      <button
+        className="cursor-pointer rounded border px-3"
         onClick={handlePrev}
         disabled={currentPage === 1}
       >
@@ -71,6 +79,14 @@ export default function Pagination({ currentPage, totalPages, onPageChange }) {
         disabled={currentPage === totalPages}
       >
         Next
+      </button>
+
+      <button
+        className="cursor-pointer rounded border px-3"
+        onClick={() => onPageChange(totalPages)}
+        disabled={currentPage === totalPages}
+      >
+        Last
       </button>
     </div>
   );

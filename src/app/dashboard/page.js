@@ -444,7 +444,7 @@ function PaperOverlay({ paper, onClose, onSave, onDelete, locations }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between">
-          <h2 className="text-lg font-medium text-[#242423]">Edit paper</h2>
+          <h2 className="text-lg font-medium text-[#242423]">Edit Paper</h2>
           <button
             onClick={onClose}
             className="text-2xl leading-none text-gray-400 hover:text-gray-600"
