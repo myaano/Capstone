@@ -176,9 +176,8 @@ export default function Dashboard() {
     body.append("abstract", updatedPaper.abstract);
     body.append("year", updatedPaper.year);
     body.append("paper_type", updatedPaper.paper_type);
-    // campus/college/program/category aren't editable from this form yet
-    // (they need real dropdowns, not text input) - send the existing ids
-    // back unchanged so the update doesn't blank out these relations
+    // campus/college/program/category come from the cascading dropdowns in
+    // the overlay, so these are always ids (unchanged ones if untouched)
     body.append("campus_id", updatedPaper.campus_id);
     body.append("college_id", updatedPaper.college_id);
     body.append("program_id", updatedPaper.program_id);
@@ -384,20 +383,45 @@ function PaperOverlay({ paper, onClose, onSave, onDelete, locations }) {
     (c) => c.id === Number(form.college_id),
   );
   const programOptions = selectedCollege?.programs ?? [];
+  // each category row belongs to one program, so the options are simply
+  // whatever categories hang off the selected program
+  const selectedProgram = programOptions.find(
+    (p) => p.id === Number(form.program_id),
+  );
+  const categoryOptions = selectedProgram?.categories ?? [];
 
   function handleCampusChange(id) {
-    // changing campus invalidates whatever college/program was selected,
-    // since they belong to the old campus's tree
+    // changing campus invalidates whatever college/program/category was
+    // selected, since they belong to the old campus's tree
     setForm((prev) => ({
       ...prev,
       campus_id: id,
       college_id: "",
       program_id: "",
+      category_id: "",
     }));
   }
 
   function handleCollegeChange(id) {
-    setForm((prev) => ({ ...prev, college_id: id, program_id: "" }));
+    setForm((prev) => ({
+      ...prev,
+      college_id: id,
+      program_id: "",
+      category_id: "",
+    }));
+  }
+
+  function handleProgramChange(id) {
+    // a category only makes sense under its own program, so it resets when
+    // the program changes - and if the new program has exactly one
+    // category, just pick it for them
+    const program = programOptions.find((p) => p.id === Number(id));
+    const categories = program?.categories ?? [];
+    setForm((prev) => ({
+      ...prev,
+      program_id: id,
+      category_id: categories.length === 1 ? String(categories[0].id) : "",
+    }));
   }
 
   async function handleSubmit() {
@@ -501,9 +525,16 @@ function PaperOverlay({ paper, onClose, onSave, onDelete, locations }) {
                 <SelectField
                   label="Program"
                   value={form.program_id}
-                  onChange={(v) => updateField("program_id", v)}
+                  onChange={handleProgramChange}
                   options={programOptions}
                   disabled={!form.college_id}
+                />
+                <SelectField
+                  label="Category"
+                  value={form.category_id}
+                  onChange={(v) => updateField("category_id", v)}
+                  options={categoryOptions}
+                  disabled={!form.program_id}
                 />
                 <EditField
                   label="Year"
