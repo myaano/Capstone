@@ -1,5 +1,3 @@
-"use server";
-
 export async function submitUpload(_prevState, formData) {
   //token
   const token = formData.get("token")?.toString().trim() || "";
