@@ -373,9 +373,19 @@ export default function Home() {
                             {paper.researchers}
                           </p>
                         </div>
-                        <div className="font-urbanist flex justify-between pr-2 text-sm text-[#242423]">
-                          <p>{fieldLabel(paper.program)}</p>
-                          <p>{paper.year}</p>
+                        <div className="font-urbanist pr-2 text-sm text-[#242423]">
+                          <div className="flex justify-between">
+                            <p>{paper.college}</p>
+                            <h1>{paper.campus}</h1>
+                          </div>
+                          <div className="flex justify-between">
+                            <h1>{fieldLabel(paper.program)}</h1>
+                            <h1>{paper.year}</h1>
+                          </div>
+                          <div className="flex justify-between">
+                            <h1>{paper.category}</h1>
+                            <h1>Views: {paper.views_count}</h1>
+                          </div>
                         </div>
                       </div>
                     );
