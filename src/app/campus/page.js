@@ -928,7 +928,7 @@ function EditOverlay({ campus, onClose, onSave, onDelete }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-amber-900/20 text-black"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 text-black"
       onClick={handleBackgroundClick}
     >
       <div

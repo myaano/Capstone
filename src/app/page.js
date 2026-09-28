@@ -363,17 +363,17 @@ export default function Home() {
                         key={paper.id}
                         className="flex flex-col gap-10 border-b border-[#585757] pb-2"
                       >
-                        <div>
+                        <div className="text-lg">
                           <Link href={detailHref}>
-                            <p className="font-urbanist line-clamp-2 text-[16px] font-semibold wrap-break-word text-[#242423] underline decoration-transparent underline-offset-2 transition-colors duration-200 hover:decoration-current">
+                            <p className="font-urbanist line-clamp-2 font-semibold wrap-break-word text-[#242423] underline decoration-transparent underline-offset-2 transition-colors duration-200 hover:decoration-current">
                               {paper.title}
                             </p>
                           </Link>
-                          <p className="font-urbanist line-clamp-1 text-sm font-light wrap-break-word text-[#585757] italic">
+                          <p className="font-urbanist line-clamp-1 font-light wrap-break-word text-[#585757] italic">
                             {paper.researchers}
                           </p>
                         </div>
-                        <div className="font-urbanist pr-2 text-sm text-[#242423]">
+                        <div className="font-urbanist pr-2 text-[#242423]">
                           <div className="flex justify-between">
                             <p>{paper.college}</p>
                             <h1>{paper.campus}</h1>
