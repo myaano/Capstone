@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import Header from "../reusable_components/Header";
+import Search from "../reusable_components/Search";
 import Pagination from "../reusable_components/Pagination";
 
 import { fetchPapers, updatePaper, deletePaper } from "./actions";
@@ -64,6 +65,10 @@ export default function Dashboard() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // admin search bar, in-place - see handleSearch below for why this
+  // doesn't navigate to /search like it does everywhere else
+  const [search, setSearch] = useState("");
+
   //main fetching of papers from actions.js of /dashboard
   // pulled out of the effect so it can also be called after a successful
   // edit/delete - Laravel's update response only has flat *_id fields, not
@@ -73,7 +78,7 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const papersData = await fetchPapers(page);
+      const papersData = await fetchPapers(page, search);
       // safety net: dedupe by id in case the backend query returns the
       // same paper twice for a page (e.g. a duplicating join) - this is
       // a symptom worth checking on the Laravel side too, not just here
@@ -87,11 +92,19 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, search]);
 
   useEffect(() => {
     refreshPapers();
   }, [refreshPapers]);
+
+  // Search's onSearch prop - runs in place instead of routing to /search,
+  // since this is the admin's own paginated list, not the public search
+  // results page. A new search always starts back on page 1.
+  const handleSearch = useCallback((term) => {
+    setSearch(term);
+    setPage(1);
+  }, []);
 
   const thesisTimer = useRef(null);
   const capstoneTimer = useRef(null);
@@ -245,6 +258,15 @@ export default function Dashboard() {
               <StatCard label="Thesis" ref={thesisTimer} />
               <StatCard label="Capstone" ref={capstoneTimer} />
               <StatCard label="Papers" ref={totalTimer} />
+            </div>
+
+            <div className="max-w-md">
+              <Search onSearch={handleSearch} />
+              {search && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Showing results for "{search}"
+                </p>
+              )}
             </div>
 
             <div className="flex flex-col gap-4">
