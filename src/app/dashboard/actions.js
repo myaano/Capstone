@@ -1,10 +1,15 @@
 "use server";
 
 // Same pattern as /upload/actions.js - point this at your Laravel LAN IP.
-const API_URL = "https://capstone-backend-1yta.onrender.com/api";
+const API_URL = "https://capstone-backend-1yta.onrender.com/api"; // TODO: swap in your actual LAN IP
 
-export async function fetchPapers(page) {
-  const params = new URLSearchParams({ page });
+export async function fetchPapers(page, search = "") {
+  // sort=oldest asks Laravel for oldest-first, so newly added papers land at
+  // the end of the list (the last page). Ordering has to happen on the
+  // backend: the list is paginated, so sorting in the browser could only
+  // shuffle the 5 papers already on screen.
+  const params = new URLSearchParams({ page, sort: "oldest" });
+  if (search) params.append("search", search);
   const res = await fetch(`${API_URL}/papers?${params}`, { cache: "no-store" });
 
   if (!res.ok) {
@@ -13,6 +18,10 @@ export async function fetchPapers(page) {
 
   return res.json();
 }
+
+// Called from the dashboard overlay's "Submit edit" button.
+// Always sends FormData (not JSON) since a replacement file may be attached -
+// same POST + _method=PUT workaround used for multipart updates in Laravel.
 
 //update paper
 
