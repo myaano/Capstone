@@ -136,7 +136,7 @@ export default function Login() {
                 <button className="flex w-full items-center justify-center rounded-xl border border-[#071437] bg-white p-2 text-xl text-[#071437]">
                   Login
                 </button>
-                <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[#071437] text-xl transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] group-hover:bg-[#071437] group-hover:text-white group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)]">
+                <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-[#071437] text-xl text-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] group-hover:bg-[#071437] group-hover:text-white group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)]">
                   Login
                 </div>
               </div>

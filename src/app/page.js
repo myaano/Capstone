@@ -341,19 +341,11 @@ export default function Home() {
               </div>
               {/* most viewed papers title */}
 
-              {/* researchers/program/year require the backend's
-                  most_viewed_papers query to actually select/eager-load
-                  them - until then these render blank. Sorted defensively
-                  before slicing, in case the backend doesn't already
-                  return it in views_count order. */}
               <div className="mx-5 flex flex-col gap-5 pt-5 sm:mx-0 lg:pl-10">
                 {[...(Analytics?.most_viewed_papers ?? [])]
                   .sort((a, b) => b.views_count - a.views_count)
                   .slice(0, 3)
                   .map((paper) => {
-                    // falling back to "thesis" is a guess, not a real
-                    // fix; add paper_type to that backend query so this
-                    // routes correctly for capstone papers too
                     const detailHref =
                       paper.paper_type === "capstone"
                         ? `/capstone/${paper.id}`
@@ -457,10 +449,6 @@ export default function Home() {
             </div>
             {/* Research Papers Analytics */}
           </div>
-          {/* Search sits below the whole two-column row (about/most-viewed
-              on one side, the maroon Research Papers box on the other) -
-              it was previously a third item inside that same lg:flex row,
-              landing beside the maroon box instead of underneath it */}
           <div className="px-10 pt-5 lg:px-10 lg:py-15">
             <Search />
           </div>
