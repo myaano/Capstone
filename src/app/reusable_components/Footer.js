@@ -41,7 +41,7 @@ export default function Footer() {
                 target="_blank"
                 className="focus:ring-0 focus:outline-none"
               >
-                <h1 className="text-base underline underline-offset-4">
+                <h1 className="text-base text-white underline underline-offset-4">
                   sorsu.edu.ph
                 </h1>
               </Link>
@@ -62,22 +62,22 @@ export default function Footer() {
                 target="_blank"
                 className="focus:ring-0 focus:outline-none"
               >
-                <h1 className="text-base underline underline-offset-4">
+                <h1 className="text-base text-white underline underline-offset-4">
                   Facebook
                 </h1>
               </Link>
             </div>
             <div>
               <h1 className="border-b border-white text-white/80">Contacts</h1>
-              <h1 className="text-base">ssc@sorsu.edu.ph</h1>
-              <h1 className="text-base">(056) 211-0103 </h1>
+              <h1 className="text-base text-white">ssc@sorsu.edu.ph</h1>
+              <h1 className="text-base text-white">(056) 211-0103 </h1>
             </div>
           </div>
           <div className="grid w-full grid-cols-1 gap-5 md:w-1/2">
             <div className="border-b border-white text-white/80 md:pb-2 md:text-lg">
               <h1 className="text-3xl">Pamantasang may Puso</h1>
             </div>
-            <p className="md:text-xl">
+            <p className="text-white md:text-xl">
               One of the Oldest Trade Schools in the Philippines, became
               Sorsogon State University in 2018 under House Bill No. 6203 ,
               nurturing future scholars and internationally competitive
