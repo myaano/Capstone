@@ -8,6 +8,8 @@ import { useAuthStore } from "../store/useAuthStore";
 //rerout someone
 import { useRouter } from "next/navigation";
 
+//wth nakay dire ini nasabay sa git add .
+
 // ---- placeholder API endpoints, swap these for your real routes ----
 const API_URL = "https://capstone-backend-1yta.onrender.com/api/locations";
 
