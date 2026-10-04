@@ -8,6 +8,8 @@ import { useAuthStore } from "../store/useAuthStore";
 //rerout someone
 import { useRouter } from "next/navigation";
 
+//wth nakay dire ini nasabay sa git add .
+
 // ---- placeholder API endpoints, swap these for your real routes ----
 const API_URL = "https://capstone-backend-1yta.onrender.com/api/locations";
 
@@ -760,7 +762,7 @@ function PolicyRow({ label, value, options, onChange }) {
         {options.map((opt) => (
           <label
             key={opt.label}
-            className={`cursor-pointer px-3 py-1 text-sm transition-colors duration-200 has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-[#071437] ${
+            className={`cursor-pointer px-3 py-1 text-sm transition-colors duration-200 has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-[#071437] ${
               value === opt.value
                 ? opt.active
                 : "bg-white text-[#242423] hover:bg-black/5"
