@@ -89,6 +89,14 @@ export default function Home() {
   const [Analytics, setAnalytics] = useState(null);
   const [pieOuterRadius, setPieOuterRadius] = useState(100);
 
+  // program dropdown next to Most Viewed Papers - needs real program ids
+  // (not just names), which only the campus->college->program tree has,
+  // not the main /analytics response
+  const [programOptions, setProgramOptions] = useState([]);
+  const [selectedProgramId, setSelectedProgramId] = useState("");
+  const [programAnalytics, setProgramAnalytics] = useState(null);
+  const [programAnalyticsLoading, setProgramAnalyticsLoading] = useState(false);
+
   // papers_by_category / papers_by_campus come back from Laravel as
   // { "Technology": 4, "Business": 1, ... } style maps - this turns that
   // into the [{ name, total }] shape the pie chart and campus loop need.
@@ -154,6 +162,75 @@ export default function Home() {
     }
     loadAnalyticsData();
   }, []);
+
+  // same campus -> college -> program tree Filter.js uses - only source
+  // that has real program ids, which the dropdown needs to query
+  // /analytics?program_id=
+  useEffect(() => {
+    const controller = new AbortController();
+    async function loadPrograms() {
+      try {
+        const response = await fetch(
+          "https://capstone-backend-1yta.onrender.com/api/locations",
+          { signal: controller.signal },
+        );
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+        const json = await response.json();
+        const locations = Array.isArray(json)
+          ? json
+          : (json.campuses ?? json.data ?? []);
+
+        const map = new Map();
+        locations.forEach((campus) =>
+          (campus.colleges || []).forEach((college) =>
+            (college.programs || []).forEach((program) => {
+              if (program?.id != null && !map.has(program.id)) {
+                map.set(program.id, { id: program.id, name: program.name });
+              }
+            }),
+          ),
+        );
+        setProgramOptions([...map.values()]);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Failed to load programs:", error);
+        }
+      }
+    }
+    loadPrograms();
+    return () => controller.abort();
+  }, []);
+
+  // whenever the dropdown selection changes, fetch that program's own
+  // top-viewed papers from the endpoint your groupmate set up
+  useEffect(() => {
+    if (!selectedProgramId) {
+      setProgramAnalytics(null);
+      return;
+    }
+    const controller = new AbortController();
+    async function loadProgramAnalytics() {
+      setProgramAnalyticsLoading(true);
+      try {
+        const response = await fetch(
+          `https://capstone-backend-1yta.onrender.com/api/analytics?program_id=${selectedProgramId}`,
+          { signal: controller.signal },
+        );
+        if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+        const data = await response.json();
+        setProgramAnalytics(data);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.error("Failed to load program analytics:", error);
+          setProgramAnalytics(null);
+        }
+      } finally {
+        setProgramAnalyticsLoading(false);
+      }
+    }
+    loadProgramAnalytics();
+    return () => controller.abort();
+  }, [selectedProgramId]);
 
   //useGsap
 
@@ -223,13 +300,17 @@ export default function Home() {
   // never finds out unless told to resize, so scroll gets capped short
   // of the real bottom. requestAnimationFrame waits for that new content
   // to actually paint before recalculating.
+  // Also re-runs when the program dropdown's result list changes
+  // (selectedProgramId / programAnalytics) - picking a program swaps in a
+  // different-height list, and without this, scrolling past that point
+  // gets stuck exactly like the original Analytics-load issue did.
   useEffect(() => {
     if (!Analytics) return;
     const id = requestAnimationFrame(() => {
       lenisRef.current?.lenis?.resize();
     });
     return () => cancelAnimationFrame(id);
-  }, [Analytics]);
+  }, [Analytics, selectedProgramId, programAnalytics]);
 
   //useAuthStore checks user and loading
   const user = useAuthStore((state) => state.user);
@@ -335,126 +416,170 @@ export default function Home() {
                 </div>
               </div>
               {/* about */}
-              {/* most viewed papers title */}
-              <div className="font-bona_nova mt-10 mr-5 bg-[#071437] py-3 pl-5 text-2xl text-white underline sm:mr-0 lg:pl-10">
-                <p>Most Viewed Papers</p>
+              {/* top viewed papers by program */}
+              <div className="font-bona_nova mt-10 mr-5 bg-[#071437] py-3 pl-5 text-2xl text-white sm:mr-0 lg:pl-10">
+                <p>Top Papers by Program</p>
               </div>
-              {/* most viewed papers title */}
-
               <div className="mx-5 flex flex-col gap-5 pt-5 sm:mx-0 lg:pl-10">
-                {[...(Analytics?.most_viewed_papers ?? [])]
-                  .sort((a, b) => b.views_count - a.views_count)
-                  .slice(0, 3)
-                  .map((paper) => {
-                    const detailHref =
-                      paper.paper_type === "capstone"
-                        ? `/capstone/${paper.id}`
-                        : `/theses/${paper.id}`;
+                <select
+                  value={selectedProgramId}
+                  onChange={(event) => setSelectedProgramId(event.target.value)}
+                  className="font-urbanist w-full rounded-md border border-gray-300 p-2 text-sm text-black"
+                >
+                  <option value="">Select a program...</option>
+                  {programOptions.map((program) => (
+                    <option key={program.id} value={program.id}>
+                      {program.name}
+                    </option>
+                  ))}
+                </select>
+
+                {(() => {
+                  // no program picked yet -> fall back to the same overall
+                  // top-3 the main Most Viewed Papers list uses, so this
+                  // section never starts out blank
+                  const sourcePapers = selectedProgramId
+                    ? programAnalytics?.most_viewed_papers
+                    : Analytics?.most_viewed_papers;
+                  const isLoading = selectedProgramId
+                    ? programAnalyticsLoading
+                    : !Analytics;
+
+                  if (isLoading) {
                     return (
-                      <div
-                        key={paper.id}
-                        className="flex flex-col gap-10 border-b border-[#585757] pb-2"
-                      >
-                        <div className="text-lg">
-                          <Link href={detailHref}>
-                            <p className="font-urbanist line-clamp-2 font-semibold wrap-break-word text-[#242423] underline decoration-transparent underline-offset-2 transition-colors duration-200 hover:decoration-current">
-                              {paper.title}
-                            </p>
-                          </Link>
-                          <p className="font-urbanist line-clamp-1 font-light wrap-break-word text-[#585757] italic">
-                            {paper.researchers}
-                          </p>
-                        </div>
-                        <div className="font-urbanist pr-2 text-[#242423]">
-                          <div className="flex justify-between">
-                            <p>{paper.college}</p>
-                            <h1>{paper.campus}</h1>
-                          </div>
-                          <div className="flex justify-between">
-                            <h1>{fieldLabel(paper.program)}</h1>
-                            <h1>{paper.year}</h1>
-                          </div>
-                          <div className="flex justify-between">
-                            <h1>{paper.category}</h1>
-                            <h1>Views: {paper.views_count}</h1>
-                          </div>
-                        </div>
-                      </div>
+                      <p className="font-urbanist text-[#242423]">Loading...</p>
                     );
-                  })}
+                  }
+                  if (!sourcePapers?.length) {
+                    return (
+                      <p className="font-urbanist text-[#242423]">
+                        {selectedProgramId
+                          ? "No papers found for this program yet."
+                          : "No papers found yet."}
+                      </p>
+                    );
+                  }
+                  return [...sourcePapers]
+                    .sort((a, b) => b.views_count - a.views_count)
+                    .slice(0, 3)
+                    .map((paper) => {
+                      const detailHref =
+                        paper.paper_type === "capstone"
+                          ? `/capstone/${paper.id}`
+                          : `/theses/${paper.id}`;
+                      return (
+                        <div
+                          key={paper.id}
+                          className="flex flex-col gap-10 border-b border-[#585757] pb-2"
+                        >
+                          <div className="text-lg">
+                            <Link href={detailHref}>
+                              <p className="font-urbanist line-clamp-2 font-semibold wrap-break-word text-[#242423] underline decoration-transparent underline-offset-2 transition-colors duration-200 hover:decoration-current">
+                                {paper.title}
+                              </p>
+                            </Link>
+                            <p className="font-urbanist line-clamp-1 font-light wrap-break-word text-[#585757] italic">
+                              {paper.researchers}
+                            </p>
+                          </div>
+                          <div className="font-urbanist pr-2 text-[#242423]">
+                            <div className="flex justify-between">
+                              <p>{paper.college}</p>
+                              <h1>{paper.campus}</h1>
+                            </div>
+                            <div className="flex justify-between">
+                              <h1>{fieldLabel(paper.program)}</h1>
+                              <h1>{paper.year}</h1>
+                            </div>
+                            <div className="flex justify-between">
+                              <h1>{paper.category}</h1>
+                              <h1>Views: {paper.views_count}</h1>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    });
+                })()}
               </div>
+              {/* top viewed papers by program */}
             </div>
 
             {/* Research Papers Analytics */}
-            <div className="text-white lg:w-[45%]">
-              <p className="font-bona_nova_sc pt-4 pb-7 pl-5 text-[24px] text-[#242423] sm:pt-0 sm:pl-0 lg:text-3xl">
-                Research Papers
-              </p>
-              <div className="ml-5 flex h-100 flex-col items-center justify-center gap-15 bg-[#800000] px-10 py-15 sm:ml-0">
-                <div className="flex w-full flex-col justify-center">
-                  <p className="font-bona_nova_sc flex items-center justify-between border-b border-white pb-2 text-5xl">
-                    {/* this stupid number should have a counting animation from 0 to current number of papers */}
-                    <span ref={thesisTimer}>0</span>
-                    {/* this stupid number should have a counting animation from 0 to current number of papers */}
-                    {/* this svg will be a <Link /> which is pressable and will send the user to the thesis section */}
-                    <Link
-                      href="/theses"
-                      className="focus:ring-0 focus:outline-none"
-                    >
-                      <svg
-                        width="30"
-                        height="15"
-                        viewBox="0 0 30 15"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
+            <div className="flex flex-col text-white lg:w-[45%]">
+              <div>
+                <p className="font-bona_nova_sc pt-4 pb-7 pl-5 text-[24px] text-[#242423] sm:pt-0 sm:pl-0 lg:text-3xl">
+                  Research Papers
+                </p>
+                <div className="ml-5 flex h-100 flex-col items-center justify-center gap-15 bg-[#800000] px-10 py-15 sm:ml-0">
+                  <div className="flex w-full flex-col justify-center">
+                    <p className="font-bona_nova_sc flex items-center justify-between border-b border-white pb-2 text-5xl">
+                      {/* this stupid number should have a counting animation from 0 to current number of papers */}
+                      <span ref={thesisTimer}>0</span>
+                      {/* this stupid number should have a counting animation from 0 to current number of papers */}
+                      {/* this svg will be a <Link /> which is pressable and will send the user to the thesis section */}
+                      <Link
+                        href="/theses"
+                        className="focus:ring-0 focus:outline-none"
                       >
-                        <path
-                          d="M29.7071 8.07106C30.0976 7.68054 30.0976 7.04737 29.7071 6.65685L23.3431 0.292885C22.9526 -0.0976396 22.3195 -0.0976396 21.9289 0.292885C21.5384 0.683409 21.5384 1.31657 21.9289 1.7071L27.5858 7.36395L21.9289 13.0208C21.5384 13.4113 21.5384 14.0445 21.9289 14.435C22.3195 14.8255 22.9526 14.8255 23.3431 14.435L29.7071 8.07106ZM0 7.36395L0 8.36395H29V7.36395V6.36395H0L0 7.36395Z"
-                          fill="white"
-                        />
-                      </svg>
-                    </Link>
-                    {/* this svg will be a <Link /> which is pressable and will send the user to the thesis section */}
-                  </p>
-                  <p className="font-bona_nova_sc pt-2 text-2xl leading-none">
-                    Theses Papers
-                  </p>
+                        <svg
+                          width="30"
+                          height="15"
+                          viewBox="0 0 30 15"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M29.7071 8.07106C30.0976 7.68054 30.0976 7.04737 29.7071 6.65685L23.3431 0.292885C22.9526 -0.0976396 22.3195 -0.0976396 21.9289 0.292885C21.5384 0.683409 21.5384 1.31657 21.9289 1.7071L27.5858 7.36395L21.9289 13.0208C21.5384 13.4113 21.5384 14.0445 21.9289 14.435C22.3195 14.8255 22.9526 14.8255 23.3431 14.435L29.7071 8.07106ZM0 7.36395L0 8.36395H29V7.36395V6.36395H0L0 7.36395Z"
+                            fill="white"
+                          />
+                        </svg>
+                      </Link>
+                      {/* this svg will be a <Link /> which is pressable and will send the user to the thesis section */}
+                    </p>
+                    <p className="font-bona_nova_sc pt-2 text-2xl leading-none">
+                      Theses Papers
+                    </p>
+                  </div>
+                  <div className="flex w-full flex-col justify-center">
+                    <p className="font-bona_nova_sc flex items-center justify-between border-b border-white pb-2 text-5xl">
+                      <span ref={capstoneTimer}>0</span>
+                      <Link
+                        href="/capstone"
+                        className="focus:ring-0 focus:outline-none"
+                      >
+                        <svg
+                          width="30"
+                          height="15"
+                          viewBox="0 0 30 15"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M29.7071 8.07106C30.0976 7.68054 30.0976 7.04737 29.7071 6.65685L23.3431 0.292885C22.9526 -0.0976396 22.3195 -0.0976396 21.9289 0.292885C21.5384 0.683409 21.5384 1.31657 21.9289 1.7071L27.5858 7.36395L21.9289 13.0208C21.5384 13.4113 21.5384 14.0445 21.9289 14.435C22.3195 14.8255 22.9526 14.8255 23.3431 14.435L29.7071 8.07106ZM0 7.36395L0 8.36395H29V7.36395V6.36395H0L0 7.36395Z"
+                            fill="white"
+                          />
+                        </svg>
+                      </Link>
+                    </p>
+                    <p className="font-bona_nova_sc pt-2 text-2xl leading-none">
+                      Capstone Projects
+                    </p>
+                  </div>
                 </div>
-                <div className="flex w-full flex-col justify-center">
-                  <p className="font-bona_nova_sc flex items-center justify-between border-b border-white pb-2 text-5xl">
-                    <span ref={capstoneTimer}>0</span>
-                    <Link
-                      href="/capstone"
-                      className="focus:ring-0 focus:outline-none"
-                    >
-                      <svg
-                        width="30"
-                        height="15"
-                        viewBox="0 0 30 15"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M29.7071 8.07106C30.0976 7.68054 30.0976 7.04737 29.7071 6.65685L23.3431 0.292885C22.9526 -0.0976396 22.3195 -0.0976396 21.9289 0.292885C21.5384 0.683409 21.5384 1.31657 21.9289 1.7071L27.5858 7.36395L21.9289 13.0208C21.5384 13.4113 21.5384 14.0445 21.9289 14.435C22.3195 14.8255 22.9526 14.8255 23.3431 14.435L29.7071 8.07106ZM0 7.36395L0 8.36395H29V7.36395V6.36395H0L0 7.36395Z"
-                          fill="white"
-                        />
-                      </svg>
-                    </Link>
-                  </p>
-                  <p className="font-bona_nova_sc pt-2 text-2xl leading-none">
-                    Capstone Projects
-                  </p>
+              </div>
+
+              <div className="justfiy-center flex flex-1 items-center">
+                <div className="w-full px-10 pt-5 lg:px-10 lg:py-5">
+                  <Search />
                 </div>
               </div>
             </div>
             {/* Research Papers Analytics */}
           </div>
-          <div className="px-10 pt-5 lg:px-10 lg:py-15">
-            <Search />
-          </div>
+
           {/* contents */}
 
-          <div className="min-h-screen w-full justify-center py-20 lg:flex">
+          <div className="min-h-[80vh] w-full justify-center pb-20 lg:flex">
             <div className="flex flex-1 items-center justify-center">
               <div className="flex h-[50vh] w-full md:h-screen">
                 <ResponsiveContainer>

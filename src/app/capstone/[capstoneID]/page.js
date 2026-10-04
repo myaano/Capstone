@@ -1,6 +1,7 @@
 import Header from "../../reusable_components/Header";
 import Footer from "../../reusable_components/Footer";
 import ViewTracker from "../../reusable_components/ViewTracker";
+import PdfViewer from "../../reusable_components/PdfViewer";
 import Link from "next/link";
 
 export default async function CapstoneID({ params, searchParams }) {
@@ -40,6 +41,7 @@ export default async function CapstoneID({ params, searchParams }) {
   } catch (error) {
     console.error(error);
   }
+  if (!data) return <div>Paper not found.</div>;
   return (
     <div>
       <Header></Header>
@@ -109,19 +111,11 @@ export default async function CapstoneID({ params, searchParams }) {
                       <p className="font-semibold">Year :</p>
                       <p>{data.year}</p>
                     </div>
-                    <div>
-                      <p className="font-semibold">File:</p>
-                      <p>
-                        <a
-                          href={`${API_URL}/api/papers/${data.id}/file`}
-                          className="text-[#0000EE] underline"
-                        >
-                          View
-                        </a>
-                      </p>
-                    </div>
                   </div>
                 </div>
+              </div>
+              <div className="mt-10 w-full lg:w-[55%]">
+                <PdfViewer fileUrl={`${API_URL}/api/papers/${data.id}/file`} />
               </div>
             </div>
           </div>

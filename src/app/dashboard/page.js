@@ -27,15 +27,17 @@ export default function Dashboard() {
 
   //check admin or not
   const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.role === "admin";
+  // super admin has everything an admin has
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
   const isLoading = useAuthStore((state) => state.isLoading);
   useEffect(() => {
     if (isLoading) return; // user data hasn't loaded yet on this refresh - wait
-    if (!user || user.role !== "admin") {
+    console.log(isLoading, user);
+    if (!isAdmin) {
       console.log("Unauthorized Access Detected");
       router.push("/");
     }
-  }, [isLoading, user]);
+  }, [isLoading, isAdmin, router]);
 
   const [papers, setPapers] = useState([]);
 

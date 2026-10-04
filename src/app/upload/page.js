@@ -54,12 +54,17 @@ export default function Upload() {
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
 
+  const canAccess = user?.role === "admin" || user?.role === "super_admin";
+
   useEffect(() => {
-    if (!user || user.role !== "admin") {
+    // wait until the auth store finishes loading, otherwise user is still
+    // null on first render and everyone gets redirected
+    if (isLoading) return;
+    if (!canAccess) {
       console.log("Unauthorized Access Detected");
       router.push("/");
     }
-  }, [isLoading, user]);
+  }, [isLoading, canAccess, router]);
 
   // file upload logics
   const uploadRef = useRef(null);
@@ -261,7 +266,7 @@ export default function Upload() {
 
   return (
     <div className="min-h-screen bg-white">
-      {isLoading || !user || user.role !== "admin" ? (
+      {isLoading || !canAccess ? (
         <div className="font-urbanist flex min-h-screen items-center justify-center">
           <h1>Unauthorized Access Detected</h1>
         </div>

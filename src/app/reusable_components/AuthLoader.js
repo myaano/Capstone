@@ -14,7 +14,7 @@ export default function AuthLoader() {
       return;
     }
 
-    fetch("https://capstone-backend-1yta.onrender.com/api/user", {
+    fetch("https://capstone-backend-1yta.onrender.com/api/users", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => {

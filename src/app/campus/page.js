@@ -1,7 +1,7 @@
 "use client";
 import Header from "../reusable_components/Header";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 
 //useAuthStore, authorize who can go in or not
 import { useAuthStore } from "../store/useAuthStore";
@@ -26,17 +26,14 @@ async function postCampus(campus) {
   const token = localStorage.getItem("token");
 
   console.log("token:", token);
-  const res = await fetch(
-    `https://capstone-backend-1yta.onrender.com/api/locations`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(campus),
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-  );
+    body: JSON.stringify(campus),
+  });
   if (!res.ok) {
     let detail;
     try {
@@ -60,17 +57,14 @@ async function postCampus(campus) {
 
 async function putCampus(id, campus) {
   const token = localStorage.getItem("token");
-  const res = await fetch(
-    `https://capstone-backend-1yta.onrender.com/api/locations/${id}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(campus),
+  const res = await fetch(`${API_URL}/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
-  );
+    body: JSON.stringify(campus),
+  });
   if (!res.ok) {
     let detail;
     try {
@@ -139,15 +133,15 @@ export default function Campus() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
-  const isAdmin = user?.role === "admin";
+  const isSuperAdmin = user?.role === "super_admin";
 
   //checks whos the user is and reroutes
   useEffect(() => {
     if (isLoading) return;
-    if (!isAdmin) {
+    if (!isSuperAdmin) {
       router.replace("/");
     }
-  }, [isLoading, isAdmin, router]);
+  }, [isLoading, isSuperAdmin, router]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [campuses, setCampuses] = useState([]);
@@ -316,6 +310,7 @@ function ConfirmDialog({ message, onConfirm, onCancel }) {
 // ---------------------------------------------------------------------
 function Modal({ onClose, onSave }) {
   const [campusName, setCampusName] = useState("");
+  const [policy, setPolicy] = useState(() => normalizePolicy());
   const [colleges, setColleges] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -459,6 +454,7 @@ function Modal({ onClose, onSave }) {
     try {
       const saved = await postCampus({
         name: campusName,
+        ...policy,
         colleges: toApiColleges(colleges),
       });
       onSave(saved);
@@ -514,6 +510,8 @@ function Modal({ onClose, onSave }) {
               className="w-full rounded-xl border border-black px-2 py-1"
             />
           </div>
+
+          <PolicyFields value={policy} onChange={setPolicy} />
 
           <div className="flex flex-col gap-4">
             {colleges.map((college, index) => (
@@ -681,6 +679,165 @@ function AddCollege({
 }
 
 // ---------------------------------------------------------------------
+// Campus policy
+// Six flat fields sent at the top level of the campus JSON:
+//   guest_can_view_metadata, guest_can_view_file, guest_can_download   // booleans
+//   student_view_metadata_scope, student_view_file_scope,
+//   student_download_scope   // "all_campus" | "same_campus" | "not_allowed"
+// ---------------------------------------------------------------------
+const GUEST_FIELDS = [
+  { key: "guest_can_view_metadata", label: "View metadata" },
+  { key: "guest_can_view_file", label: "View file" },
+  { key: "guest_can_download", label: "Download" },
+];
+
+const STUDENT_FIELDS = [
+  { key: "student_view_metadata_scope", label: "View metadata" },
+  { key: "student_view_file_scope", label: "View file" },
+  { key: "student_download_scope", label: "Download" },
+];
+
+const BOOLEAN_OPTIONS = [
+  { value: true, label: "Yes", active: "bg-[#071437] text-white" },
+  { value: false, label: "No", active: "bg-[#800000] text-white" },
+];
+
+const SCOPE_OPTIONS = [
+  {
+    value: "all_campus",
+    label: "All campus",
+    active: "bg-[#071437] text-white",
+  },
+  {
+    value: "same_campus",
+    label: "Same campus",
+    active: "bg-[#071437] text-white",
+  },
+  {
+    value: "not_allowed",
+    label: "Not allowed",
+    active: "bg-[#800000] text-white",
+  },
+];
+
+const DEFAULT_POLICY = {
+  guest_can_view_metadata: false,
+  guest_can_view_file: false,
+  guest_can_download: false,
+  student_view_metadata_scope: "same_campus",
+  student_view_file_scope: "same_campus",
+  student_download_scope: "same_campus",
+};
+
+// Takes a campus object (or nothing) and returns just the six policy
+// fields, filling in defaults for anything missing so campuses saved
+// before this change still open with sensible values.
+function normalizePolicy(campus) {
+  const policy = {};
+  GUEST_FIELDS.forEach(({ key }) => {
+    policy[key] = Boolean(campus?.[key] ?? DEFAULT_POLICY[key]);
+  });
+  STUDENT_FIELDS.forEach(({ key }) => {
+    const v = campus?.[key];
+    policy[key] = SCOPE_OPTIONS.some((o) => o.value === v)
+      ? v
+      : DEFAULT_POLICY[key];
+  });
+  return policy;
+}
+
+// One labelled row with a segmented radio control
+function PolicyRow({ label, value, options, onChange }) {
+  const name = useId();
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+      <span id={name}>{label}</span>
+      <div
+        role="radiogroup"
+        aria-labelledby={name}
+        className="inline-flex overflow-hidden rounded-xl border border-black"
+      >
+        {options.map((opt) => (
+          <label
+            key={opt.label}
+            className={`cursor-pointer px-3 py-1 text-sm transition-colors duration-200 has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-[#071437] ${
+              value === opt.value
+                ? opt.active
+                : "bg-white text-[#242423] hover:bg-black/5"
+            }`}
+          >
+            <input
+              type="radio"
+              name={name}
+              checked={value === opt.value}
+              onChange={() => onChange(opt.value)}
+              className="sr-only"
+            />
+            {opt.label}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// The full policy section used in the create and edit forms
+function PolicyFields({ value, onChange }) {
+  const setField = (key, v) => onChange({ ...value, [key]: v });
+
+  return (
+    <fieldset className="flex flex-col gap-4 border-b border-black/10 pb-4">
+      <legend className="mb-1">Policy :</legend>
+
+      <div className="flex flex-col gap-2">
+        <p className="font-medium text-[#800000]">Guests</p>
+        {GUEST_FIELDS.map(({ key, label }) => (
+          <PolicyRow
+            key={key}
+            label={label}
+            value={value[key]}
+            options={BOOLEAN_OPTIONS}
+            onChange={(v) => setField(key, v)}
+          />
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p className="font-medium text-[#800000]">Students</p>
+        {STUDENT_FIELDS.map(({ key, label }) => (
+          <PolicyRow
+            key={key}
+            label={label}
+            value={value[key]}
+            options={SCOPE_OPTIONS}
+            onChange={(v) => setField(key, v)}
+          />
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+// Small read-only summary shown on the campus card
+function PolicySummary({ campus }) {
+  const p = normalizePolicy(campus);
+  const guestsOn = GUEST_FIELDS.filter(({ key }) => p[key]).length;
+  const scope = (v) => SCOPE_OPTIONS.find((o) => o.value === v)?.label;
+  return (
+    <div className="flex flex-col gap-0.5 text-xs text-[#242423]">
+      <p>
+        Guests: {guestsOn}/{GUEST_FIELDS.length} permissions on
+      </p>
+      <p>
+        Students: metadata – {scope(p.student_view_metadata_scope)}, view –{" "}
+        {scope(p.student_view_file_scope)}, download –{" "}
+        {scope(p.student_download_scope)}
+      </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------
 // CampusCard: renders a saved campus, click to edit
 // ---------------------------------------------------------------------
 function CampusCard({ campus, onEdit }) {
@@ -688,9 +845,12 @@ function CampusCard({ campus, onEdit }) {
     <div className="font-urbanist flex flex-col rounded-2xl border border-black/10 bg-white shadow-sm">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 border-b border-black/10 px-6 py-5">
-        <h2 className="font-cormorant_infant text-3xl leading-none text-[#800000]">
-          {campus.name}
-        </h2>
+        <div className="flex flex-col items-start gap-2">
+          <h2 className="font-cormorant_infant text-3xl leading-none text-[#800000]">
+            {campus.name}
+          </h2>
+          <PolicySummary campus={campus} />
+        </div>
         <button
           type="button"
           onClick={onEdit}
@@ -735,6 +895,7 @@ function CampusCard({ campus, onEdit }) {
 // ---------------------------------------------------------------------
 function EditOverlay({ campus, onClose, onSave, onDelete }) {
   const [campusName, setCampusName] = useState(campus.name);
+  const [policy, setPolicy] = useState(() => normalizePolicy(campus));
   const [colleges, setColleges] = useState(
     (campus.colleges || []).map((college) => ({
       ...college,
@@ -753,6 +914,7 @@ function EditOverlay({ campus, onClose, onSave, onDelete }) {
 
   const hasChanges =
     campusName !== campus.name ||
+    JSON.stringify(policy) !== JSON.stringify(normalizePolicy(campus)) ||
     JSON.stringify(colleges) !== JSON.stringify(campus.colleges || []);
 
   function handleBackgroundClick() {
@@ -884,6 +1046,7 @@ function EditOverlay({ campus, onClose, onSave, onDelete }) {
     try {
       const updated = await putCampus(campus.id, {
         name: campusName,
+        ...policy,
         colleges: toApiColleges(colleges),
       });
       onSave(updated);
@@ -975,6 +1138,8 @@ function EditOverlay({ campus, onClose, onSave, onDelete }) {
               className="w-full rounded-xl border border-black px-2 py-1"
             />
           </div>
+
+          <PolicyFields value={policy} onChange={setPolicy} />
 
           <div className="flex flex-col gap-4">
             {colleges.map((college, index) => (

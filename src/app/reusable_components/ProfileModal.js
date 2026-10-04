@@ -27,7 +27,8 @@ export default function ProfileModal() {
 
   if (!user) return null; // or a "Login" button
 
-  const isAdmin = user.role === "admin";
+  const isSuperAdmin = user.role === "super_admin";
+  const isAdmin = user.role === "admin" || isSuperAdmin; // super admin inherits admin access
 
   const handleLogout = async () => {
     const token = localStorage.getItem("token");
@@ -124,7 +125,7 @@ export default function ProfileModal() {
                 </div>
               </div>
             )}
-            {isAdmin && (
+            {isSuperAdmin && (
               <div className="group relative px-1">
                 <button
                   onClick={() => router.push("/campus")}
@@ -137,6 +138,22 @@ export default function ProfileModal() {
                   onClick={() => router.push("/campus")}
                 >
                   Campus Editor
+                </div>
+              </div>
+            )}
+            {isSuperAdmin && (
+              <div className="group relative px-1">
+                <button
+                  onClick={() => router.push("/user-management")}
+                  className="cursor-pointer"
+                >
+                  User Management
+                </button>
+                <div
+                  className="absolute inset-0 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]"
+                  onClick={() => router.push("/user-management")}
+                >
+                  User Management
                 </div>
               </div>
             )}
