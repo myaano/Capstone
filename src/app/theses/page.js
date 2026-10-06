@@ -72,12 +72,23 @@ export default function Thesis() {
         params.append("page", page);
         params.append("paper_type", "thesis");
 
-        const response = await fetch(
-          `https://capstone-backend-1yta.onrender.com/api/papers?${params.toString()}`,
-          {
+        // Send the login token (if there is one) so Laravel knows who is
+        // asking and can apply each campus's policy to the list. Without it
+        // every visitor is treated as a guest.
+        const url = `https://capstone-backend-1yta.onrender.com/api/papers?${params.toString()}`;
+        const token = localStorage.getItem("token");
+        const request = (t) =>
+          fetch(url, {
             signal: controller.signal,
-          },
-        );
+            headers: {
+              Accept: "application/json",
+              ...(t ? { Authorization: `Bearer ${t}` } : {}),
+            },
+          });
+
+        let response = await request(token);
+        // an expired token shouldn't hide what guests are allowed to see
+        if (response.status === 401 && token) response = await request(null);
 
         if (!response.ok) {
           const errorBody = await response.text();
@@ -117,7 +128,7 @@ export default function Thesis() {
             Theses Papers
           </div>
           {/* this div will contain both the divs for filter and the papers for pagination */}
-          <div className="mt-5 flex-1 lg:flex">
+          <div className="mt-5 flex-1 pb-10 lg:flex">
             <div className="flex flex-col border-black lg:w-72 lg:shrink-0 lg:border-r lg:pr-5">
               <Filter onFilterChange={handleFilterChange}></Filter>
             </div>

@@ -28,7 +28,20 @@ export default function Dashboard() {
   //check admin or not
   const user = useAuthStore((s) => s.user);
   // super admin has everything an admin has
-  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const isAdmin =
+    user?.role === "campus_admin" ||
+    user?.role === "admin" ||
+    user?.role === "super_admin";
+  const isSuperAdmin = user?.role === "super_admin";
+  // an admin only manages papers from their own campus; super_admin manages all
+  const myCampusId = user?.campus_id ?? user?.campus?.id ?? null;
+  const canManagePaper = useCallback(
+    (paper) =>
+      isSuperAdmin ||
+      (myCampusId != null &&
+        String(paper.campus_id ?? paper.campus?.id) === String(myCampusId)),
+    [isSuperAdmin, myCampusId],
+  );
   const isLoading = useAuthStore((state) => state.isLoading);
   useEffect(() => {
     if (isLoading) return; // user data hasn't loaded yet on this refresh - wait
@@ -77,24 +90,46 @@ export default function Dashboard() {
   // the nested campus/college/program objects the card display needs, so
   // patching the list in place leaves those blank until a real re-fetch
   const refreshPapers = useCallback(async () => {
+    // wait until we know who the user is (the list depends on their campus)
+    if (isLoading || !isAdmin) return;
+    if (!isSuperAdmin && myCampusId == null) {
+      setPapers([]);
+      setError("Your account isn't assigned to a campus.");
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
-      const papersData = await fetchPapers(page, search);
+      const papersData = await fetchPapers(
+        page,
+        search,
+        localStorage.getItem("token") || "",
+      );
       // safety net: dedupe by id in case the backend query returns the
       // same paper twice for a page (e.g. a duplicating join) - this is
       // a symptom worth checking on the Laravel side too, not just here
       const deduped = Array.from(
         new Map((papersData.data ?? []).map((p) => [p.id, p])).values(),
       );
-      setPapers(deduped);
+      // admins only ever see their own campus's papers. The backend must
+      // enforce this too; this is the safety net on the screen
+      setPapers(deduped.filter(canManagePaper));
       setTotalPages(papersData.last_page ?? 1);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [
+    page,
+    search,
+    isLoading,
+    isAdmin,
+    isSuperAdmin,
+    myCampusId,
+    canManagePaper,
+  ]);
 
   useEffect(() => {
     refreshPapers();
@@ -193,7 +228,10 @@ export default function Dashboard() {
     body.append("paper_type", updatedPaper.paper_type);
     // campus/college/program/category come from the cascading dropdowns in
     // the overlay, so these are always ids (unchanged ones if untouched)
-    body.append("campus_id", updatedPaper.campus_id);
+    body.append(
+      "campus_id",
+      isSuperAdmin ? updatedPaper.campus_id : myCampusId,
+    );
     body.append("college_id", updatedPaper.college_id);
     body.append("program_id", updatedPaper.program_id);
     body.append("category_id", updatedPaper.category_id);
@@ -307,6 +345,7 @@ export default function Dashboard() {
           onSave={handleSave}
           onDelete={handleDelete}
           locations={locations}
+          lockCampus={!isSuperAdmin}
         />
       )}
     </div>
@@ -378,7 +417,14 @@ function Field({ label, value }) {
 }
 
 // the overlay doubles as the edit form and the delete trigger.
-function PaperOverlay({ paper, onClose, onSave, onDelete, locations }) {
+function PaperOverlay({
+  paper,
+  onClose,
+  onSave,
+  onDelete,
+  locations,
+  lockCampus,
+}) {
   // campus/college/program on `paper` are nested { id, name } objects -
   // pull out plain values for the editable fields, and keep the ids
   // around unchanged so handleSave can send them back even though
@@ -538,6 +584,7 @@ function PaperOverlay({ paper, onClose, onSave, onDelete, locations }) {
                   value={form.campus_id}
                   onChange={handleCampusChange}
                   options={locations}
+                  disabled={lockCampus}
                 />
                 <SelectField
                   label="College"
