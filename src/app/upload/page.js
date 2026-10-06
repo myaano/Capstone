@@ -54,7 +54,10 @@ export default function Upload() {
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
 
-  const canAccess = user?.role === "admin" || user?.role === "super_admin";
+  const canAccess =
+    user?.role === "campus_admin" ||
+    user?.role === "admin" ||
+    user?.role === "super_admin";
 
   useEffect(() => {
     // wait until the auth store finishes loading, otherwise user is still

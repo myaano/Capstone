@@ -28,7 +28,9 @@ export default function ProfileModal() {
   if (!user) return null; // or a "Login" button
 
   const isSuperAdmin = user.role === "super_admin";
-  const isAdmin = user.role === "admin" || isSuperAdmin; // super admin inherits admin access
+  // the campus admins' role is "campus_admin"; super admin inherits their access
+  const isCampusAdmin = user.role === "campus_admin" || user.role === "admin";
+  const isAdmin = isCampusAdmin || isSuperAdmin;
 
   const handleLogout = async () => {
     const token = localStorage.getItem("token");

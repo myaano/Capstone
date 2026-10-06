@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "../store/useAuthStore";
 
 const API = "https://capstone-backend-1yta.onrender.com/api/admin/users"; // unchanged
-const USERS_URL = API; // was `${API}/users`
+const USERS_URL = API; // GET list, PUT/DELETE /{id}
+const CAMPUS_ADMINS_URL =
+  "https://capstone-backend-1yta.onrender.com/api/admin/campus-admins"; // POST: add an admin
 const LOCATIONS_URL =
   "https://capstone-backend-1yta.onrender.com/api/locations";
+const USERNAME_MAX = 10;
 
 // ---------------------------------------------------------------------
 // helpers
@@ -48,8 +51,6 @@ const ROLE_LABEL = {
   student: "Student",
 };
 
-const isVerified = (u) =>
-  Boolean(u?.email_verified_at) || u?.status === "verified";
 const campusIdOf = (u) => u?.campus_id ?? u?.campus?.id ?? null;
 
 const inputClass =
@@ -58,21 +59,6 @@ const inputClass =
 // ---------------------------------------------------------------------
 // small UI pieces
 // ---------------------------------------------------------------------
-
-function StatusBadge({ account }) {
-  const verified = isVerified(account);
-  return (
-    <span
-      className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
-        verified
-          ? "bg-green-100 text-green-800"
-          : "bg-yellow-100 text-yellow-800"
-      }`}
-    >
-      {verified ? "Verified" : "Pending"}
-    </span>
-  );
-}
 
 function RoleBadge({ account }) {
   const key = roleKey(account);
@@ -156,6 +142,7 @@ function AccountFormModal({
   const [name, setName] = useState(account?.name ?? "");
   const [username, setUsername] = useState(account?.username ?? "");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [campusId, setCampusId] = useState(
     String(editing ? (campusIdOf(account) ?? "") : (presetCampusId ?? "")),
@@ -170,11 +157,17 @@ function AccountFormModal({
     try {
       const body = { name, username };
       body.campus_id = Number(campusId) || campusId;
-      if (password) body.password = password;
-      if (!editing) body.role = "admin"; // only a super admin can reach this page
+      if (password) {
+        body.password = password;
+        body.password_confirmation = confirmPassword; // backend uses the `confirmed` rule
+      }
+      // no role field: the backend's createCampusAdmin makes the account an admin
+      // admins are created without an email, so send it as null
+      // (not sent on edit, so an existing email is never overwritten)
+      if (!editing) body.email = null;
 
       const res = await fetch(
-        editing ? `${USERS_URL}/${account.id}` : USERS_URL,
+        editing ? `${USERS_URL}/${account.id}` : CAMPUS_ADMINS_URL,
         {
           method: editing ? "PUT" : "POST",
           headers: authHeaders(true),
@@ -195,13 +188,13 @@ function AccountFormModal({
 
   return (
     <Modal
-      title={editing ? `Edit ${ROLE_LABEL[roleKey(account)]}` : "Add admin"}
+      title={editing ? `Edit ${ROLE_LABEL[roleKey(account)]}` : "Add Admin"}
       onClose={onClose}
     >
       <form
         noValidate
         onSubmit={handleSubmit}
-        className="mt-4 flex flex-col gap-4"
+        className="mt-4 flex flex-col gap-4 text-[#242423]"
       >
         <div className="flex flex-col gap-1">
           <label htmlFor="acc-name" className="text-sm">
@@ -236,7 +229,7 @@ function AccountFormModal({
           />
         </div>
 
-        {editing && (
+        {editing && !isAdminForm && (
           <div className="flex flex-col gap-1">
             <p className="text-sm">SorSU email</p>
             <p className="rounded-lg border border-[#e5e5e5] bg-[#f5f5f5] px-3 py-2 break-all text-[#555]">
@@ -301,6 +294,23 @@ function AccountFormModal({
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
+          </div>
+        )}
+
+        {isAdminForm && (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="acc-password-confirm" className="text-sm">
+              Confirm password
+            </label>
+            <input
+              id="acc-password-confirm"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Re-enter the password"
+              className={inputClass}
+            />
           </div>
         )}
 
@@ -408,8 +418,6 @@ export default function UserManagement() {
 
   const [search, setSearch] = useState("");
   const [campusFilter, setCampusFilter] = useState("All");
-  const [roleFilter, setRoleFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("All");
 
   const [formModal, setFormModal] = useState(null); // { mode, account?, presetCampusId? }
   const [toDelete, setToDelete] = useState(null);
@@ -424,8 +432,8 @@ export default function UserManagement() {
     setLoadError("");
     try {
       const [usersRes, campusesRes] = await Promise.all([
-        fetch(LOCATIONS_URL, { headers: { Accept: "application/json" } }),
-        fetch(`${API}/locations`, { headers: { Accept: "application/json" } }),
+        fetch(USERS_URL, { headers: authHeaders() }), // GET /api/admin/users
+        fetch(LOCATIONS_URL, { headers: { Accept: "application/json" } }), // GET /api/locations
       ]);
       if (!usersRes.ok) throw new Error(await backendError(usersRes));
       if (!campusesRes.ok) throw new Error(await backendError(campusesRes));
@@ -475,9 +483,15 @@ export default function UserManagement() {
     campuses.length > 0 &&
     campuses.every((c) => adminByCampus.has(String(c.id)));
 
-  const filtered = useMemo(() => {
+  // students only; admins have their own section
+  const allStudents = useMemo(
+    () => accounts.filter((a) => roleKey(a) === "student"),
+    [accounts],
+  );
+
+  const filteredStudents = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return accounts.filter((a) => {
+    return allStudents.filter((a) => {
       const matchesSearch =
         !q ||
         (a.name ?? "").toLowerCase().includes(q) ||
@@ -485,13 +499,9 @@ export default function UserManagement() {
         (a.email ?? "").toLowerCase().includes(q);
       const matchesCampus =
         campusFilter === "All" || String(campusIdOf(a)) === campusFilter;
-      const matchesRole = roleFilter === "All" || roleKey(a) === roleFilter;
-      const matchesStatus =
-        statusFilter === "All" ||
-        (statusFilter === "verified") === isVerified(a);
-      return matchesSearch && matchesCampus && matchesRole && matchesStatus;
+      return matchesSearch && matchesCampus;
     });
-  }, [accounts, search, campusFilter, roleFilter, statusFilter]);
+  }, [allStudents, search, campusFilter]);
 
   async function afterChange() {
     setFormModal(null);
@@ -540,32 +550,11 @@ export default function UserManagement() {
 
       <div className="font-urbanist min-h-screen bg-white px-4 py-8 text-[#242423] sm:px-6 lg:px-10">
         {/* Title */}
-        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="font-bona_nova text-2xl sm:text-3xl">
-              User Management
-            </p>
-            <p className="text-sm text-[#999595]">
-              Add campus admins, and edit or delete accounts across all
-              campuses.
-            </p>
-          </div>
-          <div className="flex flex-col items-start gap-1 sm:items-end">
-            <button
-              onClick={() => setFormModal({ mode: "add-admin" })}
-              disabled={
-                loading || allCampusesHaveAdmin || campuses.length === 0
-              }
-              className="w-full border border-[#800000] bg-[#800000] px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50 sm:w-auto"
-            >
-              + Add admin
-            </button>
-            {allCampusesHaveAdmin && (
-              <p className="text-xs text-[#999595]">
-                Every campus already has an admin.
-              </p>
-            )}
-          </div>
+        <div className="mb-8">
+          <p className="font-bona_nova text-2xl sm:text-3xl">User Management</p>
+          <p className="text-sm text-[#999595]">
+            Manage campus admins and student accounts across all campuses.
+          </p>
         </div>
 
         {loadError && (
@@ -578,224 +567,243 @@ export default function UserManagement() {
           </div>
         )}
 
-        {/* Campus admins: one card per campus */}
-        <p className="font-bona_nova_sc mb-3 text-xl sm:text-2xl">
-          Campus Admins
-        </p>
-        <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {loading &&
-            [0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="h-36 animate-pulse border border-[#e5e5e5] bg-[#f5f5f5]"
-              />
-            ))}
-          {!loading &&
-            campuses.map((c) => {
-              const admin = adminByCampus.get(String(c.id));
-              const count = accounts.filter(
-                (a) => String(campusIdOf(a)) === String(c.id),
-              ).length;
-              return (
+        {/* ADMIN ACCOUNTS: one card per campus */}
+        <section aria-labelledby="admins-heading" className="mb-10">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p
+                id="admins-heading"
+                className="font-bona_nova_sc text-xl sm:text-2xl"
+              >
+                Admin Accounts
+              </p>
+              <p className="text-sm text-[#999595]">One admin per campus.</p>
+            </div>
+            <div className="flex flex-col items-start gap-1 sm:items-end">
+              <button
+                onClick={() => setFormModal({ mode: "add-admin" })}
+                disabled={
+                  loading || allCampusesHaveAdmin || campuses.length === 0
+                }
+                className="w-full border border-[#800000] bg-[#800000] px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50 sm:w-auto"
+              >
+                + Add admin
+              </button>
+              {allCampusesHaveAdmin && (
+                <p className="text-xs text-[#999595]">
+                  Every campus already has an admin.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {loading &&
+              [0, 1, 2, 3].map((i) => (
                 <div
-                  key={c.id}
-                  className="flex flex-col gap-3 border border-[#800000] bg-white p-4 sm:p-5"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-lg font-semibold">{c.name}</p>
-                    <span className="shrink-0 rounded-full bg-[#800000] px-2 py-0.5 text-xs font-semibold text-white">
-                      {count} {count === 1 ? "account" : "accounts"}
-                    </span>
-                  </div>
-
-                  {admin ? (
-                    <div className="min-w-0">
-                      <p className="font-semibold">{admin.name}</p>
-                      <p className="text-sm break-all text-[#999595]">
-                        {admin.email}
-                      </p>
-                      <div className="mt-2">
-                        <StatusBadge account={admin} />
-                      </div>
+                  key={i}
+                  className="h-40 animate-pulse border border-[#e5e5e5] bg-[#f5f5f5]"
+                />
+              ))}
+            {!loading &&
+              campuses.map((c) => {
+                const admin = adminByCampus.get(String(c.id));
+                const studentCount = allStudents.filter(
+                  (a) => String(campusIdOf(a)) === String(c.id),
+                ).length;
+                return (
+                  <div
+                    key={c.id}
+                    className="flex flex-col gap-3 border border-[#800000] bg-[#fffff6] p-4 sm:p-5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-lg font-semibold">{c.name}</p>
+                      <span className="shrink-0 rounded-full bg-[#800000] px-2 py-0.5 text-xs font-semibold text-white">
+                        {studentCount}{" "}
+                        {studentCount === 1 ? "student" : "students"}
+                      </span>
                     </div>
-                  ) : (
-                    <p className="text-sm text-[#999595]">No admin assigned</p>
-                  )}
 
-                  <div className="mt-auto flex gap-2">
                     {admin ? (
-                      <>
+                      <div className="min-w-0">
+                        <p className="font-semibold">{admin.name}</p>
+                        {admin.username && (
+                          <p className="text-sm text-[#999595]">
+                            @{admin.username}
+                          </p>
+                        )}
+                        <p className="text-sm break-all text-[#999595]">
+                          {admin.email}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          <RoleBadge account={admin} />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-[#999595]">
+                        No admin assigned
+                      </p>
+                    )}
+
+                    <div className="mt-auto flex gap-2">
+                      {admin ? (
+                        <>
+                          <OutlineButton
+                            className="flex-1"
+                            onClick={() =>
+                              setFormModal({ mode: "edit", account: admin })
+                            }
+                          >
+                            Edit
+                          </OutlineButton>
+                          <OutlineButton
+                            danger
+                            className="flex-1"
+                            onClick={() => setToDelete(admin)}
+                          >
+                            Delete
+                          </OutlineButton>
+                        </>
+                      ) : (
                         <OutlineButton
                           className="flex-1"
                           onClick={() =>
-                            setFormModal({ mode: "edit", account: admin })
+                            setFormModal({
+                              mode: "add-admin",
+                              presetCampusId: c.id,
+                            })
                           }
                         >
-                          Edit
+                          + Add admin
                         </OutlineButton>
-                        <OutlineButton
-                          danger
-                          className="flex-1"
-                          onClick={() => setToDelete(admin)}
-                        >
-                          Delete
-                        </OutlineButton>
-                      </>
-                    ) : (
-                      <OutlineButton
-                        className="flex-1"
-                        onClick={() =>
-                          setFormModal({
-                            mode: "add-admin",
-                            presetCampusId: c.id,
-                          })
-                        }
-                      >
-                        + Add admin
-                      </OutlineButton>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-        </div>
+                );
+              })}
+          </div>
+        </section>
 
-        {/* Accounts */}
-        <p className="font-bona_nova_sc mb-3 text-xl sm:text-2xl">Accounts</p>
+        <hr className="mb-8 border-[#800000]/20" />
 
-        <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto]">
-          <input
-            type="search"
-            placeholder="Search name, username or email"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={`${inputClass} sm:col-span-2 lg:col-span-1`}
-          />
-          <select
-            value={campusFilter}
-            onChange={(e) => setCampusFilter(e.target.value)}
-            className={inputClass}
-            aria-label="Filter by campus"
+        {/* STUDENT ACCOUNTS */}
+        <section aria-labelledby="students-heading">
+          <p
+            id="students-heading"
+            className="font-bona_nova_sc text-xl sm:text-2xl"
           >
-            <option value="All">All campuses</option>
-            {campuses.map((c) => (
-              <option key={c.id} value={String(c.id)}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className={inputClass}
-            aria-label="Filter by role"
-          >
-            <option value="All">All roles</option>
-            <option value="admin">Admin</option>
-            <option value="student">Student</option>
-          </select>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className={inputClass}
-            aria-label="Filter by status"
-          >
-            <option value="All">All statuses</option>
-            <option value="verified">Verified</option>
-            <option value="pending">Pending</option>
-          </select>
-        </div>
+            Student Accounts
+          </p>
+          <p className="mb-4 text-sm text-[#999595]">
+            {loading
+              ? "Loading..."
+              : `${allStudents.length} ${allStudents.length === 1 ? "student" : "students"} registered.`}
+          </p>
 
-        {/* Phones: one card per account */}
-        <div className="flex flex-col gap-3 md:hidden">
-          {!loading && filtered.length === 0 && (
-            <p className="border border-[#e5e5e5] px-4 py-10 text-center text-[#999595]">
-              No accounts found.
-            </p>
-          )}
-          {filtered.map((a) => (
-            <div
-              key={a.id}
-              className="flex flex-col gap-3 border border-[#800000] p-4"
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto]">
+            <input
+              type="search"
+              placeholder="Search name, username or email"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={`${inputClass} sm:col-span-2 lg:col-span-1`}
+            />
+            <select
+              value={campusFilter}
+              onChange={(e) => setCampusFilter(e.target.value)}
+              className={inputClass}
+              aria-label="Filter by campus"
             >
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <p className="font-semibold">{a.name}</p>
-                  {a.username && (
-                    <p className="text-sm text-[#999595]">@{a.username}</p>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  <RoleBadge account={a} />
-                  <StatusBadge account={a} />
-                </div>
-              </div>
-              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-                <dt className="text-[#999595]">Email</dt>
-                <dd className="break-all">{a.email}</dd>
-                <dt className="text-[#999595]">Campus</dt>
-                <dd>{campusName(a)}</dd>
-              </dl>
-              {renderActions(a)}
-            </div>
-          ))}
-        </div>
+              <option value="All">All campuses</option>
+              {campuses.map((c) => (
+                <option key={c.id} value={String(c.id)}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Tablets and desktops: table */}
-        <div className="hidden overflow-x-auto border border-[#800000] md:block">
-          <table className="w-full text-left">
-            <thead className="bg-[#800000] text-white">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Name</th>
-                <th className="px-4 py-3 font-semibold">SorSU email</th>
-                <th className="px-4 py-3 font-semibold">Campus</th>
-                <th className="px-4 py-3 font-semibold">Role</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 text-right font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {!loading && filtered.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-10 text-center text-[#999595]"
-                  >
-                    No accounts found.
-                  </td>
-                </tr>
-              )}
-              {filtered.map((a) => (
-                <tr
-                  key={a.id}
-                  className="border-t border-[#e5e5e5] hover:bg-[#fffff6]"
-                >
-                  <td className="px-4 py-3">
+          {/* Phones: one card per student */}
+          <div className="flex flex-col gap-3 md:hidden">
+            {!loading && filteredStudents.length === 0 && (
+              <p className="border border-[#e5e5e5] px-4 py-10 text-center text-[#999595]">
+                No students found.
+              </p>
+            )}
+            {filteredStudents.map((a) => (
+              <div
+                key={a.id}
+                className="flex flex-col gap-3 border border-[#e5e5e5] p-4"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="font-semibold">{a.name}</p>
                     {a.username && (
                       <p className="text-sm text-[#999595]">@{a.username}</p>
                     )}
-                  </td>
-                  <td className="px-4 py-3 break-all">{a.email}</td>
-                  <td className="px-4 py-3">{campusName(a)}</td>
-                  <td className="px-4 py-3">
-                    <RoleBadge account={a} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge account={a} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-end">{renderActions(a)}</div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                  <dt className="text-[#999595]">Email</dt>
+                  <dd className="break-all">{a.email}</dd>
+                  <dt className="text-[#999595]">Campus</dt>
+                  <dd>{campusName(a)}</dd>
+                </dl>
+                {renderActions(a)}
+              </div>
+            ))}
+          </div>
 
-        <p className="mt-3 text-sm text-[#999595]">
-          Showing {filtered.length} of {accounts.length} accounts
-        </p>
+          {/* Tablets and desktops: table */}
+          <div className="hidden overflow-x-auto border border-[#242423] md:block">
+            <table className="w-full text-left">
+              <thead className="bg-[#242423] text-white">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Name</th>
+                  <th className="px-4 py-3 font-semibold">SorSU email</th>
+                  <th className="px-4 py-3 font-semibold">Campus</th>
+                  <th className="px-4 py-3 text-right font-semibold">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {!loading && filteredStudents.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-10 text-center text-[#999595]"
+                    >
+                      No students found.
+                    </td>
+                  </tr>
+                )}
+                {filteredStudents.map((a) => (
+                  <tr
+                    key={a.id}
+                    className="border-t border-[#e5e5e5] hover:bg-[#fffff6]"
+                  >
+                    <td className="px-4 py-3">
+                      <p className="font-semibold">{a.name}</p>
+                      {a.username && (
+                        <p className="text-sm text-[#999595]">@{a.username}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 break-all">{a.email}</td>
+                    <td className="px-4 py-3">{campusName(a)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end">{renderActions(a)}</div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="mt-3 text-sm text-[#999595]">
+            Showing {filteredStudents.length} of {allStudents.length} students
+          </p>
+        </section>
       </div>
 
       {formModal && (

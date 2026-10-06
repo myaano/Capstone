@@ -685,18 +685,18 @@ function AddCollege({
 // Six flat fields sent at the top level of the campus JSON:
 //   guest_can_view_metadata, guest_can_view_file, guest_can_download   // booleans
 //   student_view_metadata_scope, student_view_file_scope,
-//   student_download_scope   // "all_campus" | "same_campus" | "not_allowed"
+//   student_download_scope   // "all_campuses" | "same_campus" | "none"
 // ---------------------------------------------------------------------
 const GUEST_FIELDS = [
-  { key: "guest_can_view_metadata", label: "View metadata" },
-  { key: "guest_can_view_file", label: "View file" },
-  { key: "guest_can_download", label: "Download" },
+  { key: "guest_can_view_metadata", label: "View paper details" },
+  { key: "guest_can_view_file", label: "View paper file" },
+  { key: "guest_can_download", label: "Download paper" },
 ];
 
 const STUDENT_FIELDS = [
-  { key: "student_view_metadata_scope", label: "View metadata" },
-  { key: "student_view_file_scope", label: "View file" },
-  { key: "student_download_scope", label: "Download" },
+  { key: "student_view_metadata_scope", label: "View paper details" },
+  { key: "student_view_file_scope", label: "View paper file" },
+  { key: "student_download_scope", label: "Download paper" },
 ];
 
 const BOOLEAN_OPTIONS = [
@@ -706,7 +706,7 @@ const BOOLEAN_OPTIONS = [
 
 const SCOPE_OPTIONS = [
   {
-    value: "all_campus",
+    value: "all_campuses",
     label: "All campus",
     active: "bg-[#071437] text-white",
   },
@@ -716,7 +716,7 @@ const SCOPE_OPTIONS = [
     active: "bg-[#071437] text-white",
   },
   {
-    value: "not_allowed",
+    value: "none",
     label: "Not allowed",
     active: "bg-[#800000] text-white",
   },
@@ -734,13 +734,23 @@ const DEFAULT_POLICY = {
 // Takes a campus object (or nothing) and returns just the six policy
 // fields, filling in defaults for anything missing so campuses saved
 // before this change still open with sensible values.
+// The backend returns the six fields nested under `campus.policy`
+// (a related record), so read from there first.
 function normalizePolicy(campus) {
+  const source = campus?.policy ?? campus;
   const policy = {};
   GUEST_FIELDS.forEach(({ key }) => {
-    policy[key] = Boolean(campus?.[key] ?? DEFAULT_POLICY[key]);
+    policy[key] = Boolean(source?.[key] ?? DEFAULT_POLICY[key]);
   });
   STUDENT_FIELDS.forEach(({ key }) => {
-    const v = campus?.[key];
+    // records saved with the old values ("all_campus", "not_allowed") still load correctly
+    const raw = source?.[key];
+    const v =
+      raw === "all_campus"
+        ? "all_campuses"
+        : raw === "not_allowed"
+          ? "none"
+          : raw;
     policy[key] = SCOPE_OPTIONS.some((o) => o.value === v)
       ? v
       : DEFAULT_POLICY[key];
@@ -790,6 +800,9 @@ function PolicyFields({ value, onChange }) {
   return (
     <fieldset className="flex flex-col gap-4 border-b border-black/10 pb-4">
       <legend className="mb-1">Policy :</legend>
+      <p className="-mt-2 text-xs text-[#999595]">
+        Paper details = title, authors and abstract.
+      </p>
 
       <div className="flex flex-col gap-2">
         <p className="font-medium text-[#800000]">Guests</p>
@@ -831,7 +844,7 @@ function PolicySummary({ campus }) {
         Guests: {guestsOn}/{GUEST_FIELDS.length} permissions on
       </p>
       <p>
-        Students: metadata – {scope(p.student_view_metadata_scope)}, view –{" "}
+        Students: details – {scope(p.student_view_metadata_scope)}, file –{" "}
         {scope(p.student_view_file_scope)}, download –{" "}
         {scope(p.student_download_scope)}
       </p>
