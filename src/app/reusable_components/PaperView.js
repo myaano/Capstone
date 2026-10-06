@@ -105,7 +105,7 @@ function fileDeniedMessage(paper) {
   if (scope === "same_campus") {
     return `Only students from ${fieldLabel(paper.campus)} Campus can view the file of this paper.`;
   }
-  return "The file of this paper isn't available to your account.";
+  return "Based on Campus Policy, the file cannot be viewed.";
 }
 
 // Full-page message with a button back to the list
