@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import Header from "../reusable_components/Header";
 import Search from "../reusable_components/Search";
 import Pagination from "../reusable_components/Pagination";
@@ -83,6 +83,8 @@ export default function Dashboard() {
   // admin search bar, in-place - see handleSearch below for why this
   // doesn't navigate to /search like it does everywhere else
   const [search, setSearch] = useState("");
+  // which stat card is pressed: "all" | "thesis" | "capstone"
+  const [typeFilter, setTypeFilter] = useState("all");
 
   //main fetching of papers from actions.js of /dashboard
   // pulled out of the effect so it can also be called after a successful
@@ -105,6 +107,7 @@ export default function Dashboard() {
         page,
         search,
         localStorage.getItem("token") || "",
+        typeFilter === "all" ? "" : typeFilter,
       );
       // safety net: dedupe by id in case the backend query returns the
       // same paper twice for a page (e.g. a duplicating join) - this is
@@ -114,7 +117,12 @@ export default function Dashboard() {
       );
       // admins only ever see their own campus's papers. The backend must
       // enforce this too; this is the safety net on the screen
-      setPapers(deduped.filter(canManagePaper));
+      // (and, as a second safety net, only the pressed paper type)
+      setPapers(
+        deduped
+          .filter(canManagePaper)
+          .filter((p) => typeFilter === "all" || p.paper_type === typeFilter),
+      );
       setTotalPages(papersData.last_page ?? 1);
     } catch (err) {
       setError(err.message);
@@ -124,6 +132,7 @@ export default function Dashboard() {
   }, [
     page,
     search,
+    typeFilter,
     isLoading,
     isAdmin,
     isSuperAdmin,
@@ -143,6 +152,14 @@ export default function Dashboard() {
     setPage(1);
   }, []);
 
+  // pressing a stat card filters the list below by that paper type;
+  // pressing the active one again (or "Papers") shows everything. A new
+  // filter always starts back on page 1.
+  const handleTypeSelect = useCallback((type) => {
+    setTypeFilter((prev) => (prev === type ? "all" : type));
+    setPage(1);
+  }, []);
+
   const thesisTimer = useRef(null);
   const capstoneTimer = useRef(null);
   const totalTimer = useRef(null);
@@ -152,6 +169,37 @@ export default function Dashboard() {
   const totalCounterValue = useRef({ value: 0 });
 
   const [Analytics, setAnalytics] = useState(null);
+
+  // The counts follow the logged-in user: a campus admin sees only their own
+  // campus's numbers (from papers_by_campus_and_type, keyed by campus name),
+  // the super admin sees the totals across every campus.
+  const myCampusName =
+    user?.campus?.name ??
+    locations.find((c) => String(c.id) === String(myCampusId))?.name ??
+    null;
+
+  const stats = useMemo(() => {
+    if (!Analytics) return null;
+    const byCampus = Analytics.papers_by_campus_and_type ?? {};
+
+    if (isSuperAdmin) {
+      const sum = (type) =>
+        Object.values(byCampus).reduce((n, c) => n + (c?.[type] ?? 0), 0);
+      const thesis = Analytics.papers_thesis ?? sum("thesis");
+      const capstone = Analytics.papers_capstone ?? sum("capstone");
+      return {
+        thesis,
+        capstone,
+        total: Analytics.total_papers ?? thesis + capstone,
+      };
+    }
+
+    if (!myCampusName) return null; // campus name not known yet
+    const mine = byCampus[myCampusName] ?? {};
+    const thesis = mine.thesis ?? 0;
+    const capstone = mine.capstone ?? 0;
+    return { thesis, capstone, total: thesis + capstone };
+  }, [Analytics, isSuperAdmin, myCampusName]);
   //analytics feetch
   useEffect(() => {
     async function loadAnalyticsData() {
@@ -174,13 +222,13 @@ export default function Dashboard() {
 
   // analytics animation
   useGSAP(() => {
-    if (!Analytics) return;
+    if (!stats) return;
 
     console.log("useGSAP ran, mounting fresh");
 
     // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
     gsap.to(thesisCounterValue.current, {
-      value: Analytics.papers_thesis,
+      value: stats.thesis,
       duration: 3,
       ease: "power2.out",
       onUpdate: () => {
@@ -193,7 +241,7 @@ export default function Dashboard() {
     });
     // on counterValue.current, change the value on whatever is the current amount of papers available to a campus or research paper so that itll count from 0 to current amount
     gsap.to(capstoneCounterValue.current, {
-      value: Analytics.papers_capstone,
+      value: stats.capstone,
       duration: 3,
       ease: "power2.out",
       onUpdate: () => {
@@ -206,7 +254,7 @@ export default function Dashboard() {
     });
     // campus counter animations
     gsap.to(totalCounterValue.current, {
-      value: Analytics.total_papers,
+      value: stats.total,
       ease: "power2.out",
 
       onUpdate: () => {
@@ -217,7 +265,7 @@ export default function Dashboard() {
         }
       },
     });
-  }, [Analytics]);
+  }, [stats?.thesis, stats?.capstone, stats?.total]);
 
   async function handleSave(updatedPaper) {
     const body = new FormData();
@@ -284,6 +332,13 @@ export default function Dashboard() {
             <h1 className="font-cormorant_infant text-6xl text-[#800000]">
               Dashboard
             </h1>
+            {isAdmin && (
+              <p className="text-sm text-[#242423]/60">
+                {isSuperAdmin
+                  ? "Showing totals for all campuses"
+                  : `Showing totals for ${myCampusName ?? "your"} campus`}
+              </p>
+            )}
           </div>
 
           {error && (
@@ -295,9 +350,24 @@ export default function Dashboard() {
           <div className="flex flex-col gap-16">
             {/* stat cards */}
             <div className="mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-black/10 bg-black/10 sm:grid-cols-3">
-              <StatCard label="Thesis" ref={thesisTimer} />
-              <StatCard label="Capstone" ref={capstoneTimer} />
-              <StatCard label="Papers" ref={totalTimer} />
+              <StatCard
+                label="Thesis"
+                ref={thesisTimer}
+                active={typeFilter === "thesis"}
+                onClick={() => handleTypeSelect("thesis")}
+              />
+              <StatCard
+                label="Capstone"
+                ref={capstoneTimer}
+                active={typeFilter === "capstone"}
+                onClick={() => handleTypeSelect("capstone")}
+              />
+              <StatCard
+                label="Papers"
+                ref={totalTimer}
+                active={typeFilter === "all"}
+                onClick={() => handleTypeSelect("all")}
+              />
             </div>
 
             <div className="max-w-md">
@@ -352,28 +422,44 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ label, ref }) {
+function StatCard({ label, ref, active, onClick }) {
   return (
-    <div className="flex h-52 flex-col justify-between bg-white px-6 py-8">
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex h-52 w-full cursor-pointer flex-col justify-between px-6 py-8 text-left transition-colors duration-200 focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-[#800000] ${
+        active
+          ? "bg-[#800000] text-white"
+          : "bg-white text-black hover:bg-[#fffff6]"
+      }`}
+    >
       <div>
-        <p className="text-xs leading-none font-light tracking-wide text-[#242423]/50 uppercase">
+        <p
+          className={`text-xs leading-none font-light tracking-wide uppercase ${
+            active ? "text-white/70" : "text-[#242423]/50"
+          }`}
+        >
           Total
         </p>
-        <p className="font-cormorant_infant text-3xl leading-none text-[#800000] italic">
+        <p
+          className={`font-cormorant_infant text-3xl leading-none italic ${
+            active ? "text-white" : "text-[#800000]"
+          }`}
+        >
           {label}
         </p>
       </div>
       <h1
         ref={ref}
-        className="text-right text-7xl leading-none font-light tabular-nums"
+        className="w-full text-right text-7xl leading-none font-light tabular-nums"
       >
         0
       </h1>
-    </div>
+    </button>
   );
 }
 
-// one row = one card. the whole card is clickable and opens the edit/delete overlay.
 function PaperCard({ paper, isAdmin, onView }) {
   return (
     <div

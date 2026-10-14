@@ -50,7 +50,7 @@ export default function Footer() {
                 target="_blank"
                 className="focus:ring-0 focus:outline-none"
               >
-                <h1 className="underline underline-offset-4">
+                <h1 className="text-white underline underline-offset-4">
                   bulan.sorsu.edu.ph
                 </h1>
               </Link>

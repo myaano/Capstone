@@ -5,6 +5,7 @@ import Header from "../reusable_components/Header";
 import Filter from "../reusable_components/Filter";
 import Pagination from "../reusable_components/Pagination";
 import Search from "../reusable_components/Search";
+import { buildPaperQuery } from "../reusable_components/paperQuery";
 // component import
 
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -63,19 +64,12 @@ export default function Thesis() {
       console.log("effect ran", filters, page);
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        filters.campus_id.forEach((v) => params.append("campus_id", v));
-        filters.college_id.forEach((v) => params.append("college_id", v));
-        filters.program_id.forEach((v) => params.append("program_id", v));
-        filters.category_id.forEach((v) => params.append("category_id", v));
-        filters.year.forEach((v) => params.append("year", v));
-        params.append("page", page);
-        params.append("paper_type", "thesis");
+        const query = buildPaperQuery({ filters, paperType: "thesis", page });
 
         // Send the login token (if there is one) so Laravel knows who is
         // asking and can apply each campus's policy to the list. Without it
         // every visitor is treated as a guest.
-        const url = `https://capstone-backend-1yta.onrender.com/api/papers?${params.toString()}`;
+        const url = `https://capstone-backend-1yta.onrender.com/api/papers?${query}`;
         const token = localStorage.getItem("token");
         const request = (t) =>
           fetch(url, {

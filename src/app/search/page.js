@@ -8,6 +8,7 @@ import Filter from "../reusable_components/Filter";
 import Pagination from "../reusable_components/Pagination";
 import Searchbar from "../reusable_components/Search";
 import Header from "../reusable_components/Header";
+import { buildPaperQuery } from "../reusable_components/paperQuery";
 import { useSearchStore } from "../store/useSearchStore";
 
 // campus/college/program/category on a paper are nested { id, name }
@@ -89,19 +90,17 @@ function SearchContent() {
     async function fetchResults() {
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        if (q) params.append("search", q);
-        filters.campus_id.forEach((v) => params.append("campus_id", v));
-        filters.college_id.forEach((v) => params.append("college_id", v));
-        filters.program_id.forEach((v) => params.append("program_id", v));
-        filters.category_id.forEach((v) => params.append("category_id", v));
-        filters.year.forEach((v) => params.append("year", v));
-        params.append("page", page);
-        // no paper_type here on purpose - search covers both thesis and
-        // capstone papers at once; each result shows its own type below
+        // search covers both thesis and capstone papers at once; each
+        // result shows its own type below
+        const query = buildPaperQuery({
+          filters,
+          search: q,
+          paperType: ["capstone", "thesis"],
+          page,
+        });
 
         const response = await fetch(
-          `https://capstone-backend-1yta.onrender.com/api/papers?${params.toString()}`,
+          `https://capstone-backend-1yta.onrender.com/api/papers?${query}`,
           { signal: controller.signal },
         );
 

@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 export default function Login() {
   const [login, setLogin] = useState(""); // username or SorSU email
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const setUser = useAuthStore((state) => state.setUser);
@@ -127,13 +128,26 @@ export default function Login() {
                   <p className="leading-none text-[#363633] select-none">
                     Password
                   </p>
-                  <input
-                    placeholder="Password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="rounded-lg border border-[#363633] bg-[#fffff6] px-2 py-1 text-[#363633] outline-[#363633] placeholder:text-[#999595]"
-                  />
+                  <div className="relative">
+                    <input
+                      placeholder="Password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full rounded-lg border border-[#363633] bg-[#fffff6] px-2 py-1 pr-16 text-[#363633] outline-[#363633] placeholder:text-[#999595]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((s) => !s)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      className="absolute inset-y-0 right-3 cursor-pointer text-sm text-[#515050] select-none"
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
                 </div>
                 {/*PasswordContainer */}
                 {error && <p className="-mt-4 text-sm text-red-600">{error}</p>}

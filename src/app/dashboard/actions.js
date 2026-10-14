@@ -1,10 +1,22 @@
 "use server";
 
-const API_URL = "https://capstone-backend-1yta.onrender.com/api";
+// Same pattern as /upload/actions.js - point this at your Laravel LAN IP.
+const API_URL = "https://capstone-backend-1yta.onrender.com/api"; // TODO: swap in your actual LAN IP
 
-export async function fetchPapers(page, search = "", token = "") {
+export async function fetchPapers(
+  page,
+  search = "",
+  token = "",
+  paperType = "",
+) {
+  // sort=oldest asks Laravel for oldest-first, so newly added papers land at
+  // the end of the list (the last page). Ordering has to happen on the
+  // backend: the list is paginated, so sorting in the browser could only
+  // shuffle the 5 papers already on screen.
   const params = new URLSearchParams({ page, sort: "oldest" });
   if (search) params.append("search", search);
+  // "thesis" or "capstone" (the dashboard's stat cards); empty means both
+  if (paperType) params.append("paper_type", paperType);
   // The token tells Laravel who is asking, so it can limit an admin to their
   // own campus's papers (super_admin gets everything). It runs server-side
   // here, so the dashboard passes the token in from localStorage.
@@ -17,6 +29,11 @@ export async function fetchPapers(page, search = "", token = "") {
   });
 
   if (!res.ok) {
+    // the body shows in the terminal running `npm run dev`; it says WHY Laravel refused
+    const body = await res.text();
+    console.error(
+      `fetchPapers failed: ${res.status} ${res.url} - ${body.slice(0, 300)}`,
+    );
     throw new Error(`Failed to fetch papers (${res.status})`);
   }
 
