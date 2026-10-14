@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
+import { buildPaperQuery } from "../reusable_components/paperQuery";
 import Header from "../reusable_components/Header";
 import Filter from "../reusable_components/Filter";
 import Pagination from "../reusable_components/Pagination";
@@ -70,16 +71,9 @@ function CapstoneContent() {
     const fetchPapers = async () => {
       setLoading(true);
       try {
-        const params = new URLSearchParams();
-        filters.campus_id.forEach((v) => params.append("campus_id", v));
-        filters.college_id.forEach((v) => params.append("college_id", v));
-        filters.program_id.forEach((v) => params.append("program_id", v));
-        filters.category_id.forEach((v) => params.append("category_id", v));
-        filters.year.forEach((v) => params.append("year", v));
-        params.append("page", page);
-        params.append("paper_type", "capstone");
+        const query = buildPaperQuery({ filters, paperType: "capstone", page });
         const response = await fetch(
-          `https://capstone-backend-1yta.onrender.com/api/papers?${params.toString()}`,
+          `https://capstone-backend-1yta.onrender.com/api/papers?${query}`,
           {
             signal: controller.signal,
           },

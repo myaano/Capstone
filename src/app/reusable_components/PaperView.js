@@ -11,11 +11,9 @@ function fieldLabel(value) {
   return value ?? "";
 }
 
-// ---------------------------------------------------------------------
-// Who is looking at the paper?
-// Guests have no token, so we don't wait on the auth store for them
-// (it can stay "loading" forever when nobody is logged in).
-// ---------------------------------------------------------------------
+// this damn  file is reused for both [paperID] and [capstoneID] dynamic pages
+
+//analyzes who the viewer is, if its a guest or a student and checks tokens
 function useViewer() {
   const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);

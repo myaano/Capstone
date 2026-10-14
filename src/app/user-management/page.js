@@ -5,17 +5,13 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "../store/useAuthStore";
 
-const API = "https://capstone-backend-1yta.onrender.com/api/admin/users"; // unchanged
+const API = "https://capstone-backend-1yta.onrender.com/api/admin/users";
 const USERS_URL = API; // GET list, PUT/DELETE /{id}
 const CAMPUS_ADMINS_URL =
   "https://capstone-backend-1yta.onrender.com/api/admin/campus-admins"; // POST: add an admin
 const LOCATIONS_URL =
   "https://capstone-backend-1yta.onrender.com/api/locations";
 const USERNAME_MAX = 10;
-
-// ---------------------------------------------------------------------
-// helpers
-// ---------------------------------------------------------------------
 
 // Shows the backend's own error: first Laravel field error, else `message`
 async function backendError(res) {
@@ -56,10 +52,6 @@ const campusIdOf = (u) => u?.campus_id ?? u?.campus?.id ?? null;
 const inputClass =
   "w-full rounded-lg border border-[#242423] bg-[#fffff6] px-3 py-2 placeholder:text-[#999595]";
 
-// ---------------------------------------------------------------------
-// small UI pieces
-// ---------------------------------------------------------------------
-
 function RoleBadge({ account }) {
   const key = roleKey(account);
   return (
@@ -71,6 +63,26 @@ function RoleBadge({ account }) {
       }`}
     >
       {ROLE_LABEL[key]}
+    </span>
+  );
+}
+
+// The backend stores this in the `status` column ("active" / "inactive")
+const ACTIVE = "active";
+const INACTIVE = "inactive";
+const isActive = (u) => String(u?.status ?? ACTIVE).toLowerCase() === ACTIVE;
+
+function StatusBadge({ account }) {
+  const active = isActive(account);
+  return (
+    <span
+      className={`inline-block rounded-full border px-2 py-0.5 text-xs font-semibold ${
+        active
+          ? "border-green-700 bg-green-50 text-green-700"
+          : "border-red-700 bg-red-50 text-red-700"
+      }`}
+    >
+      {active ? "Active" : "Inactive"}
     </span>
   );
 }
@@ -124,9 +136,7 @@ function Modal({ title, onClose, children }) {
   );
 }
 
-// ---------------------------------------------------------------------
-// Add admin / edit account modal
-// ---------------------------------------------------------------------
+//admin modal
 function AccountFormModal({
   mode, // "add-admin" | "edit"
   account, // when editing
@@ -338,64 +348,39 @@ function AccountFormModal({
 }
 
 // ---------------------------------------------------------------------
-// Delete confirmation modal
+// Deactivate confirmation modal
 // ---------------------------------------------------------------------
-function DeleteModal({ account, onClose, onDeleted }) {
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState("");
+function DeactivateModal({ account, busy, onClose, onConfirm }) {
   const isAdmin = roleKey(account) === "admin";
-
-  async function confirmDelete() {
-    setDeleting(true);
-    setError("");
-    try {
-      const res = await fetch(`${USERS_URL}/${account.id}`, {
-        method: "DELETE",
-        headers: authHeaders(),
-      });
-      if (!res.ok) {
-        setError(await backendError(res));
-        return;
-      }
-      await onDeleted();
-    } catch {
-      setError("Could not reach the server. Please try again.");
-    } finally {
-      setDeleting(false);
-    }
-  }
-
   return (
     <Modal
-      title={isAdmin ? "Delete admin?" : "Delete account?"}
-      onClose={onClose}
+      title={isAdmin ? "Deactivate admin?" : "Deactivate account?"}
+      onClose={busy ? () => {} : onClose}
     >
       <p className="mt-3 text-[#242423]">
-        This will permanently delete{" "}
-        <span className="font-semibold">{account.name}</span> (
-        <span className="break-all">{account.email}</span>). This can&apos;t be
-        undone.
+        <span className="font-semibold">{account.name}</span>
+        {account.email && (
+          <>
+            {" "}
+            (<span className="break-all">{account.email}</span>)
+          </>
+        )}{" "}
+        won&apos;t be able to log in until the account is reactivated.
       </p>
-      {isAdmin && (
-        <p className="mt-2 text-sm text-[#999595]">
-          The campus will have no admin until you add a new one.
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="mt-3 text-sm text-red-600">
-          {error}
-        </p>
-      )}
+      <p className="mt-2 text-sm text-[#999595]">
+        Any session they have open will also stop working.
+      </p>
       <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <OutlineButton onClick={onClose} disabled={deleting}>
+        <OutlineButton onClick={onClose} disabled={busy}>
           Cancel
         </OutlineButton>
         <button
-          onClick={confirmDelete}
-          disabled={deleting}
+          type="button"
+          onClick={onConfirm}
+          disabled={busy}
           className="border border-[#800000] bg-[#800000] px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {deleting ? "Deleting..." : "Delete"}
+          {busy ? "Deactivating..." : "Deactivate"}
         </button>
       </div>
     </Modal>
@@ -420,7 +405,9 @@ export default function UserManagement() {
   const [campusFilter, setCampusFilter] = useState("All");
 
   const [formModal, setFormModal] = useState(null); // { mode, account?, presetCampusId? }
-  const [toDelete, setToDelete] = useState(null);
+  const [busyId, setBusyId] = useState(null); // account id being (de)activated
+  const [toDeactivate, setToDeactivate] = useState(null); // account awaiting confirmation
+  const [statusError, setStatusError] = useState("");
 
   // only the super admin may be on this page
   useEffect(() => {
@@ -505,8 +492,45 @@ export default function UserManagement() {
 
   async function afterChange() {
     setFormModal(null);
-    setToDelete(null);
     await load();
+  }
+
+  async function toggleStatus(a) {
+    const next = !isActive(a);
+    setStatusError("");
+    setBusyId(a.id);
+    try {
+      const res = await fetch(`${USERS_URL}/${a.id}`, {
+        method: "PUT",
+        headers: authHeaders(true),
+        body: JSON.stringify({ status: next ? ACTIVE : INACTIVE }),
+      });
+      if (!res.ok) {
+        setStatusError(await backendError(res));
+        return;
+      }
+      // use the status the server actually saved, not what we asked for
+      const data = await res.json().catch(() => null);
+      const saved = data?.user?.status ?? (next ? ACTIVE : INACTIVE);
+      setAccounts((prev) =>
+        prev.map((u) => (u.id === a.id ? { ...u, status: saved } : u)),
+      );
+    } catch {
+      setStatusError("Could not reach the server. Please try again.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  // deactivating asks first; activating goes straight through
+  function requestToggle(a) {
+    if (isActive(a)) setToDeactivate(a);
+    else toggleStatus(a);
+  }
+
+  async function confirmDeactivate() {
+    await toggleStatus(toDeactivate);
+    setToDeactivate(null);
   }
 
   if (isLoadingAuth || !isSuperAdmin) {
@@ -520,7 +544,7 @@ export default function UserManagement() {
     );
   }
 
-  // Edit / Delete buttons for one account (none for the super admin)
+  // Edit / Activate-Deactivate buttons for one account (none for the super admin)
   const renderActions = (a) => {
     if (roleKey(a) === "super admin") {
       return <span className="text-sm text-[#999595]">-</span>;
@@ -534,11 +558,12 @@ export default function UserManagement() {
           Edit
         </OutlineButton>
         <OutlineButton
-          danger
-          onClick={() => setToDelete(a)}
+          danger={isActive(a)}
+          disabled={busyId === a.id}
+          onClick={() => requestToggle(a)}
           className="flex-1 md:flex-none"
         >
-          Delete
+          {busyId === a.id ? "..." : isActive(a) ? "Deactivate" : "Activate"}
         </OutlineButton>
       </div>
     );
@@ -564,6 +589,15 @@ export default function UserManagement() {
           >
             <span>{loadError}</span>
             <OutlineButton onClick={load}>Retry</OutlineButton>
+          </div>
+        )}
+
+        {statusError && (
+          <div
+            role="alert"
+            className="mb-6 border border-red-300 bg-red-50 p-4 text-sm text-red-700"
+          >
+            {statusError}
           </div>
         )}
 
@@ -637,6 +671,7 @@ export default function UserManagement() {
                         </p>
                         <div className="mt-2 flex flex-wrap gap-1">
                           <RoleBadge account={admin} />
+                          <StatusBadge account={admin} />
                         </div>
                       </div>
                     ) : (
@@ -657,11 +692,16 @@ export default function UserManagement() {
                             Edit
                           </OutlineButton>
                           <OutlineButton
-                            danger
+                            danger={isActive(admin)}
+                            disabled={busyId === admin.id}
                             className="flex-1"
-                            onClick={() => setToDelete(admin)}
+                            onClick={() => requestToggle(admin)}
                           >
-                            Delete
+                            {busyId === admin.id
+                              ? "..."
+                              : isActive(admin)
+                                ? "Deactivate"
+                                : "Activate"}
                           </OutlineButton>
                         </>
                       ) : (
@@ -748,6 +788,10 @@ export default function UserManagement() {
                   <dd className="break-all">{a.email}</dd>
                   <dt className="text-[#999595]">Campus</dt>
                   <dd>{campusName(a)}</dd>
+                  <dt className="text-[#999595]">Status</dt>
+                  <dd>
+                    <StatusBadge account={a} />
+                  </dd>
                 </dl>
                 {renderActions(a)}
               </div>
@@ -762,6 +806,7 @@ export default function UserManagement() {
                   <th className="px-4 py-3 font-semibold">Name</th>
                   <th className="px-4 py-3 font-semibold">SorSU email</th>
                   <th className="px-4 py-3 font-semibold">Campus</th>
+                  <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 text-right font-semibold">
                     Actions
                   </th>
@@ -771,7 +816,7 @@ export default function UserManagement() {
                 {!loading && filteredStudents.length === 0 && (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={5}
                       className="px-4 py-10 text-center text-[#999595]"
                     >
                       No students found.
@@ -792,6 +837,9 @@ export default function UserManagement() {
                     <td className="px-4 py-3 break-all">{a.email}</td>
                     <td className="px-4 py-3">{campusName(a)}</td>
                     <td className="px-4 py-3">
+                      <StatusBadge account={a} />
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex justify-end">{renderActions(a)}</div>
                     </td>
                   </tr>
@@ -806,6 +854,15 @@ export default function UserManagement() {
         </section>
       </div>
 
+      {toDeactivate && (
+        <DeactivateModal
+          account={toDeactivate}
+          busy={busyId === toDeactivate.id}
+          onClose={() => setToDeactivate(null)}
+          onConfirm={confirmDeactivate}
+        />
+      )}
+
       {formModal && (
         <AccountFormModal
           mode={formModal.mode}
@@ -815,14 +872,6 @@ export default function UserManagement() {
           adminByCampus={adminByCampus}
           onClose={() => setFormModal(null)}
           onSaved={afterChange}
-        />
-      )}
-
-      {toDelete && (
-        <DeleteModal
-          account={toDelete}
-          onClose={() => setToDelete(null)}
-          onDeleted={afterChange}
         />
       )}
     </>
