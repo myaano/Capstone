@@ -14,27 +14,60 @@ function fieldLabel(value) {
 // this damn  file is reused for both [paperID] and [capstoneID] dynamic pages
 
 //analyzes who the viewer is, if its a guest or a student and checks tokens
-function useViewer() {
-  const user = useAuthStore((s) => s.user);
+function useViewer(apiUrl) {
+  const storeUser = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
   const [hasToken, setHasToken] = useState(null); // null = not checked yet
   const [gaveUp, setGaveUp] = useState(false);
+  // fallback: if the store has a token but no user, ask the API who this is
+  const [fetchedUser, setFetchedUser] = useState(null);
+  const [fetchDone, setFetchDone] = useState(false);
 
   useEffect(() => {
     setHasToken(Boolean(localStorage.getItem("token")));
   }, []);
 
-  // a token exists but the user never loads (expired token, etc.): treat as guest
   useEffect(() => {
-    if (!hasToken || !isLoading) return;
-    const timer = setTimeout(() => setGaveUp(true), 3000);
+    if (!hasToken || storeUser || isLoading || fetchDone) return;
+    let cancelled = false;
+    async function whoAmI() {
+      try {
+        const res = await fetch(`${apiUrl}/api/user`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          cache: "no-store",
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        const json = await res.json();
+        if (!cancelled) setFetchedUser(json?.data ?? json?.user ?? json);
+      } catch (e) {
+        console.warn("PaperView: could not load the logged-in user", e);
+      } finally {
+        if (!cancelled) setFetchDone(true);
+      }
+    }
+    whoAmI();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiUrl, hasToken, storeUser, isLoading, fetchDone]);
+
+  // never wait forever (the backend on Render can be slow to wake up)
+  useEffect(() => {
+    if (!hasToken || storeUser) return;
+    const timer = setTimeout(() => setGaveUp(true), 25000);
     return () => clearTimeout(timer);
-  }, [hasToken, isLoading]);
+  }, [hasToken, storeUser]);
+
+  const user = storeUser ?? fetchedUser ?? null;
 
   if (hasToken === null) return { ready: false, user: null };
   if (!hasToken) return { ready: true, user: null };
-  if (isLoading && !gaveUp) return { ready: false, user: null };
-  return { ready: true, user: user ?? null };
+  // token present but user not known yet: don't treat them as a guest
+  if (!user && !fetchDone && !gaveUp) return { ready: false, user: null };
+  return { ready: true, user };
 }
 
 // ---------------------------------------------------------------------
@@ -133,13 +166,14 @@ export default function PaperView({
   backHref,
   summaryLabel = "Summary", // the heading above the abstract ("Abstract" for theses)
 }) {
-  const { ready, user } = useViewer();
+  const { ready, user } = useViewer(apiUrl);
+  console.log("PaperView mounted", { paperId, paperType, apiUrl, ready, user });
   const [paper, setPaper] = useState(null);
   // "loading" | "ok" | "restricted" | "notfound" | "error"
   const [status, setStatus] = useState("loading");
   // the address the PDF is opened from (a short-lived link made for this viewer)
   const [fileUrl, setFileUrl] = useState(null);
-  const [fileState, setFileState] = useState("idle"); // "idle" | "loading" | "ready" | "error"
+  const [fileState, setFileState] = useState("idle"); // "idle" | "loading" | "ready" | "denied" | "error"
 
   // The paper is fetched here, in the browser, so the request can carry the
   // login token. A server component can't read it, so Laravel would treat
@@ -164,16 +198,28 @@ export default function PaperView({
         // an expired token shouldn't lock someone out of what guests can see
         if (res.status === 401 && token) res = await request(null);
         if (cancelled) return;
+        console.log("PaperView: paper request answered", {
+          status: res.status,
+          sentToken: Boolean(token),
+        });
 
         if (res.status === 401 || res.status === 403) {
+          console.warn(
+            `PaperView: the API refused this paper (HTTP ${res.status}). Check the backend access check.`,
+          );
           setStatus("restricted");
         } else if (res.status === 404) {
           setStatus("notfound");
         } else if (!res.ok) {
           setStatus("error");
         } else {
-          setPaper(await res.json());
-          if (!cancelled) setStatus("ok");
+          const json = await res.json();
+          if (cancelled) return;
+          // accept a bare paper, or one wrapped as { data: ... } / { paper: ... }
+          const loaded = json?.data ?? json?.paper ?? json;
+          console.log("PaperView: backend access verdict", loaded?.access);
+          setPaper(loaded);
+          setStatus("ok");
         }
       } catch {
         if (!cancelled) setStatus("error");
@@ -186,58 +232,84 @@ export default function PaperView({
     };
   }, [apiUrl, paperId, paperType]);
 
-  const access = useMemo(
-    () => (paper ? getAccess(user, paper) : null),
-    [user, paper],
-  );
+  const access = useMemo(() => {
+    if (!paper) return null;
+    // The backend knows the real viewer from the login token, so when it sends
+    // its own verdict (paper.access) that is used instead of guessing here.
+    if (typeof paper.access?.details === "boolean") {
+      return {
+        details: paper.access.details,
+        viewFile: Boolean(paper.access.view_file),
+        download: Boolean(paper.access.download),
+      };
+    }
+    const result = getAccess(user, paper);
+    console.log("PaperView access", {
+      viewer: user ? { role: user.role, campus_id: user.campus_id } : "guest",
+      paperCampusId: paper.campus_id ?? paper.campus?.id,
+      result,
+    });
+    return result;
+  }, [user, paper]);
 
-  // A link or an embedded viewer can't send the login token, so Laravel would
-  // see an anonymous request for the file. Instead we ask Laravel (with the
-  // token) for a temporary signed address, and the PDF is opened from that.
+  // A link or an embedded viewer can't send the login token, so the PDF is
+  // fetched here with the token and opened from a temporary blob address.
   const wantsFile = Boolean(
     access && access.details && (access.viewFile || access.download),
   );
   useEffect(() => {
     if (!paper || !wantsFile) return;
     let cancelled = false;
+    let objectUrl = null;
 
-    async function getLink() {
+    async function loadFile() {
       setFileState("loading");
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(`${apiUrl}/api/papers/${paper.id}/file-link`, {
+        const res = await fetch(`${apiUrl}/api/papers/${paper.id}/file`, {
           headers: {
-            Accept: "application/json",
+            Accept: "application/pdf, application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           cache: "no-store",
         });
         if (cancelled) return;
-        if (res.status === 404) {
-          // no file-link route on the backend yet: fall back to the plain file route
-          setFileUrl(`${apiUrl}/api/papers/${paper.id}/file`);
-          setFileState("ready");
+        if (res.status === 401 || res.status === 403) {
+          console.warn("PaperView: the backend refused the file", {
+            status: res.status,
+            viewer: user
+              ? { role: user.role, campus_id: user.campus_id }
+              : "guest",
+            paperCampusId: paper.campus_id ?? paper.campus?.id,
+            viewFileScope: paper.campus?.policy?.student_view_file_scope,
+            viewable: paper.viewable,
+          });
+          setFileState("denied");
           return;
         }
         if (!res.ok) {
           setFileState("error");
           return;
         }
-        const json = await res.json();
-        setFileUrl(json.url);
+        const blob = await res.blob();
+        if (cancelled) return;
+        objectUrl = URL.createObjectURL(blob);
+        setFileUrl(objectUrl);
         setFileState("ready");
       } catch {
         if (!cancelled) setFileState("error");
       }
     }
 
-    getLink();
+    loadFile();
     return () => {
       cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [apiUrl, paper, wantsFile]);
+  }, [apiUrl, paper, wantsFile, user]);
 
-  if (status === "loading" || !ready) {
+  // no need to wait for the login store when the backend already decided
+  if (status === "loading" || (!ready && !paper?.access)) {
     return (
       <div className="bg-white py-10">
         <p className="font-urbanist px-5 text-[#999595] lg:px-10">Loading...</p>
@@ -247,6 +319,29 @@ export default function PaperView({
 
   // details restricted: either Laravel refused the request, or the paper came
   // back and the campus policy says this viewer can't see the details
+  if (access && !access.details && !paper.campus?.policy) {
+    console.warn(
+      "PaperView: the paper has no campus.policy, so access defaults to closed. Load 'campus.policy' in the backend.",
+      paper,
+    );
+    return (
+      <FullPageMessage backHref={backHref}>
+        The access policy for this paper&apos;s campus could not be loaded.
+      </FullPageMessage>
+    );
+  }
+
+  if (access && !access.details) {
+    console.warn("PaperView: details denied by the campus policy", {
+      viewer: user
+        ? { role: user.role, campus_id: user.campus_id }
+        : "guest (no user loaded)",
+      paperCampusId: paper.campus_id ?? paper.campus?.id,
+      studentDetailsScope: paper.campus?.policy?.student_view_metadata_scope,
+      guestDetails: paper.campus?.policy?.guest_can_view_metadata,
+    });
+  }
+
   if (status === "restricted" || (access && !access.details)) {
     return (
       <FullPageMessage backHref={backHref}>
@@ -279,11 +374,14 @@ export default function PaperView({
   //   view + download   -> link that opens the PDF (its viewer has a download button)
   //   download only     -> download link
   //   neither           -> nothing for guests, a short note for logged-in users
+  const denied = fileState === "denied";
+  const canView = !denied && access.viewFile;
+  const canDownload = !denied && access.download;
   const fileReady = fileState === "ready" && Boolean(fileUrl);
-  const showViewer = access.viewFile && !access.download && fileReady;
-  const showLink = access.download && fileReady;
-  const showNote = !access.viewFile && !access.download && Boolean(user);
-  const showFileStatus = (access.viewFile || access.download) && !fileReady;
+  const showViewer = canView && !canDownload && fileReady;
+  const showLink = canDownload && fileReady;
+  const showNote = Boolean(user) && !canView && !canDownload;
+  const showFileStatus = (canView || canDownload) && !fileReady;
 
   return (
     <div className="bg-white py-10">
@@ -377,9 +475,7 @@ export default function PaperView({
                     className="font-urbanist inline-flex flex-col gap-1 border border-[#800000] bg-[#800000] px-6 py-4 text-white transition-opacity hover:opacity-90"
                   >
                     <span className="text-xl">
-                      {access.viewFile
-                        ? "Open paper (PDF)"
-                        : "Download paper (PDF)"}
+                      {canView ? "Open paper (PDF)" : "Download paper (PDF)"}
                     </span>
                     {(data.original_filename || sizeMb) && (
                       <span className="text-sm break-all text-white/80">

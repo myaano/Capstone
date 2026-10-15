@@ -6,7 +6,6 @@ export default function AuthLoader() {
   const setUser = useAuthStore((state) => state.setUser);
 
   useEffect(() => {
-    console.log("AuthLoader mounted, token:", localStorage.getItem("token"));
     const token = localStorage.getItem("token");
 
     if (!token) {

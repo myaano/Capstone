@@ -27,7 +27,6 @@ async function getCampuses() {
 async function postCampus(campus) {
   const token = localStorage.getItem("token");
 
-  console.log("token:", token);
   const res = await fetch(API_URL, {
     method: "POST",
     headers: {
@@ -312,7 +311,9 @@ function ConfirmDialog({ message, onConfirm, onCancel }) {
 // ---------------------------------------------------------------------
 function Modal({ onClose, onSave }) {
   const [campusName, setCampusName] = useState("");
-  const [policy, setPolicy] = useState(() => normalizePolicy());
+  const [policy, setPolicy] = useState(() =>
+    enforcePolicyRules(normalizePolicy()),
+  );
   const [colleges, setColleges] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -456,7 +457,7 @@ function Modal({ onClose, onSave }) {
     try {
       const saved = await postCampus({
         name: campusName,
-        ...policy,
+        ...enforcePolicyRules(policy),
         colleges: toApiColleges(colleges),
       });
       onSave(saved);
@@ -758,30 +759,53 @@ function normalizePolicy(campus) {
   return policy;
 }
 
+// Rule: if students are not allowed to see paper details, guests can't see
+// anything either (a guest can't open the file or download without first
+// seeing the details), so all three guest permissions are forced off.
+const guestsLocked = (p) => p.student_view_metadata_scope === "none";
+
+function enforcePolicyRules(p) {
+  if (!guestsLocked(p)) return p;
+  return {
+    ...p,
+    guest_can_view_metadata: false,
+    guest_can_view_file: false,
+    guest_can_download: false,
+  };
+}
+
 // One labelled row with a segmented radio control
-function PolicyRow({ label, value, options, onChange }) {
+function PolicyRow({ label, value, options, onChange, disabled = false }) {
   const name = useId();
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+    <div
+      className={`flex flex-wrap items-center justify-between gap-2 text-sm ${
+        disabled ? "opacity-50" : ""
+      }`}
+    >
       <span id={name}>{label}</span>
       <div
         role="radiogroup"
         aria-labelledby={name}
+        aria-disabled={disabled}
         className="inline-flex overflow-hidden rounded-xl border border-black"
       >
         {options.map((opt) => (
           <label
             key={opt.label}
-            className={`cursor-pointer px-3 py-1 text-sm transition-colors duration-200 has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-[#071437] ${
+            className={`px-3 py-1 text-sm transition-colors duration-200 has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-[#071437] ${
+              disabled ? "cursor-not-allowed" : "cursor-pointer"
+            } ${
               value === opt.value
                 ? opt.active
-                : "bg-white text-[#242423] hover:bg-black/5"
+                : `bg-white text-[#242423] ${disabled ? "" : "hover:bg-black/5"}`
             }`}
           >
             <input
               type="radio"
               name={name}
               checked={value === opt.value}
+              disabled={disabled}
               onChange={() => onChange(opt.value)}
               className="sr-only"
             />
@@ -795,7 +819,9 @@ function PolicyRow({ label, value, options, onChange }) {
 
 // The full policy section used in the create and edit forms
 function PolicyFields({ value, onChange }) {
-  const setField = (key, v) => onChange({ ...value, [key]: v });
+  const setField = (key, v) =>
+    onChange(enforcePolicyRules({ ...value, [key]: v }));
+  const locked = guestsLocked(value);
 
   return (
     <fieldset className="flex flex-col gap-4 border-b border-black/10 pb-4">
@@ -806,12 +832,19 @@ function PolicyFields({ value, onChange }) {
 
       <div className="flex flex-col gap-2">
         <p className="font-medium text-[#800000]">Guests</p>
+        {locked && (
+          <p className="-mt-1 text-xs text-[#999595]">
+            Guests can&apos;t view papers while students&apos; paper details are
+            set to Not allowed.
+          </p>
+        )}
         {GUEST_FIELDS.map(({ key, label }) => (
           <PolicyRow
             key={key}
             label={label}
             value={value[key]}
             options={BOOLEAN_OPTIONS}
+            disabled={locked}
             onChange={(v) => setField(key, v)}
           />
         ))}
@@ -910,7 +943,9 @@ function CampusCard({ campus, onEdit }) {
 // ---------------------------------------------------------------------
 function EditOverlay({ campus, onClose, onSave, onDelete }) {
   const [campusName, setCampusName] = useState(campus.name);
-  const [policy, setPolicy] = useState(() => normalizePolicy(campus));
+  const [policy, setPolicy] = useState(() =>
+    enforcePolicyRules(normalizePolicy(campus)),
+  );
   const [colleges, setColleges] = useState(
     (campus.colleges || []).map((college) => ({
       ...college,
@@ -927,13 +962,19 @@ function EditOverlay({ campus, onClose, onSave, onDelete }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const maxLength = 25;
 
-  const hasChanges =
-    campusName !== campus.name ||
-    JSON.stringify(policy) !== JSON.stringify(normalizePolicy(campus)) ||
-    JSON.stringify(colleges) !== JSON.stringify(campus.colleges || []);
+  // a function (not a value) so the deep comparison only runs when it's
+  // needed, instead of on every keystroke/re-render
+  function hasChanges() {
+    return (
+      campusName !== campus.name ||
+      JSON.stringify(policy) !==
+        JSON.stringify(enforcePolicyRules(normalizePolicy(campus))) ||
+      JSON.stringify(colleges) !== JSON.stringify(campus.colleges || [])
+    );
+  }
 
   function handleBackgroundClick() {
-    if (hasChanges) {
+    if (hasChanges()) {
       setShowExitConfirm(true);
       return;
     }
@@ -1056,12 +1097,17 @@ function EditOverlay({ campus, onClose, onSave, onDelete }) {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!campusName.trim()) return;
+    // nothing changed: skip the (slow) request entirely
+    if (!hasChanges()) {
+      onClose();
+      return;
+    }
     setError("");
     setSubmitting(true);
     try {
       const updated = await putCampus(campus.id, {
         name: campusName,
-        ...policy,
+        ...enforcePolicyRules(policy),
         colleges: toApiColleges(colleges),
       });
       onSave(updated);
