@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function ProfileModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const router = useRouter();
@@ -33,18 +34,25 @@ export default function ProfileModal() {
   const isAdmin = isCampusAdmin || isSuperAdmin;
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("token");
+    if (loggingOut) return; // ignore extra clicks while a logout is running
+    setLoggingOut(true);
 
-    await fetch("https://capstone-backend-1yta.onrender.com/api/logout", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    try {
+      const token = localStorage.getItem("token");
 
-    localStorage.removeItem("token");
-    logout();
-    router.push("/");
+      await fetch("https://capstone-backend-1yta.onrender.com/api/logout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      localStorage.removeItem("token");
+      logout();
+      router.push("/");
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -58,7 +66,7 @@ export default function ProfileModal() {
             className="flex items-center justify-center gap-1"
             onClick={() => setIsOpen((prev) => !prev)}
           >
-            {user.name}
+            {user.username}
             <svg
               width="15"
               height="9"
@@ -76,7 +84,7 @@ export default function ProfileModal() {
             className="absolute inset-0 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)] md:gap-1"
             onClick={() => setIsOpen((prev) => !prev)}
           >
-            {user.name}
+            {user.username}
             <svg
               width="15"
               height="9"
@@ -159,15 +167,23 @@ export default function ProfileModal() {
                 </div>
               </div>
             )}
-            <div className="group relative px-1">
-              <button onClick={handleLogout} className="cursor-pointer">
-                Logout
+            <div
+              className={`group relative px-1 ${
+                loggingOut ? "pointer-events-none opacity-60" : ""
+              }`}
+            >
+              <button
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="cursor-pointer"
+              >
+                {loggingOut ? "Logging out..." : "Logout"}
               </button>
               <div
                 className="absolute inset-0 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]"
                 onClick={handleLogout}
               >
-                Logout
+                {loggingOut ? "Logging out..." : "Logout"}
               </div>
             </div>
           </div>
