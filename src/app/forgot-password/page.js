@@ -2,14 +2,9 @@
 import Image from "next/image";
 import Rizal from "../../../public/Rizal.jpg";
 import Link from "next/link";
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 const API = "https://capstone-backend-1yta.onrender.com/api";
-
-// Name of the field the backend expects for the emailed code.
-// Laravel's default is `token`; change this if your controller uses `code`.
-const CODE_FIELD = "token";
 
 // Pulls the message out of a failed response so the page shows the backend's
 // own error: the first field error for Laravel validation failures
@@ -59,24 +54,17 @@ function PrimaryButton({ children, loading, onClick, type = "submit" }) {
   );
 }
 
-// Steps: "email" -> "reset" (code + new password) -> "done"
+// Steps: "email" -> "sent" (check your inbox for the reset link)
 export default function ForgotPassword() {
-  const router = useRouter();
-
   const [step, setStep] = useState("email");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState(["", "", "", "", "", ""]);
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState(""); // success message from the backend
   const [loading, setLoading] = useState(false);
-  const codeRefs = useRef([]);
 
-  // POST /forgot-password: the backend emails the code to the user.
-  // Used by the first step and by "Resend code".
-  const requestCode = async () => {
+  // POST /forgot-password: Laravel emails a reset link to the user.
+  // Used by the first step and by "Resend link".
+  const requestLink = async () => {
     setError("");
     setInfo("");
     setLoading(true);
@@ -99,81 +87,17 @@ export default function ForgotPassword() {
 
   const handleSendEmail = async (e) => {
     e.preventDefault();
-    if (await requestCode()) setStep("reset");
-  };
-
-  const handleResend = async () => {
-    if (await requestCode()) {
-      setCode(["", "", "", "", "", ""]);
-      codeRefs.current[0]?.focus();
-    }
-  };
-
-  // POST /reset-password: code + new password in one request
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-    setError("");
-    setInfo("");
-    setLoading(true);
-    try {
-      const res = await post("/reset-password", {
-        email,
-        [CODE_FIELD]: code.join(""),
-        password: newPassword,
-        password_confirmation: confirmPassword,
-      });
-      if (!res.ok) {
-        setError(await backendError(res));
-        return;
-      }
-      const data = await res.json().catch(() => ({}));
-      setInfo(data.message || "");
-      setStep("done");
-    } catch {
-      setError("Could not reach the server. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Code input helpers (one box per digit)
-  const handleCodeChange = (value, index) => {
-    if (!/^\d?$/.test(value)) return;
-    const next = [...code];
-    next[index] = value;
-    setCode(next);
-    if (value && index < 5) codeRefs.current[index + 1]?.focus();
-  };
-
-  const handleCodeKeyDown = (e, index) => {
-    if (e.key === "Backspace" && !code[index] && index > 0) {
-      codeRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handleCodePaste = (e) => {
-    const pasted = e.clipboardData
-      .getData("text")
-      .replace(/\D/g, "")
-      .slice(0, 6);
-    if (!pasted) return;
-    e.preventDefault();
-    setCode(pasted.split("").concat(Array(6).fill("")).slice(0, 6));
-    codeRefs.current[Math.min(pasted.length, 5)]?.focus();
+    if (await requestLink()) setStep("sent");
   };
 
   const titles = {
     email: [
       "Forgot password",
-      "Enter your SorSU email and we'll send you a verification code.",
+      "Enter your SorSU email and we'll send you a link to reset your password.",
     ],
-    reset: [
-      "Reset password",
-      `Enter the code we sent to ${email} and choose a new password.`,
-    ],
-    done: [
-      "Password updated",
-      info || "You can now log in with your new password.",
+    sent: [
+      "Check your email",
+      `We sent a password reset link to ${email}. Open it to choose a new password.`,
     ],
   };
 
@@ -261,106 +185,35 @@ export default function ForgotPassword() {
                       {error}
                     </p>
                   )}
-                  <PrimaryButton loading={loading}>Send code</PrimaryButton>
+                  <PrimaryButton loading={loading}>Send link</PrimaryButton>
                 </form>
               )}
 
-              {/* STEP 2: CODE + NEW PASSWORD */}
-              {step === "reset" && (
-                <form
-                  noValidate
-                  onSubmit={handleResetPassword}
-                  className="font-urbanist flex flex-col gap-6 pt-7"
-                >
-                  <div className="flex flex-col gap-2">
-                    <p className="leading-none text-[#363633] select-none">
-                      Verification code
-                    </p>
-                    <div className="flex gap-2" onPaste={handleCodePaste}>
-                      {code.map((digit, i) => (
-                        <input
-                          key={i}
-                          ref={(el) => (codeRefs.current[i] = el)}
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={1}
-                          value={digit}
-                          onChange={(e) => handleCodeChange(e.target.value, i)}
-                          onKeyDown={(e) => handleCodeKeyDown(e, i)}
-                          aria-label={`Digit ${i + 1}`}
-                          className="h-12 w-full max-w-12 rounded-lg border border-[#363633] bg-[#fffff6] text-center text-xl text-[#363633] outline-[#363633]"
-                        />
-                      ))}
-                    </div>
-                    <p className="text-sm text-[#999595]">
-                      Didn&apos;t get it?{" "}
-                      <button
-                        type="button"
-                        onClick={handleResend}
-                        disabled={loading}
-                        className="text-[#071437] underline disabled:opacity-50"
-                      >
-                        Resend code
-                      </button>
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col">
-                    <label
-                      htmlFor="newPassword"
-                      className="leading-none text-[#363633] select-none"
-                    >
-                      New password
-                    </label>
-                    <div className="relative">
-                      <input
-                        id="newPassword"
-                        placeholder="New password"
-                        type={showPassword ? "text" : "password"}
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className={`${inputClass} w-full pr-14`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((s) => !s)}
-                        className="absolute inset-y-0 right-2 text-sm text-[#515050]"
-                      >
-                        {showPassword ? "Hide" : "Show"}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col">
-                    <label
-                      htmlFor="confirmPassword"
-                      className="leading-none text-[#363633] select-none"
-                    >
-                      Confirm new password
-                    </label>
-                    <input
-                      id="confirmPassword"
-                      placeholder="Re-enter your password"
-                      type={showPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className={inputClass}
-                    />
-                  </div>
-
+              {/* STEP 2: LINK SENT */}
+              {step === "sent" && (
+                <div className="font-urbanist flex flex-col gap-4 pt-7">
                   {info && !error && (
-                    <p role="status" className="-mt-3 text-sm text-[#363633]">
+                    <p role="status" className="text-sm text-[#363633]">
                       {info}
                     </p>
                   )}
                   {error && (
-                    <p role="alert" className="-mt-3 text-sm text-red-600">
+                    <p role="alert" className="text-sm text-red-600">
                       {error}
                     </p>
                   )}
-                  <PrimaryButton loading={loading}>
-                    Reset password
-                  </PrimaryButton>
+                  <p className="text-sm text-[#999595]">
+                    Didn&apos;t get it? Check your spam folder or{" "}
+                    <button
+                      type="button"
+                      onClick={requestLink}
+                      disabled={loading}
+                      className="text-[#071437] underline disabled:opacity-50"
+                    >
+                      {loading ? "sending..." : "resend the link"}
+                    </button>
+                    .
+                  </p>
                   <button
                     type="button"
                     onClick={() => {
@@ -368,34 +221,19 @@ export default function ForgotPassword() {
                       setInfo("");
                       setStep("email");
                     }}
-                    className="-mt-3 text-sm text-[#363633] underline"
+                    className="self-start text-sm text-[#363633] underline"
                   >
                     Use a different email
                   </button>
-                </form>
-              )}
-
-              {/* STEP 3: DONE */}
-              {step === "done" && (
-                <div className="font-urbanist flex flex-col gap-7 pt-7">
-                  <PrimaryButton
-                    type="button"
-                    loading={false}
-                    onClick={() => router.push("/login")}
-                  >
-                    Back to login
-                  </PrimaryButton>
                 </div>
               )}
 
-              {step !== "done" && (
-                <p className="font-urbanist pt-6 text-sm text-[#363633]">
-                  Remembered it?{" "}
-                  <Link href="/login" className="text-[#071437] underline">
-                    Back to login
-                  </Link>
-                </p>
-              )}
+              <p className="font-urbanist pt-6 text-sm text-[#363633]">
+                Remembered it?{" "}
+                <Link href="/login" className="text-[#071437] underline">
+                  Back to login
+                </Link>
+              </p>
             </div>
           </div>
         </div>

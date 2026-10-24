@@ -13,12 +13,14 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const setUser = useAuthStore((state) => state.setUser);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
       const res = await fetch(
@@ -46,6 +48,8 @@ export default function Login() {
       router.push("/"); // or wherever you want to land after login
     } catch (err) {
       setError("Something went wrong");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -151,12 +155,19 @@ export default function Login() {
                 </div>
                 {/*PasswordContainer */}
                 {error && <p className="-mt-4 text-sm text-red-600">{error}</p>}
-                <div className="group relative flex w-full cursor-pointer active:opacity-70">
-                  <button className="flex w-full items-center justify-center rounded-xl bg-[#071437] p-2 text-xl text-white">
-                    Login
+                <div
+                  className={`group relative flex w-full cursor-pointer active:opacity-70 ${
+                    loading ? "pointer-events-none opacity-60" : ""
+                  }`}
+                >
+                  <button
+                    disabled={loading}
+                    className="flex w-full items-center justify-center rounded-xl bg-[#071437] p-2 text-xl text-white"
+                  >
+                    {loading ? "Logging in..." : "Login"}
                   </button>
                   <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-[#071437] bg-white text-xl text-[#071437] transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)]">
-                    Login
+                    {loading ? "Logging in..." : "Login"}
                   </div>
                 </div>
               </form>
