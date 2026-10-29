@@ -12,6 +12,8 @@ const CAMPUS_ADMINS_URL =
 const LOCATIONS_URL =
   "https://capstone-backend-1yta.onrender.com/api/locations";
 const USERNAME_MAX = 10;
+// every new admin starts with this password and is told to change it
+const DEFAULT_ADMIN_PASSWORD = "12345678";
 
 // Shows the backend's own error: first Laravel field error, else `message`
 async function backendError(res) {
@@ -136,27 +138,18 @@ function Modal({ title, onClose, children }) {
   );
 }
 
-//admin modal
+//admin modal: add a new admin. Editing accounts is not done from this page.
 function AccountFormModal({
-  mode, // "add-admin" | "edit"
-  account, // when editing
   presetCampusId, // when adding from a campus card
   campuses,
   adminByCampus, // Map(campusId -> admin account)
   onClose,
   onSaved,
 }) {
-  const editing = mode === "edit";
-  const isAdminForm = !editing || roleKey(account) === "admin";
-
-  const [name, setName] = useState(account?.name ?? "");
-  const [username, setUsername] = useState(account?.username ?? "");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [campusId, setCampusId] = useState(
-    String(editing ? (campusIdOf(account) ?? "") : (presetCampusId ?? "")),
-  );
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [campusId, setCampusId] = useState(String(presetCampusId ?? ""));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -165,25 +158,22 @@ function AccountFormModal({
     setError("");
     setSaving(true);
     try {
-      const body = { name, username };
-      body.campus_id = Number(campusId) || campusId;
-      if (password) {
-        body.password = password;
-        body.password_confirmation = confirmPassword; // backend uses the `confirmed` rule
-      }
       // no role field: the backend's createCampusAdmin makes the account an admin
-      // admins are created without an email, so send it as null
-      // (not sent on edit, so an existing email is never overwritten)
-      if (!editing) body.email = null;
+      const body = {
+        name,
+        username,
+        email,
+        campus_id: Number(campusId) || campusId,
+        // every new admin starts with the fixed default password
+        password: DEFAULT_ADMIN_PASSWORD,
+        password_confirmation: DEFAULT_ADMIN_PASSWORD, // backend uses the `confirmed` rule
+      };
 
-      const res = await fetch(
-        editing ? `${USERS_URL}/${account.id}` : CAMPUS_ADMINS_URL,
-        {
-          method: editing ? "PUT" : "POST",
-          headers: authHeaders(true),
-          body: JSON.stringify(body),
-        },
-      );
+      const res = await fetch(CAMPUS_ADMINS_URL, {
+        method: "POST",
+        headers: authHeaders(true),
+        body: JSON.stringify(body),
+      });
       if (!res.ok) {
         setError(await backendError(res));
         return;
@@ -197,10 +187,7 @@ function AccountFormModal({
   }
 
   return (
-    <Modal
-      title={editing ? `Edit ${ROLE_LABEL[roleKey(account)]}` : "Add Admin"}
-      onClose={onClose}
-    >
+    <Modal title="Add Admin" onClose={onClose}>
       <form
         noValidate
         onSubmit={handleSubmit}
@@ -239,17 +226,20 @@ function AccountFormModal({
           />
         </div>
 
-        {editing && !isAdminForm && (
-          <div className="flex flex-col gap-1">
-            <p className="text-sm">SorSU email</p>
-            <p className="rounded-lg border border-[#e5e5e5] bg-[#f5f5f5] px-3 py-2 break-all text-[#555]">
-              {account.email}
-            </p>
-            <p className="text-xs text-[#999595]">
-              The email can&apos;t be edited.
-            </p>
-          </div>
-        )}
+        <div className="flex flex-col gap-1">
+          <label htmlFor="acc-email" className="text-sm">
+            SorSU email
+          </label>
+          <input
+            id="acc-email"
+            type="email"
+            autoComplete="off"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@sorsu.edu.ph"
+            className={inputClass}
+          />
+        </div>
 
         <div className="flex flex-col gap-1">
           <label htmlFor="acc-campus" className="text-sm">
@@ -265,9 +255,8 @@ function AccountFormModal({
               Select a campus
             </option>
             {campuses.map((c) => {
-              // one admin per campus (students aren't limited)
-              const holder = adminByCampus.get(String(c.id));
-              const taken = isAdminForm && holder && holder.id !== account?.id;
+              // one admin per campus
+              const taken = adminByCampus.has(String(c.id));
               return (
                 <option key={c.id} value={c.id} disabled={taken}>
                   {c.name}
@@ -276,53 +265,30 @@ function AccountFormModal({
               );
             })}
           </select>
-          {isAdminForm && (
-            <p className="text-xs text-[#999595]">Only one admin per campus.</p>
-          )}
+          <p className="text-xs text-[#999595]">Only one admin per campus.</p>
         </div>
 
-        {isAdminForm && (
-          <div className="flex flex-col gap-1">
-            <label htmlFor="acc-password" className="text-sm">
-              {editing ? "New password (leave blank to keep)" : "Password"}
-            </label>
-            <div className="relative">
-              <input
-                id="acc-password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={editing ? "New password" : "Password"}
-                className={`${inputClass} pr-16`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute inset-y-0 right-3 text-sm text-[#515050]"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {isAdminForm && (
-          <div className="flex flex-col gap-1">
-            <label htmlFor="acc-password-confirm" className="text-sm">
-              Confirm password
-            </label>
-            <input
-              id="acc-password-confirm"
-              type={showPassword ? "text" : "password"}
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter the password"
-              className={inputClass}
-            />
-          </div>
-        )}
+        <div className="flex flex-col gap-2">
+          <label htmlFor="acc-password-default" className="text-sm">
+            Password
+          </label>
+          <input
+            id="acc-password-default"
+            type="text"
+            value={DEFAULT_ADMIN_PASSWORD}
+            readOnly
+            aria-readonly="true"
+            className="w-full cursor-not-allowed rounded-lg border border-[#e5e5e5] bg-[#f5f5f5] px-3 py-2 text-[#555] select-all"
+          />
+          <p
+            role="note"
+            className="border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-900"
+          >
+            <span className="font-semibold">Warning:</span> the default password
+            is <span className="font-semibold">12345678</span>. The admin should
+            change it as soon as they log in.
+          </p>
+        </div>
 
         {error && (
           <p role="alert" className="text-sm text-red-600">
@@ -339,7 +305,7 @@ function AccountFormModal({
             disabled={saving}
             className="border border-[#800000] bg-[#800000] px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {saving ? "Saving..." : editing ? "Save changes" : "Add admin"}
+            {saving ? "Saving..." : "Add admin"}
           </button>
         </div>
       </form>
@@ -404,7 +370,7 @@ export default function UserManagement() {
   const [search, setSearch] = useState("");
   const [campusFilter, setCampusFilter] = useState("All");
 
-  const [formModal, setFormModal] = useState(null); // { mode, account?, presetCampusId? }
+  const [formModal, setFormModal] = useState(null); // { presetCampusId? } while the Add Admin modal is open
   const [busyId, setBusyId] = useState(null); // account id being (de)activated
   const [toDeactivate, setToDeactivate] = useState(null); // account awaiting confirmation
   const [statusError, setStatusError] = useState("");
@@ -544,19 +510,13 @@ export default function UserManagement() {
     );
   }
 
-  // Edit / Activate-Deactivate buttons for one account (none for the super admin)
+  // Activate / Deactivate button for one account (none for the super admin)
   const renderActions = (a) => {
     if (roleKey(a) === "super admin") {
       return <span className="text-sm text-[#999595]">-</span>;
     }
     return (
       <div className="flex gap-2">
-        <OutlineButton
-          onClick={() => setFormModal({ mode: "edit", account: a })}
-          className="flex-1 md:flex-none"
-        >
-          Edit
-        </OutlineButton>
         <OutlineButton
           danger={isActive(a)}
           disabled={busyId === a.id}
@@ -615,7 +575,7 @@ export default function UserManagement() {
             </div>
             <div className="flex flex-col items-start gap-1 sm:items-end">
               <button
-                onClick={() => setFormModal({ mode: "add-admin" })}
+                onClick={() => setFormModal({})}
                 disabled={
                   loading || allCampusesHaveAdmin || campuses.length === 0
                 }
@@ -684,14 +644,6 @@ export default function UserManagement() {
                       {admin ? (
                         <>
                           <OutlineButton
-                            className="flex-1"
-                            onClick={() =>
-                              setFormModal({ mode: "edit", account: admin })
-                            }
-                          >
-                            Edit
-                          </OutlineButton>
-                          <OutlineButton
                             danger={isActive(admin)}
                             disabled={busyId === admin.id}
                             className="flex-1"
@@ -707,12 +659,7 @@ export default function UserManagement() {
                       ) : (
                         <OutlineButton
                           className="flex-1"
-                          onClick={() =>
-                            setFormModal({
-                              mode: "add-admin",
-                              presetCampusId: c.id,
-                            })
-                          }
+                          onClick={() => setFormModal({ presetCampusId: c.id })}
                         >
                           + Add admin
                         </OutlineButton>
@@ -865,8 +812,6 @@ export default function UserManagement() {
 
       {formModal && (
         <AccountFormModal
-          mode={formModal.mode}
-          account={formModal.account}
           presetCampusId={formModal.presetCampusId}
           campuses={campuses}
           adminByCampus={adminByCampus}

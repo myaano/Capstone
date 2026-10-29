@@ -14,13 +14,23 @@ export default function AuthLoader() {
     }
 
     fetch("https://capstone-backend-1yta.onrender.com/api/users", {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        // without Accept, Laravel can answer a bad token with a redirect
+        // instead of a clean 401
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
     })
       .then((res) => {
+        if (res.status === 401) {
+          // expired or revoked: forget it so it isn't sent with every request
+          localStorage.removeItem("token");
+        }
         if (!res.ok) throw new Error("Not authenticated");
         return res.json();
       })
-      .then((data) => setUser(data))
+      // accept a bare user, or one wrapped as { data: ... } / { user: ... }
+      .then((data) => setUser(data?.data ?? data?.user ?? data))
       .catch(() => setUser(null));
   }, [setUser]);
 
