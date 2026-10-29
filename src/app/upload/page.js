@@ -55,19 +55,23 @@ export default function Upload() {
   const isLoading = useAuthStore((state) => state.isLoading);
 
   const canAccess =
-    user?.role === "campus_admin" ||
-    user?.role === "admin" ||
+    (user?.role === "campus_admin" &&
+      user?.must_change_credentials === false) ||
     user?.role === "super_admin";
+
+  const isNotVerified =
+    user?.role == "campus_admin" && user?.must_change_credentials === true;
 
   useEffect(() => {
     // wait until the auth store finishes loading, otherwise user is still
     // null on first render and everyone gets redirected
     if (isLoading) return;
-    if (!canAccess) {
+    if (!canAccess && isNotVerified) {
       console.log("Unauthorized Access Detected");
       router.push("/");
+    } else {
     }
-  }, [isLoading, canAccess, router]);
+  }, [isLoading, canAccess, isNotVerified, router]);
 
   // file upload logics
   const uploadRef = useRef(null);

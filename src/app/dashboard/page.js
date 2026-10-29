@@ -29,9 +29,13 @@ export default function Dashboard() {
   const user = useAuthStore((s) => s.user);
   // super admin has everything an admin has
   const isAdmin =
-    user?.role === "campus_admin" ||
-    user?.role === "admin" ||
+    (user?.role === "campus_admin" &&
+      user?.must_change_credentials === false) ||
     user?.role === "super_admin";
+
+  const isNotVerified =
+    user?.role === "campus_admin" && user?.must_change_credentials === true;
+
   const isSuperAdmin = user?.role === "super_admin";
   // an admin only manages papers from their own campus; super_admin manages all
   const myCampusId = user?.campus_id ?? user?.campus?.id ?? null;
@@ -46,11 +50,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (isLoading) return; // user data hasn't loaded yet on this refresh - wait
     console.log(isLoading, user);
-    if (!isAdmin) {
+    if (!isAdmin && isNotVerified) {
       console.log("Unauthorized Access Detected");
       router.push("/");
     }
-  }, [isLoading, isAdmin, router]);
+  }, [isLoading, isAdmin, isNotVerified, router]);
 
   const [papers, setPapers] = useState([]);
 
