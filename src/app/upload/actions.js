@@ -60,6 +60,59 @@ export async function submitUpload(_prevState, formData) {
   }
   //error validations //error validations //error validations //error validations
 
+  //who is uploading? Ask Laravel using the token: the campus fields in the form
+  //can be edited in the browser, so a campus admin is checked against the
+  //campus on their own account (the super admin may upload to any campus)
+  let me = null;
+  try {
+    const meRes = await fetch(
+      "https://capstone-backend-1yta.onrender.com/api/users",
+      {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      },
+    );
+    if (meRes.ok) {
+      const json = await meRes.json();
+      me = json?.data ?? json?.user ?? json;
+    }
+  } catch {
+    // handled just below
+  }
+
+  if (!me?.role) {
+    return {
+      success: false,
+      message: "Could not confirm who is logged in. Please log in again.",
+      errors: {},
+    };
+  }
+
+  const isSuperAdmin = me.role === "super_admin";
+  const isCampusAdmin = me.role === "campus_admin" || me.role === "admin";
+
+  if (!isSuperAdmin && !isCampusAdmin) {
+    return {
+      success: false,
+      message: "Only admins can upload papers.",
+      errors: {},
+    };
+  }
+
+  if (!isSuperAdmin) {
+    const myCampusId = me.campus_id ?? me.campus?.id;
+    if (myCampusId == null || String(myCampusId) !== campus_id) {
+      return {
+        success: false,
+        message: "You can only upload papers to your own campus.",
+        errors: { campus: "You can only upload to your own campus." },
+      };
+    }
+  }
+
   //puts data into a submittion body
   const uploadData = new FormData();
   uploadData.append("file", file);
