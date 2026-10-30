@@ -54,6 +54,10 @@ export default function Upload() {
   const user = useAuthStore((state) => state.user);
   const isLoading = useAuthStore((state) => state.isLoading);
 
+  const isSuperAdmin = user?.role === "super_admin";
+  // a campus admin may only upload to their own campus
+  const myCampusId = user?.campus_id ?? user?.campus?.id ?? null;
+
   const canAccess =
     (user?.role === "campus_admin" &&
       user?.must_change_credentials === false) ||
@@ -194,6 +198,34 @@ export default function Upload() {
   const [DepartmentOptions, setDepartmentOptions] = useState([]);
   const [CourseOptions, setCourseOptions] = useState([]);
   // campus, department, course use states HERE
+
+  // Campus admins are tied to their own campus: the name of that campus (taken
+  // from the campus list by id), or "" for the super admin, who can pick any.
+  const lockedCampusName =
+    !isSuperAdmin && myCampusId != null
+      ? (Object.keys(campusData).find(
+          (name) => String(campusData[name].id) === String(myCampusId),
+        ) ?? "")
+      : "";
+  const campusNames = isSuperAdmin
+    ? Object.keys(campusData)
+    : lockedCampusName
+      ? [lockedCampusName]
+      : [];
+  const noCampusMessage =
+    !isSuperAdmin &&
+    user &&
+    Object.keys(campusData).length > 0 &&
+    !lockedCampusName
+      ? "Your account isn't assigned to a campus."
+      : "";
+
+  // pre-select it (and again after the form resets)
+  useEffect(() => {
+    if (lockedCampusName && Campus !== lockedCampusName) {
+      setCampus(lockedCampusName);
+    }
+  }, [lockedCampusName, Campus]);
 
   // cascading dropdown logic
   useEffect(() => {
@@ -417,20 +449,28 @@ export default function Upload() {
                         <div className="items-center justify-between lg:flex">
                           <h1 className="text-xl">Campus :</h1>
                           <span className="text-sm text-red-500">
-                            {state.errors.campus || campusDataError}
+                            {state.errors.campus ||
+                              campusDataError ||
+                              noCampusMessage}
                           </span>
                         </div>
+                        {/* a disabled select isn't submitted, so a locked campus
+                            goes along as a hidden input instead */}
+                        {lockedCampusName && (
+                          <input type="hidden" name="campus" value={Campus} />
+                        )}
                         <select
-                          name="campus"
+                          name={lockedCampusName ? undefined : "campus"}
                           id=""
                           value={Campus}
                           onChange={(event) => setCampus(event.target.value)}
-                          className="w-full rounded-md border border-black p-2"
+                          disabled={Boolean(lockedCampusName)}
+                          className="w-full rounded-md border border-black p-2 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
                         >
                           <option value="" hidden>
                             Campus
                           </option>
-                          {Object.keys(campusData).map((selectedCampus) => (
+                          {campusNames.map((selectedCampus) => (
                             <option
                               key={selectedCampus}
                               value={selectedCampus}
