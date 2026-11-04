@@ -217,7 +217,7 @@ export default function ChangePassword() {
               </p>
               <div className="inline-flex flex-col gap-1">
                 <p className="font-cormorant_infant text-5xl leading-none text-[#363633] select-none">
-                  {done ? "Check your email" : "Change password"}
+                  {done ? "Check your email" : "Change Credentials"}
                 </p>
                 <p className="font-urbanist text-[14px] text-[#363633] select-none">
                   {done

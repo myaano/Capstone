@@ -182,16 +182,16 @@ export default function ProfileModal() {
               <>
                 <div className="group relative px-1">
                   <button
-                    onClick={() => router.push("/change-password")}
+                    onClick={() => router.push("/change-credentials")}
                     className="cursor-pointer"
                   >
-                    Change Password
+                    Change Credentials
                   </button>
                   <div
                     className="absolute inset-0 flex items-center justify-center bg-white transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0%_50%,100%_50%,100%_50%,0%_50%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,101%_0,101%_101%,0_101%)]"
-                    onClick={() => router.push("/change-password")}
+                    onClick={() => router.push("/change-credentials")}
                   >
-                    Change Password
+                    Change Credentials
                   </div>
                 </div>
               </>
