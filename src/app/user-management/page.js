@@ -314,11 +314,10 @@ function AccountFormModal({
 }
 
 // ---------------------------------------------------------------------
-// Edit modal: a campus admin or a student. Full name, username, SorSU email
-// and campus can be changed; a campus admin's campus can't. No delete here.
+// Edit modal: students only. Full name, username, SorSU email and campus can
+// be changed. No delete here.
 // ---------------------------------------------------------------------
 function EditAccountModal({ account, campuses, onClose, onSaved }) {
-  const isAdminAccount = roleKey(account) === "admin";
   const startCampusId = campusIdOf(account);
 
   const [name, setName] = useState(account.name ?? "");
@@ -327,11 +326,6 @@ function EditAccountModal({ account, campuses, onClose, onSaved }) {
   const [campusId, setCampusId] = useState(String(startCampusId ?? ""));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const campusLabel =
-    account.campus?.name ??
-    campuses.find((c) => String(c.id) === String(startCampusId))?.name ??
-    "-";
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -343,7 +337,7 @@ function EditAccountModal({ account, campuses, onClose, onSaved }) {
     if (name !== (account.name ?? "")) body.name = name;
     if (username !== (account.username ?? "")) body.username = username;
     if (email !== (account.email ?? "")) body.email = email;
-    if (!isAdminAccount && String(campusId) !== String(startCampusId ?? "")) {
+    if (String(campusId) !== String(startCampusId ?? "")) {
       body.campus_id = Number(campusId) || campusId;
     }
 
@@ -372,10 +366,7 @@ function EditAccountModal({ account, campuses, onClose, onSaved }) {
   }
 
   return (
-    <Modal
-      title={isAdminAccount ? "Edit admin" : "Edit student"}
-      onClose={onClose}
-    >
+    <Modal title="Edit student" onClose={onClose}>
       <form
         noValidate
         onSubmit={handleSubmit}
@@ -429,38 +420,26 @@ function EditAccountModal({ account, campuses, onClose, onSaved }) {
           />
         </div>
 
-        {isAdminAccount ? (
-          <div className="flex flex-col gap-1">
-            <p className="text-sm">Campus</p>
-            <p className="rounded-lg border border-[#e5e5e5] bg-[#f5f5f5] px-3 py-2 text-[#555]">
-              {campusLabel}
-            </p>
-            <p className="text-xs text-[#999595]">
-              A campus admin&apos;s campus can&apos;t be changed.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1">
-            <label htmlFor="edit-campus" className="text-sm">
-              Campus
-            </label>
-            <select
-              id="edit-campus"
-              value={campusId}
-              onChange={(e) => setCampusId(e.target.value)}
-              className={inputClass}
-            >
-              <option value="" disabled>
-                Select a campus
+        <div className="flex flex-col gap-1">
+          <label htmlFor="edit-campus" className="text-sm">
+            Campus
+          </label>
+          <select
+            id="edit-campus"
+            value={campusId}
+            onChange={(e) => setCampusId(e.target.value)}
+            className={inputClass}
+          >
+            <option value="" disabled>
+              Select a campus
+            </option>
+            {campuses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
               </option>
-              {campuses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+            ))}
+          </select>
+        </div>
 
         {error && (
           <p role="alert" className="text-sm text-red-600">
@@ -823,12 +802,6 @@ export default function UserManagement() {
                     <div className="mt-auto flex gap-2">
                       {admin ? (
                         <>
-                          <OutlineButton
-                            className="flex-1"
-                            onClick={() => setEditTarget(admin)}
-                          >
-                            Edit
-                          </OutlineButton>
                           <OutlineButton
                             danger={isActive(admin)}
                             disabled={busyId === admin.id}
