@@ -138,7 +138,7 @@ function Modal({ title, onClose, children }) {
   );
 }
 
-//admin modal: add a new admin. Editing accounts is not done from this page.
+//admin modal: add a new admin (editing an existing account is EditAccountModal below)
 function AccountFormModal({
   presetCampusId, // when adding from a campus card
   campuses,
@@ -314,6 +314,178 @@ function AccountFormModal({
 }
 
 // ---------------------------------------------------------------------
+// Edit modal: a campus admin or a student. Full name, username, SorSU email
+// and campus can be changed; a campus admin's campus can't. No delete here.
+// ---------------------------------------------------------------------
+function EditAccountModal({ account, campuses, onClose, onSaved }) {
+  const isAdminAccount = roleKey(account) === "admin";
+  const startCampusId = campusIdOf(account);
+
+  const [name, setName] = useState(account.name ?? "");
+  const [username, setUsername] = useState(account.username ?? "");
+  const [email, setEmail] = useState(account.email ?? "");
+  const [campusId, setCampusId] = useState(String(startCampusId ?? ""));
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const campusLabel =
+    account.campus?.name ??
+    campuses.find((c) => String(c.id) === String(startCampusId))?.name ??
+    "-";
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+
+    // only send what actually changed, so an unchanged username or email
+    // never runs into a "has already been taken" check
+    const body = {};
+    if (name !== (account.name ?? "")) body.name = name;
+    if (username !== (account.username ?? "")) body.username = username;
+    if (email !== (account.email ?? "")) body.email = email;
+    if (!isAdminAccount && String(campusId) !== String(startCampusId ?? "")) {
+      body.campus_id = Number(campusId) || campusId;
+    }
+
+    if (Object.keys(body).length === 0) {
+      onClose(); // nothing changed
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(`${USERS_URL}/${account.id}`, {
+        method: "PUT",
+        headers: authHeaders(true),
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        setError(await backendError(res));
+        return;
+      }
+      await onSaved();
+    } catch {
+      setError("Could not reach the server. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Modal
+      title={isAdminAccount ? "Edit admin" : "Edit student"}
+      onClose={onClose}
+    >
+      <form
+        noValidate
+        onSubmit={handleSubmit}
+        className="mt-4 flex flex-col gap-4 text-[#242423]"
+      >
+        <div className="flex flex-col gap-1">
+          <label htmlFor="edit-name" className="text-sm">
+            Full name
+          </label>
+          <input
+            id="edit-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Full name"
+            className={inputClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="edit-username"
+            className="flex justify-between text-sm"
+          >
+            <span>Username</span>
+            <span className="text-[#999595]">
+              {username.length}/{USERNAME_MAX}
+            </span>
+          </label>
+          <input
+            id="edit-username"
+            value={username}
+            maxLength={USERNAME_MAX}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+            className={inputClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="edit-email" className="text-sm">
+            SorSU email
+          </label>
+          <input
+            id="edit-email"
+            type="email"
+            autoComplete="off"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="email@sorsu.edu.ph"
+            className={inputClass}
+          />
+        </div>
+
+        {isAdminAccount ? (
+          <div className="flex flex-col gap-1">
+            <p className="text-sm">Campus</p>
+            <p className="rounded-lg border border-[#e5e5e5] bg-[#f5f5f5] px-3 py-2 text-[#555]">
+              {campusLabel}
+            </p>
+            <p className="text-xs text-[#999595]">
+              A campus admin&apos;s campus can&apos;t be changed.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1">
+            <label htmlFor="edit-campus" className="text-sm">
+              Campus
+            </label>
+            <select
+              id="edit-campus"
+              value={campusId}
+              onChange={(e) => setCampusId(e.target.value)}
+              className={inputClass}
+            >
+              <option value="" disabled>
+                Select a campus
+              </option>
+              {campuses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {error && (
+          <p role="alert" className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
+
+        <div className="mt-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <OutlineButton onClick={onClose} disabled={saving}>
+            Cancel
+          </OutlineButton>
+          <button
+            type="submit"
+            disabled={saving}
+            className="border border-[#800000] bg-[#800000] px-4 py-2 text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {saving ? "Saving..." : "Save changes"}
+          </button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------
 // Deactivate confirmation modal
 // ---------------------------------------------------------------------
 function DeactivateModal({ account, busy, onClose, onConfirm }) {
@@ -371,6 +543,7 @@ export default function UserManagement() {
   const [campusFilter, setCampusFilter] = useState("All");
 
   const [formModal, setFormModal] = useState(null); // { presetCampusId? } while the Add Admin modal is open
+  const [editTarget, setEditTarget] = useState(null); // the account being edited
   const [busyId, setBusyId] = useState(null); // account id being (de)activated
   const [toDeactivate, setToDeactivate] = useState(null); // account awaiting confirmation
   const [statusError, setStatusError] = useState("");
@@ -458,6 +631,7 @@ export default function UserManagement() {
 
   async function afterChange() {
     setFormModal(null);
+    setEditTarget(null);
     await load();
   }
 
@@ -517,6 +691,12 @@ export default function UserManagement() {
     }
     return (
       <div className="flex gap-2">
+        <OutlineButton
+          onClick={() => setEditTarget(a)}
+          className="flex-1 md:flex-none"
+        >
+          Edit
+        </OutlineButton>
         <OutlineButton
           danger={isActive(a)}
           disabled={busyId === a.id}
@@ -643,6 +823,12 @@ export default function UserManagement() {
                     <div className="mt-auto flex gap-2">
                       {admin ? (
                         <>
+                          <OutlineButton
+                            className="flex-1"
+                            onClick={() => setEditTarget(admin)}
+                          >
+                            Edit
+                          </OutlineButton>
                           <OutlineButton
                             danger={isActive(admin)}
                             disabled={busyId === admin.id}
@@ -807,6 +993,15 @@ export default function UserManagement() {
           busy={busyId === toDeactivate.id}
           onClose={() => setToDeactivate(null)}
           onConfirm={confirmDeactivate}
+        />
+      )}
+
+      {editTarget && (
+        <EditAccountModal
+          account={editTarget}
+          campuses={campuses}
+          onClose={() => setEditTarget(null)}
+          onSaved={afterChange}
         />
       )}
 
