@@ -124,8 +124,14 @@ function SearchContent() {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="font-bona_nova_sc bg-[#800000] px-5 py-5 text-4xl text-white">
-        {q ? `Searched for: ${q}` : "All Papers"}
+      <div className="font-bona_nova_sc bg-[#800000] px-5 py-5 text-4xl leading-relaxed wrap-break-word text-white">
+        {q ? (
+          <>
+            Searched for: <span className="font-urbanist">{q}</span>
+          </>
+        ) : (
+          "All Papers"
+        )}
       </div>
       <div className="mt-5 flex-1 lg:flex">
         <div className="flex flex-col border-black lg:w-72 lg:shrink-0 lg:border-r lg:pr-5">
