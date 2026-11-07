@@ -103,6 +103,11 @@ export default function ChangePassword() {
   const [info, setInfo] = useState(""); // success message from the backend
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (isLoadingAuth || !user) return;
+    if (user.must_change_credentials !== true) router.replace("/");
+  }, [isLoadingAuth, user, router]);
+
   // start from the details already on the account (never overwrites typing)
   useEffect(() => {
     if (!user) return;
