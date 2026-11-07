@@ -1,6 +1,8 @@
 "use client";
 
 import Header from "../reusable_components/Header";
+import Dropdown from "../reusable_components/Dropdown";
+import TextField from "../reusable_components/TextField";
 import { submitUpload } from "./actions";
 
 import { useRef, useState, useEffect, useActionState } from "react";
@@ -187,6 +189,11 @@ export default function Upload() {
   );
 
   const [SelectedCategory, setSelectedCategory] = useState("");
+  const [Year, setYear] = useState("");
+  const [PaperType, setPaperType] = useState("");
+  const [Title, setTitle] = useState("");
+  const [Abstract, setAbstract] = useState("");
+  const [Researchers, setResearchers] = useState("");
   const [CategoryOptions, setCategoryOptions] = useState([]);
 
   const fileTypes = ["Capstone", "Thesis"];
@@ -290,6 +297,11 @@ export default function Upload() {
     if (state.success) {
       setFile(null);
       setCampus("");
+      setYear("");
+      setPaperType("");
+      setTitle("");
+      setAbstract("");
+      setResearchers("");
       if (uploadRef.current) {
         uploadRef.current.value = "";
       }
@@ -403,10 +415,13 @@ export default function Upload() {
                           </span>
                         </div>
                         <div className="h-50 w-full">
-                          <textarea
-                            className="h-full w-full resize-none overflow-y-auto rounded-md border border-black bg-white px-2 py-1 text-black focus:outline-none"
-                            placeholder="Abstract or Summary here ..."
+                          <TextField
+                            as="textarea"
                             name="abstract/summary"
+                            placeholder="Abstract or Summary here ..."
+                            value={Abstract}
+                            onChange={(e) => setAbstract(e.target.value)}
+                            invalid={Boolean(state.errors.abstract)}
                           />
                         </div>
                       </div>
@@ -418,11 +433,13 @@ export default function Upload() {
                           </span>
                         </div>
                         <div className="w-full">
-                          <input
-                            placeholder="Title ..."
-                            type="text"
-                            className="h-full w-full rounded-md border border-black bg-white p-2 text-black"
+                          <TextField
                             name="title"
+                            type="text"
+                            placeholder="Title ..."
+                            value={Title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            invalid={Boolean(state.errors.title)}
                           />
                         </div>
                       </div>
@@ -434,10 +451,13 @@ export default function Upload() {
                           </span>
                         </div>
                         <div className="h-30 w-full">
-                          <textarea
-                            placeholder="Name 1, Name 2, Name 3, ..."
-                            className="h-full w-full resize-none overflow-y-auto rounded-md border border-black bg-white px-2 py-1 text-black focus:outline-none"
+                          <TextField
+                            as="textarea"
                             name="researchers"
+                            placeholder="Name 1, Name 2, Name 3, ..."
+                            value={Researchers}
+                            onChange={(e) => setResearchers(e.target.value)}
+                            invalid={Boolean(state.errors.researchers)}
                           />
                         </div>
                       </div>
@@ -454,32 +474,16 @@ export default function Upload() {
                               noCampusMessage}
                           </span>
                         </div>
-                        {/* a disabled select isn't submitted, so a locked campus
-                            goes along as a hidden input instead */}
-                        {lockedCampusName && (
-                          <input type="hidden" name="campus" value={Campus} />
-                        )}
-                        <select
-                          name={lockedCampusName ? undefined : "campus"}
-                          id=""
+                        <Dropdown
+                          name="campus"
                           value={Campus}
-                          onChange={(event) => setCampus(event.target.value)}
+                          onChange={setCampus}
+                          options={campusNames}
+                          placeholder="Campus"
+                          ariaLabel="Campus"
                           disabled={Boolean(lockedCampusName)}
-                          className="w-full rounded-md border border-black p-2 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
-                        >
-                          <option value="" hidden>
-                            Campus
-                          </option>
-                          {campusNames.map((selectedCampus) => (
-                            <option
-                              key={selectedCampus}
-                              value={selectedCampus}
-                              className=""
-                            >
-                              {selectedCampus}
-                            </option>
-                          ))}
-                        </select>
+                          invalid={Boolean(state.errors.campus)}
+                        />
                       </div>
                       <div>
                         <div className="items-center justify-between lg:flex">
@@ -488,27 +492,16 @@ export default function Upload() {
                             {state.errors.department}
                           </span>
                         </div>
-                        <select
+                        <Dropdown
                           name="department"
-                          id=""
-                          onChange={(event) =>
-                            setDepartment(event.target.value)
-                          }
-                          className="w-full rounded-md border border-black p-2"
+                          value={Department}
+                          onChange={setDepartment}
+                          options={DepartmentOptions}
+                          placeholder="College"
+                          ariaLabel="College"
                           disabled={!Campus}
-                        >
-                          <option value="" hidden>
-                            College
-                          </option>
-                          {DepartmentOptions.map((selectedDepartment) => (
-                            <option
-                              key={selectedDepartment}
-                              value={selectedDepartment}
-                            >
-                              {selectedDepartment}
-                            </option>
-                          ))}
-                        </select>
+                          invalid={Boolean(state.errors.department)}
+                        />
                       </div>
                       <div>
                         <div className="items-center justify-between lg:flex">
@@ -517,22 +510,16 @@ export default function Upload() {
                             {state.errors.course}
                           </span>
                         </div>
-                        <select
+                        <Dropdown
                           name="course"
-                          id=""
-                          onChange={(event) => setCourse(event.target.value)}
-                          className="w-full rounded-md border border-black p-2"
+                          value={Course}
+                          onChange={setCourse}
+                          options={CourseOptions}
+                          placeholder="Program"
+                          ariaLabel="Program"
                           disabled={!Department}
-                        >
-                          <option value="" hidden>
-                            Program
-                          </option>
-                          {CourseOptions.map((selectedCourse) => (
-                            <option key={selectedCourse} value={selectedCourse}>
-                              {selectedCourse}
-                            </option>
-                          ))}
-                        </select>
+                          invalid={Boolean(state.errors.course)}
+                        />
                       </div>
                       <input type="hidden" name="campus_id" value={campusId} />
                       <input
@@ -552,20 +539,15 @@ export default function Upload() {
                             {state.errors.year}
                           </span>
                         </div>
-                        <select
+                        <Dropdown
                           name="year"
-                          id=""
-                          className="w-full rounded-md border border-black p-2"
-                        >
-                          <option value="" hidden>
-                            Year
-                          </option>
-                          {years.map((selectedYear) => (
-                            <option key={selectedYear} value={selectedYear}>
-                              {selectedYear}
-                            </option>
-                          ))}
-                        </select>
+                          value={Year}
+                          onChange={setYear}
+                          options={years}
+                          placeholder="Year"
+                          ariaLabel="Year"
+                          invalid={Boolean(state.errors.year)}
+                        />
                       </div>
                       <div>
                         <div className="items-center justify-between lg:flex">
@@ -574,21 +556,16 @@ export default function Upload() {
                             {state.errors.paper_type}
                           </span>
                         </div>
-                        <select
+                        <Dropdown
                           name="paper_type"
-                          id=""
-                          className="w-full rounded-md border border-black p-2"
+                          value={PaperType}
+                          onChange={setPaperType}
+                          options={fileTypes}
+                          placeholder="Paper Type"
+                          ariaLabel="Paper Type"
                           disabled={!(Campus && Department && Course)}
-                        >
-                          <option value="" hidden>
-                            Paper Type
-                          </option>
-                          {fileTypes.map((selectedFType) => (
-                            <option key={selectedFType} value={selectedFType}>
-                              {selectedFType}
-                            </option>
-                          ))}
-                        </select>
+                          invalid={Boolean(state.errors.paper_type)}
+                        />
                       </div>
                       <div>
                         <div className="items-center justify-between lg:flex">
@@ -597,28 +574,16 @@ export default function Upload() {
                             {state.errors.category}
                           </span>
                         </div>
-                        <select
+                        <Dropdown
                           name="category"
-                          id=""
                           value={SelectedCategory}
-                          onChange={(event) =>
-                            setSelectedCategory(event.target.value)
-                          }
-                          className="w-full rounded-md border border-black p-2"
+                          onChange={setSelectedCategory}
+                          options={CategoryOptions}
+                          placeholder="Category"
+                          ariaLabel="Category"
                           disabled={!Course}
-                        >
-                          <option value="" hidden>
-                            Category
-                          </option>
-                          {CategoryOptions.map((selectedCategory) => (
-                            <option
-                              key={selectedCategory}
-                              value={selectedCategory}
-                            >
-                              {selectedCategory}
-                            </option>
-                          ))}
-                        </select>
+                          invalid={Boolean(state.errors.category)}
+                        />
                         <input
                           type="hidden"
                           name="category_id"

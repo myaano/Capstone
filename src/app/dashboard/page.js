@@ -716,7 +716,7 @@ function PaperOverlay({
                 <input
                   type="file"
                   onChange={(e) => updateField("newFile", e.target.files[0])}
-                  className="text-sm"
+                  className="text-sm text-black"
                   onClick={(e) => e.stopPropagation()}
                 />
               </label>

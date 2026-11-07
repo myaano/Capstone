@@ -178,7 +178,8 @@ export default function ProfileModal() {
                 </div>
               </div>
             )}
-            {isCampusAdmin && (
+            {/* only while the credentials still have to be changed */}
+            {mustChange && (
               <>
                 <div className="group relative px-1">
                   <button

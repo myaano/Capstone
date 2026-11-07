@@ -108,8 +108,21 @@ function CapstoneContent() {
           <Search />
         </div>
         <Link href="../theses" className="flex items-center justify-center">
-          <button className="flex cursor-pointer gap-2 border border-[#800000] bg-white p-2 text-[#800000] transition-colors duration-200 hover:bg-[#800000] hover:text-white">
-            <h1 className="text-xl">Theses</h1> -&gt;
+          <button className="group flex cursor-pointer items-center justify-center gap-2 border border-[#800000] bg-white p-2 text-[#800000] transition-colors duration-200 hover:bg-[#800000] hover:text-white">
+            <h1 className="text-xl">Theses</h1>{" "}
+            <svg
+              width="30"
+              height="15"
+              viewBox="0 0 30 15"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M29.7071 8.07106C30.0976 7.68054 30.0976 7.04737 29.7071 6.65685L23.3431 0.292885C22.9526 -0.0976396 22.3195 -0.0976396 21.9289 0.292885C21.5384 0.683409 21.5384 1.31657 21.9289 1.7071L27.5858 7.36395L21.9289 13.0208C21.5384 13.4113 21.5384 14.0445 21.9289 14.435C22.3195 14.8255 22.9526 14.8255 23.3431 14.435L29.7071 8.07106ZM0 7.36395L0 8.36395H29V7.36395V6.36395H0L0 7.36395Z"
+                fill="#800000"
+                className="transition-colors duration-200 group-hover:fill-white"
+              />
+            </svg>
           </button>
         </Link>
       </div>
