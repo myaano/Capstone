@@ -318,7 +318,7 @@ export default function Upload() {
   return (
     <div className="min-h-screen bg-white">
       {isLoading || !canAccess ? (
-        <div className="font-urbanist flex min-h-screen items-center justify-center">
+        <div className="font-urbanist flex min-h-screen items-center justify-center text-black">
           <h1>Unauthorized Access Detected</h1>
         </div>
       ) : (
