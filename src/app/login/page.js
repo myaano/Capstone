@@ -39,6 +39,7 @@ export default function Login() {
         // show the backend's own message (e.g. "Email not verified")
         const err = await res.json().catch(() => ({}));
         setError(err.message || "Invalid credentials");
+        setLoading(false);
         return;
       }
 
@@ -48,7 +49,6 @@ export default function Login() {
       router.push("/"); // or wherever you want to land after login
     } catch (err) {
       setError("Something went wrong");
-    } finally {
       setLoading(false);
     }
   }
@@ -162,11 +162,11 @@ export default function Login() {
                 >
                   <button
                     disabled={loading}
-                    className="flex w-full items-center justify-center rounded-xl bg-[#071437] p-2 text-xl text-white"
+                    className="flex w-full items-center justify-center rounded-xl bg-[#071437] p-2 text-xl text-white select-none"
                   >
                     {loading ? "Logging in..." : "Login"}
                   </button>
-                  <div className="absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-[#071437] bg-white text-xl text-[#071437] transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)]">
+                  <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-xl border border-[#071437] bg-white text-xl text-[#071437] transition-[clip-path,background-color,color] duration-500 [clip-path:polygon(0_0%,101%_0%,101%_101%,0_101%)] group-hover:bg-white group-hover:text-[#071437] group-hover:[clip-path:polygon(0_0%,0%_0%,0%_101%,0_101%)]">
                     {loading ? "Logging in..." : "Login"}
                   </div>
                 </div>
