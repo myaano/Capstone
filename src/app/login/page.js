@@ -36,9 +36,11 @@ export default function Login() {
       );
 
       if (!res.ok) {
-        // show the backend's own message (e.g. "Email not verified")
         const err = await res.json().catch(() => ({}));
-        setError(err.message || "Invalid credentials");
+        const firstFieldError = err.errors
+          ? Object.values(err.errors)[0]?.[0]
+          : null;
+        setError(firstFieldError || err.message || "Invalid credentials");
         setLoading(false);
         return;
       }
@@ -47,6 +49,8 @@ export default function Login() {
       localStorage.setItem("token", data.token);
       setUser(data.user);
       router.push("/"); // or wherever you want to land after login
+      // loading stays on here: the button keeps saying "Logging in..." until
+      // the next page replaces this one (no flicker back to "Login")
     } catch (err) {
       setError("Something went wrong");
       setLoading(false);
