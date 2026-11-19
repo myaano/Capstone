@@ -209,7 +209,9 @@ export default function Campus() {
             </div>
             <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {loading && (
-                <p className="text-[#242423]/60">Loading campuses...</p>
+                <p className="font-urbanist col-span-full text-center text-[#242423]">
+                  Loading campuses...
+                </p>
               )}
               {!loading && loadError && (
                 <p className="text-[#800000]">{loadError}</p>

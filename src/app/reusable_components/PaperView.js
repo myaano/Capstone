@@ -70,11 +70,6 @@ function useViewer(apiUrl) {
   return { ready: true, user };
 }
 
-// ---------------------------------------------------------------------
-// The rules, read from the campus policy that comes with the paper
-//   guest   -> true/false fields
-//   student -> "all_campuses" | "same_campus" | "none"
-// ---------------------------------------------------------------------
 function scopeAllows(scope, viewerCampusId, paperCampusId) {
   if (scope === "all_campuses" || scope === "all_campus") return true;
   if (scope === "same_campus") {
@@ -93,6 +88,7 @@ function getAccess(user, paper) {
 
   if (user?.role === "super_admin") return all;
   // a campus admin gets everything for their own campus's papers
+
   if (
     (user?.role === "campus_admin" || user?.role === "admin") &&
     String(user.campus_id) === String(paperCampusId)
@@ -311,8 +307,8 @@ export default function PaperView({
   // no need to wait for the login store when the backend already decided
   if (status === "loading" || (!ready && !paper?.access)) {
     return (
-      <div className="bg-white py-10">
-        <p className="font-urbanist px-5 text-[#999595] lg:px-10">Loading...</p>
+      <div className="flex h-screen items-center justify-center bg-white py-10 text-[#242423]">
+        <p className="font-urbanist px-5 lg:px-10">Loading...</p>
       </div>
     );
   }
@@ -478,8 +474,6 @@ export default function PaperView({
                       : "Loading file..."}
                   </p>
                 )}
-
-                {showViewer && <PdfViewer fileUrl={fileUrl} />}
 
                 {showLink && (
                   <Link
