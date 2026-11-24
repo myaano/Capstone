@@ -171,6 +171,9 @@ export default function PaperView({
   const [fileUrl, setFileUrl] = useState(null);
   const [fileState, setFileState] = useState("idle"); // "idle" | "loading" | "ready" | "denied" | "error"
 
+  // useState for opening and closing the abstract's line-clamp
+  const [abstractOpen, setAbstractOpen] = useState(false);
+
   // The paper is fetched here, in the browser, so the request can carry the
   // login token. A server component can't read it, so Laravel would treat
   // every visitor as a guest.
@@ -412,7 +415,6 @@ export default function PaperView({
           <p className="font-bona_nova text-3xl wrap-break-word text-[#242423]">
             {data.title}
           </p>
-
           <div className="mt-5 flex flex-1 flex-col">
             <div className="lg:w-[55%]">
               <div className="pb-10">
@@ -428,9 +430,19 @@ export default function PaperView({
                   <p className="font-bona_nova_sc text-3xl leading-relaxed">
                     {summaryLabel}
                   </p>
-                  <p className="font-urbanist max-w-[65ch] text-[1.1rem] wrap-break-word">
+                  <p
+                    onClick={() => {
+                      setAbstractOpen((current) => !current);
+                    }}
+                    className={`font-urbanist max-w-[65ch] text-[1.1rem] wrap-break-word ${abstractOpen ? "" : "line-clamp-5 "}`}
+                  >
                     {data.abstract}
                   </p>
+                  <h1 className="font-urbanist w-full text-end">
+                    {abstractOpen
+                      ? "Click text to Close"
+                      : "Click text to Open"}
+                  </h1>
                 </div>
               </div>
 
