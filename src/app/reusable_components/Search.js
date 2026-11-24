@@ -36,7 +36,7 @@ export default function Search({ onSearch }) {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         className="font-urbanist h-10 w-full rounded border border-black bg-white px-3"
-        placeholder="Search in Repository"
+        placeholder="Search in Repository (Title, Author, Keywords)"
       />
     </form>
   );
